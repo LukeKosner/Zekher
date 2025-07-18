@@ -12,7 +12,6 @@ import {
   vector,
 } from 'drizzle-orm/pg-core';
 import {createSelectSchema} from 'drizzle-zod';
-import {z} from 'zod';
 import {nanoid} from 'nanoid';
 
 // Lexicon Sources Table
@@ -113,3 +112,4 @@ export type SelectLexiconSource = typeof lexiconSources.$inferSelect;
 
 export type InsertTestimonySource = typeof testimonySources.$inferInsert;
 export type SelectTestimonySource = typeof testimonySources.$inferSelect;
+

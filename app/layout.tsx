@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientSidebarLayout } from "@/components/layout/ClientSidebarLayout";
 import { Analytics } from "@vercel/analytics/next";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -42,18 +43,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <Analytics />
-        <head>
-          {/* Static performance optimizations */}
-          <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-          <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-          <meta name="theme-color" content="#1f2937" />
-        </head>
-        <body className={`${inter.variable} antialiased`}>
-          {/* Client Component boundary - only interactive parts */}
-          <ClientSidebarLayout>{children}</ClientSidebarLayout>
-        </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <Analytics />
+          <head>
+            {/* Static performance optimizations */}
+            <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+            <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+            <meta name="theme-color" content="#1f2937" />
+          </head>
+          <body className={`${inter.variable} antialiased`}>
+            {/* Client Component boundary - only interactive parts */}
+            <ClientSidebarLayout>{children}</ClientSidebarLayout>
+          </body>
+      </html>
+    </ClerkProvider>
   );
 }
