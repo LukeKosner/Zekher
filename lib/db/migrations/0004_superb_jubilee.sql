@@ -1,0 +1,1 @@
+ALTER TABLE "testimonySources" ADD COLUMN "testimony_language" varchar(100);
