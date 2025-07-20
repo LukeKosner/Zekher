@@ -1,10 +1,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-import { config } from "dotenv";
-import { resolve } from "path";
 
-// Explicitly load .env.local file
-config({ path: resolve(process.cwd(), ".env.local") });
+// Only load dotenv on server side
+if (typeof window === "undefined") {
+  const { config } = require("dotenv");
+  const { resolve } = require("path");
+  config({ path: resolve(process.cwd(), ".env.local") });
+}
 
 export const env = createEnv({
   server: {
@@ -12,10 +14,7 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     DATABASE_URL: z.string().min(1),
-    BETTER_AUTH_SECRET: z.string().min(1),
-    BETTER_AUTH_URL: z.string().url(),
-    AUTH_GOOGLE_ID: z.string().min(1),
-    AUTH_GOOGLE_SECRET: z.string().min(1),
+    REDIS_URL: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_BASE_URL: z.string().url().default("http://localhost:3000")

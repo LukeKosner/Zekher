@@ -1,5 +1,19 @@
-import { env } from "./env";
 import { getBlobUrl } from "./blob-urls";
+
+// Client-safe environment access
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  }
+  
+  // Server side - can import env safely
+  try {
+    const { env } = require("./env");
+    return env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  } catch {
+    return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  }
+}
 
 /**
  * Parameters for generating source URLs
@@ -183,7 +197,7 @@ const SPEAKER_MAPPINGS: Record<string, SpeakerMapping> = {
  * Default URL configuration
  */
 const DEFAULT_URL_CONFIG: UrlConfig = {
-  NEXT_PUBLIC_BASE_URL: env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+  NEXT_PUBLIC_BASE_URL: getBaseUrl(),
   GOOGLE_CLOUD_STORAGE_BASE: "https://storage.googleapis.com/zekher-storage",
   AUDIO_PATH: "/audio",
   LEXICON_PATH: "/lexicon/pdf",
@@ -495,7 +509,7 @@ export function validateEnvironment(): void {
   try {
     // Get fresh environment configuration for validation
     const config: UrlConfig = {
-      NEXT_PUBLIC_BASE_URL: env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+      NEXT_PUBLIC_BASE_URL: getBaseUrl(),
       GOOGLE_CLOUD_STORAGE_BASE: "https://storage.googleapis.com/zekher-storage",
       AUDIO_PATH: "/audio",
       LEXICON_PATH: "/lexicon/pdf",
