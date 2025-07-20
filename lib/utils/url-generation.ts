@@ -6,13 +6,8 @@ function getBaseUrl(): string {
     return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   }
   
-  // Server side - can import env safely
-  try {
-    const { env } = require("./env");
-    return env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  } catch {
-    return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  }
+  // Server side - use process.env directly to avoid circular imports
+  return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
 
 /**
@@ -508,14 +503,7 @@ export function generateLexiconPdfUrl(filename: string): string {
 export function validateEnvironment(): void {
   try {
     // Get fresh environment configuration for validation
-    const config: UrlConfig = {
-      NEXT_PUBLIC_BASE_URL: getBaseUrl(),
-      GOOGLE_CLOUD_STORAGE_BASE: "https://storage.googleapis.com/zekher-storage",
-      AUDIO_PATH: "/audio",
-      LEXICON_PATH: "/lexicon/pdf",
-      TESTIMONY_PATH: "/testimony"
-    };
-    validateUrlConfig(config);
+    validateUrlConfig(DEFAULT_URL_CONFIG);
   } catch (error) {
     throw new Error(
       `Environment validation failed: ${error instanceof Error ? error.message : "Unknown error"}`

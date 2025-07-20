@@ -3,9 +3,11 @@ import { z } from "zod";
 
 // Only load dotenv on server side
 if (typeof window === "undefined") {
-  const { config } = require("dotenv");
-  const { resolve } = require("path");
-  config({ path: resolve(process.cwd(), ".env.local") });
+  import("dotenv").then(({ config }) => {
+    import("path").then(({ resolve }) => {
+      config({ path: resolve(process.cwd(), ".env.local") });
+    });
+  });
 }
 
 export const env = createEnv({
