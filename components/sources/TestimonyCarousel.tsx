@@ -1,3 +1,11 @@
+/**
+ * Testimony Carousel Component
+ * 
+ * Displays survivor testimony entries in a carousel format with interactive cards.
+ * Uses the new TestimonyCard component with hover overlays for better UX.
+ * Maintains audio playback functionality for timestamp segments.
+ */
+
 "use client";
 
 import {
@@ -27,6 +35,9 @@ import {
   generateSourceUrl,
   generateAudioUrl
 } from "@/lib/utils/url-generation";
+import { TestimonyCard } from "./TestimonyCard";
+import { sourcesPageConstants } from "@/lib/prompts";
+import { TestimonySource } from "@/lib/types";
 
 interface TestimonyEntry {
   survivorName: string;
@@ -52,6 +63,21 @@ interface TestimonyCarouselProps {
   sources: TestimonyEntry[];
 }
 
+/**
+ * Converts TestimonyEntry to TestimonySource for card component
+ */
+function convertToTestimonySource(entry: TestimonyEntry, index: number): TestimonySource {
+  return {
+    id: `testimony-${index}`,
+    filename: entry.filename,
+    survivor_name: entry.survivorName,
+    title: entry.title,
+    description: `Survivor testimony by ${entry.survivorName}`,
+    location: entry.location,
+    featured: false
+  };
+}
+
 export const TestimonyCarousel = ({
   status,
   name,
@@ -64,6 +90,7 @@ export const TestimonyCarousel = ({
   } | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentPlayPromise = useRef<Promise<void> | null>(null);
+  const { loadingStates } = sourcesPageConstants;
 
   // Parse timestamps from testimony content
   const parseTimestamps = (content: string): TimestampSegment[] => {
@@ -214,7 +241,7 @@ export const TestimonyCarousel = ({
             ) : (
               <ClockIcon className="size-4 animate-pulse" />
             )}
-            {status === "result" ? "Completed" : "Finding survivor testimonies..."}
+            {status === "result" ? "Completed" : loadingStates.findingTestimonies}
           </Badge>
         </div>
         {status === "result" && (
@@ -230,33 +257,27 @@ export const TestimonyCarousel = ({
       {status === "result" && (
         <CollapsibleContent className="grid gap-4 overflow-hidden border-t p-4 text-sm">
           <Carousel className="w-full max-w-4xl mx-auto">
-            <CarouselContent>
+            <CarouselContent className="-ml-2 md:-ml-4">
               {sources.map((testimony, index) => {
+                const testimonySource = convertToTestimonySource(testimony, index);
                 const timestamps = parseTimestamps(
                   testimony.fullTranscript || testimony.excerpt || ""
                 );
 
                 return (
-                  <CarouselItem key={testimony.filename || index}>
+                  <CarouselItem key={testimony.filename || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                     <div className="p-1">
-                      <div className="text-center mb-4">
-                        <h3 className="text-xl font-semibold mb-1">
-                          {testimony.survivorName}
-                        </h3>
-                        {(testimony.location || testimony.timeReference) && (
-                          <p className="text-muted-foreground text-xs mt-1">
-                            {testimony.location}
-                            {testimony.location &&
-                              testimony.timeReference &&
-                              ` • `}
-                            {testimony.timeReference}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="max-h-96 overflow-y-auto space-y-3 bg-muted/30 rounded-lg p-4">
-                        {timestamps.length > 0 ? (
-                          timestamps.map((segment, segIndex) => {
+                      {/* Interactive Card */}
+                      <TestimonyCard 
+                        source={testimonySource}
+                        className="h-[300px] flex flex-col mb-4"
+                      />
+                      
+                      {/* Audio Segments Section */}
+                      {timestamps.length > 0 && (
+                        <div className="max-h-48 overflow-y-auto space-y-2 bg-muted/30 rounded-lg p-3">
+                          <h4 className="text-xs font-medium text-muted-foreground mb-2">Audio Segments</h4>
+                          {timestamps.map((segment, segIndex) => {
                             const isPlaying =
                               playingSegment?.testimony === testimony &&
                               playingSegment?.segmentIndex === segIndex;
@@ -282,22 +303,15 @@ export const TestimonyCarousel = ({
                                   )}
                                   {segment.timestamp}
                                 </Button>
-                                <p className="text-sm leading-relaxed pl-2 border-l-2 border-muted">
-                                  {segment.text}
+                                <p className="text-xs leading-relaxed pl-2 border-l-2 border-muted">
+                                  {segment.text.substring(0, 100)}
+                                  {segment.text.length > 100 && "..."}
                                 </p>
                               </div>
                             );
-                          })
-                        ) : (
-                          <div className="text-center text-muted-foreground">
-                            <p className="text-sm leading-relaxed">
-                              {testimony.excerpt ||
-                                "No transcript segments available"}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
+                          })}
+                        </div>
+                      )}
                     </div>
                   </CarouselItem>
                 );
@@ -305,8 +319,8 @@ export const TestimonyCarousel = ({
             </CarouselContent>
             {sources.length > 1 && (
               <>
-                <CarouselPrevious />
-                <CarouselNext />
+                <CarouselPrevious className="left-0 md:left-4" />
+                <CarouselNext className="right-0 md:right-4" />
               </>
             )}
           </Carousel>

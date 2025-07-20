@@ -73,5 +73,71 @@ export const errorMessages = {
   audio: {
     noSegments: "No audio segments provided",
     processingError: "Error processing audio segments"
+  },
+
+  sources: {
+    notFound: "Source not found",
+    invalidType: "Invalid source type",
+    missingParams: "Missing required parameters",
+    systemError: "An error occurred while fetching sources."
+  }
+} as const;
+
+// Sources page constants
+export const sourcesPageConstants = {
+  // Card overlay text
+  lexiconOverlay: {
+    title: "Holocaust Lexicon",
+    actionText: "View Full PDF",
+    actionIcon: "FileText"
+  },
+
+  testimonyOverlay: {
+    title: "Survivor Testimony",
+    actionText: "Read Full Testimony",
+    actionIcon: "BookOpen"
+  },
+
+  // Loading states
+  loadingStates: {
+    sources: "Loading Sources",
+    sourceLibrary: "Loading Source Library",
+    loadingMore: "Loading...",
+    searching: "Searching historical records...",
+    findingTestimonies: "Finding survivor testimonies..."
+  },
+
+  // Page content
+  pageContent: {
+    title: "Holocaust Education Source Library",
+    description: "Explore our comprehensive collection of Holocaust education resources, including authoritative lexicon entries and survivor testimonies. These sources are hosted by Zekher for its users.",
+    searchPlaceholder: "Search sources...",
+    noFeaturedSources: "No featured sources available.",
+    noLexiconEntries: "No lexicon entries available.",
+    noTestimonies: "No testimonies available.",
+    noSearchResults: {
+      lexicon: "No lexicon entries match your search.",
+      testimony: "No testimonies match your search."
+    }
+  },
+
+  // Tab labels
+  tabs: {
+    featured: "Featured",
+    lexicon: "Lexicon",
+    testimony: "Testimony"
+  },
+
+  // Section titles
+  sections: {
+    featuredLexicon: "Featured Lexicon Entries",
+    featuredTestimonies: "Featured Testimonies"
+  },
+
+  // Pagination
+  pagination: {
+    loadMore: "Load More",
+    defaultLimit: 10,
+    maxLimit: 50
   }
 } as const;

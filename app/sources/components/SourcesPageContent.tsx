@@ -1,3 +1,10 @@
+/**
+ * Sources Page Content Component
+ * 
+ * Main content component for the sources page with improved interactive cards,
+ * centralized constants, and comprehensive error handling.
+ */
+
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -11,20 +18,16 @@ import {
   getTestimonyUrl
 } from "@/lib/utils/blob-urls";
 import { ExternalLink } from "lucide-react";
+import { LexiconCard } from "@/components/sources/LexiconCard";
+import { TestimonyCard } from "@/components/sources/TestimonyCard";
+import { sourcesPageConstants, errorMessages } from "@/lib/prompts";
+import { LexiconSource, TestimonySource, SourcesApiErrorResponse } from "@/lib/types";
 
-interface Source {
-  id: string;
-  filename: string;
-  title?: string;
-  description?: string;
-  tags?: string[];
-  date?: string;
-  featured?: boolean;
-}
+// Using types from @/lib/types instead of local interface
 
 function SourceLibrary() {
-  const [lexiconSources, setLexiconSources] = useState<Source[]>([]);
-  const [testimonySources, setTestimonySources] = useState<Source[]>([]);
+  const [lexiconSources, setLexiconSources] = useState<LexiconSource[]>([]);
+  const [testimonySources, setTestimonySources] = useState<TestimonySource[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<
     "featured" | "lexicon" | "testimony"
@@ -64,7 +67,7 @@ function SourceLibrary() {
             id: `lexicon-${index}`,
             filename: entry.title,
             title: entry.title,
-            description: `Holocaust Lexicon entry: ${entry.title}`,
+            description: `${sourcesPageConstants.lexiconOverlay.title} entry: ${entry.title}`,
             tags: [],
             featured: false
           })) || [];
@@ -74,6 +77,7 @@ function SourceLibrary() {
             (entry: TestimonyEntry, index: number) => ({
               id: `testimony-${index}`,
               filename: entry.interviewee,
+              survivor_name: entry.interviewee,
               title: entry.title,
               description: `Survivor testimony: ${entry.title}`,
               tags: [],
@@ -87,6 +91,7 @@ function SourceLibrary() {
         setTestimonyHasMore(false);
       } catch (error) {
         console.error("Failed to fetch sources:", error);
+        // Could implement error state here if needed
       } finally {
         setLoading(false);
       }
@@ -147,46 +152,22 @@ function SourceLibrary() {
     (source) => source.featured
   );
 
+  /**
+   * Renders appropriate card component based on source type
+   */
   const SourceCard = ({
     source,
     type
   }: {
-    source: Source;
+    source: LexiconSource | TestimonySource;
     type: "lexicon" | "testimony";
-  }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-      <Link
-        href={`/sources?pageType=${type}&file=${source.filename}`}
-        className="block group"
-      >
-        <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-600 transition-colors">
-          {source.title || source.filename}
-        </h3>
-        {source.description && (
-          <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
-            {source.description}
-          </p>
-        )}
-        {source.tags && source.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {source.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-        {source.date && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {new Date(source.date).toLocaleDateString()}
-          </p>
-        )}
-      </Link>
-    </div>
-  );
+  }) => {
+    if (type === "lexicon") {
+      return <LexiconCard source={source as LexiconSource} />;
+    } else {
+      return <TestimonyCard source={source as TestimonySource} />;
+    }
+  };
 
   if (loading) {
     return (
@@ -198,7 +179,7 @@ function SourceLibrary() {
         >
           <span className="sr-only">Loading...</span>
         </div>
-        <h2 className="text-xl font-semibold mb-2">Loading Source Library</h2>
+        <h2 className="text-xl font-semibold mb-2">{sourcesPageConstants.loadingStates.sourceLibrary}</h2>
         <p className="text-gray-600 dark:text-gray-400">
           Please wait while we load the sources...
         </p>
@@ -210,12 +191,10 @@ function SourceLibrary() {
     <div className="w-full max-w-6xl mx-auto p-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-4">
-          Holocaust Education Source Library
+          {sourcesPageConstants.pageContent.title}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Explore our comprehensive collection of Holocaust education resources,
-          including authoritative lexicon entries and survivor testimonies.
-          These sources are hosted by Zekher for its users.
+          {sourcesPageConstants.pageContent.description}
         </p>
       </div>
 
@@ -224,7 +203,7 @@ function SourceLibrary() {
         <div className="relative max-w-md mx-auto">
           <input
             type="text"
-            placeholder="Search sources..."
+            placeholder={sourcesPageConstants.pageContent.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -256,7 +235,7 @@ function SourceLibrary() {
                 : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
-            Featured
+            {sourcesPageConstants.tabs.featured}
           </button>
           <button
             onClick={() => setActiveTab("lexicon")}
@@ -266,7 +245,7 @@ function SourceLibrary() {
                 : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
-            Lexicon ({filteredLexiconSources.length})
+            {sourcesPageConstants.tabs.lexicon} ({filteredLexiconSources.length})
           </button>
           <button
             onClick={() => setActiveTab("testimony")}
@@ -276,7 +255,7 @@ function SourceLibrary() {
                 : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
-            Testimony ({filteredTestimonySources.length})
+            {sourcesPageConstants.tabs.testimony} ({filteredTestimonySources.length})
           </button>
         </div>
       </div>
@@ -288,7 +267,7 @@ function SourceLibrary() {
             {featuredLexicon.length > 0 && (
               <section>
                 <h2 className="text-2xl font-semibold mb-4">
-                  Featured Lexicon Entries
+                  {sourcesPageConstants.sections.featuredLexicon}
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredLexicon.map((source) => (
@@ -305,7 +284,7 @@ function SourceLibrary() {
             {featuredTestimony.length > 0 && (
               <section>
                 <h2 className="text-2xl font-semibold mb-4">
-                  Featured Testimonies
+                  {sourcesPageConstants.sections.featuredTestimonies}
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {featuredTestimony.map((source) => (
@@ -322,7 +301,7 @@ function SourceLibrary() {
             {featuredLexicon.length === 0 && featuredTestimony.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600 dark:text-gray-400">
-                  No featured sources available.
+                  {sourcesPageConstants.pageContent.noFeaturedSources}
                 </p>
               </div>
             )}
@@ -340,8 +319,8 @@ function SourceLibrary() {
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-600 dark:text-gray-400">
                     {searchQuery
-                      ? "No lexicon entries match your search."
-                      : "No lexicon entries available."}
+                      ? sourcesPageConstants.pageContent.noSearchResults.lexicon
+                      : sourcesPageConstants.pageContent.noLexiconEntries}
                   </p>
                 </div>
               )}
@@ -353,7 +332,7 @@ function SourceLibrary() {
                   disabled={loadingMore}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingMore ? "Loading..." : "Load More"}
+                  {loadingMore ? sourcesPageConstants.loadingStates.loadingMore : sourcesPageConstants.pagination.loadMore}
                 </button>
               </div>
             )}
@@ -375,8 +354,8 @@ function SourceLibrary() {
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-600 dark:text-gray-400">
                     {searchQuery
-                      ? "No testimonies match your search."
-                      : "No testimonies available."}
+                      ? sourcesPageConstants.pageContent.noSearchResults.testimony
+                      : sourcesPageConstants.pageContent.noTestimonies}
                   </p>
                 </div>
               )}
@@ -388,7 +367,7 @@ function SourceLibrary() {
                   disabled={loadingMore}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingMore ? "Loading..." : "Load More"}
+                  {loadingMore ? sourcesPageConstants.loadingStates.loadingMore : sourcesPageConstants.pagination.loadMore}
                 </button>
               </div>
             )}
