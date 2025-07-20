@@ -43,37 +43,8 @@ const createWinstonLogger = (service?: string) => {
     })
   );
 
-  // File transport for production
-  if (process.env.NODE_ENV === 'production') {
-    transports.push(
-      new winston.transports.File({
-        filename: 'logs/error.log',
-        level: 'error',
-        format: combine(
-          errors({ stack: true }),
-          timestamp(),
-          service ? label({ label: service }) : winston.format.simple(),
-          json()
-        ),
-        maxsize: 5242880, // 5MB
-        maxFiles: 5,
-      })
-    );
-
-    transports.push(
-      new winston.transports.File({
-        filename: 'logs/combined.log',
-        format: combine(
-          errors({ stack: true }),
-          timestamp(),
-          service ? label({ label: service }) : winston.format.simple(),
-          json()
-        ),
-        maxsize: 5242880, // 5MB
-        maxFiles: 5,
-      })
-    );
-  }
+  // Note: File logging removed for production deployments
+  // Modern cloud platforms handle log aggregation through stdout/stderr
 
   // Add Sentry transport if configured
   const sentryTransport = createSentryTransport();
@@ -223,7 +194,6 @@ class Logger {
 
   // Database operation logging helper
   dbOperation(operation: string, table: string, duration: number, success: boolean, context?: LogContext): void {
-    const level = success ? LogLevel.INFO : LogLevel.ERROR;
     const message = `Database ${operation} on ${table} - ${success ? 'success' : 'failed'}`;
     const logContext = {
       ...context,
