@@ -1,17 +1,13 @@
-// Type definitions for Holocaust education tool responses
-// Provides structured data format while maintaining LLM compatibility
+/**
+ * Shared type definitions used across multiple features
+ */
 
+// Core data structure types
 export interface LexiconEntry {
   title: string;
   content: string;
   citation: string;
   filename: string;
-}
-
-export interface LexiconResponse {
-  entries: LexiconEntry[];
-  formattedText: string;
-  nextSteps: string;
 }
 
 export interface TestimonyEntry {
@@ -23,16 +19,19 @@ export interface TestimonyEntry {
   filename: string;
 }
 
+export interface LexiconResponse {
+  entries: LexiconEntry[];
+  nextSteps: string;
+}
+
 export interface TestimonyResponse {
   entries: TestimonyEntry[];
-  formattedText: string;
   nextSteps: string;
 }
 
 export interface ToolErrorResponse {
   error: string;
   errorType: "VALIDATION_ERROR" | "SEARCH_ERROR" | "SYSTEM_ERROR";
-  formattedText: string;
   metadata: {
     timestamp: string;
     searchTerms?: string[];

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { SourcesPageContent } from "@/components/sources/SourcesPageContent";
+import { SourcesPageContent } from "./components/SourcesPageContent";
 
 function SourcesPageFallback() {
   return (

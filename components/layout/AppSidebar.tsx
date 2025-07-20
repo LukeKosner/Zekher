@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Logo } from "@/components/logo";
+import { Logo } from "@/components/layout/logo";
 import { SidebarNavigation } from "@/components/layout/Sidebar/Navigation";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";

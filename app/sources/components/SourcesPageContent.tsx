@@ -1,11 +1,16 @@
-'use client';
+"use client";
 
-import {useSearchParams} from 'next/navigation';
-import {useEffect, useState} from 'react';
-import {AudioPlayerSuspense} from '@/components/audio/AudioPlayerSuspense';
-import {ErrorBoundary} from '@/components/ErrorBoundary';
-import Link from 'next/link';
-import {getLexiconUrl, getAudioUrl, getTestimonyUrl} from '@/lib/utils/blob-urls';
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { AudioPlayerSuspense } from "@/components/audio/AudioPlayerSuspense";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import Link from "next/link";
+import {
+  getLexiconUrl,
+  getAudioUrl,
+  getTestimonyUrl
+} from "@/lib/utils/blob-urls";
+import { ExternalLink } from "lucide-react";
 
 interface Source {
   id: string;
@@ -20,8 +25,10 @@ interface Source {
 function SourceLibrary() {
   const [lexiconSources, setLexiconSources] = useState<Source[]>([]);
   const [testimonySources, setTestimonySources] = useState<Source[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'featured' | 'lexicon' | 'testimony'>('featured');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<
+    "featured" | "lexicon" | "testimony"
+  >("featured");
   const [loading, setLoading] = useState(true);
   const [lexiconPage, setLexiconPage] = useState(1);
   const [testimonyPage, setTestimonyPage] = useState(1);
@@ -34,48 +41,52 @@ function SourceLibrary() {
       try {
         setLoading(true);
         const [lexiconRes, testimonyRes] = await Promise.all([
-          fetch('/data/lexicon.json'),
-          fetch('/data/testimony.json')
+          fetch("/data/lexicon.json"),
+          fetch("/data/testimony.json")
         ]);
-        
+
         const lexiconData = await lexiconRes.json();
         const testimonyData = await testimonyRes.json();
-        
+
         interface LexiconEntry {
           title: string;
           [key: string]: any;
         }
-        
+
         interface TestimonyEntry {
           title: string;
           interviewee: string;
           [key: string]: any;
         }
-        
-        const lexiconSources = lexiconData.entries?.map((entry: LexiconEntry, index: number) => ({
-          id: `lexicon-${index}`,
-          filename: entry.title,
-          title: entry.title,
-          description: `Holocaust Lexicon entry: ${entry.title}`,
-          tags: [],
-          featured: false,
-        })) || [];
-        
-        const testimonySources = testimonyData.entries?.map((entry: TestimonyEntry, index: number) => ({
-          id: `testimony-${index}`,
-          filename: entry.interviewee,
-          title: entry.title,
-          description: `Survivor testimony: ${entry.title}`,
-          tags: [],
-          featured: false,
-        })) || [];
-        
+
+        const lexiconSources =
+          lexiconData.entries?.map((entry: LexiconEntry, index: number) => ({
+            id: `lexicon-${index}`,
+            filename: entry.title,
+            title: entry.title,
+            description: `Holocaust Lexicon entry: ${entry.title}`,
+            tags: [],
+            featured: false
+          })) || [];
+
+        const testimonySources =
+          testimonyData.entries?.map(
+            (entry: TestimonyEntry, index: number) => ({
+              id: `testimony-${index}`,
+              filename: entry.interviewee,
+              title: entry.title,
+              description: `Survivor testimony: ${entry.title}`,
+              tags: [],
+              featured: false
+            })
+          ) || [];
+
         setLexiconSources(lexiconSources);
         setTestimonySources(testimonySources);
         setLexiconHasMore(false);
         setTestimonyHasMore(false);
       } catch (error) {
-        console.error('Failed to fetch sources:', error);
+        console.error("Failed to fetch sources:", error);
       } finally {
         setLoading(false);
       }
@@ -84,49 +95,65 @@ function SourceLibrary() {
     fetchSources();
   }, []);
 
-  const loadMoreSources = async (type: 'lexicon' | 'testimony') => {
+  const loadMoreSources = async (type: "lexicon" | "testimony") => {
     if (loadingMore) return;
-    
-    const currentPage = type === 'lexicon' ? lexiconPage : testimonyPage;
+
+    const currentPage = type === "lexicon" ? lexiconPage : testimonyPage;
     const nextPage = currentPage + 1;
-    
+
     try {
       setLoadingMore(true);
-      const response = await fetch(`/api/sources/library?type=${type}&page=${nextPage}`);
+      const response = await fetch(
+        `/api/sources/library?type=${type}&page=${nextPage}`
+      );
       const data = await response.json();
-      
-      if (type === 'lexicon') {
-        setLexiconSources(prev => [...prev, ...data.sources]);
+
+      if (type === "lexicon") {
+        setLexiconSources((prev) => [...prev, ...data.sources]);
         setLexiconPage(nextPage);
         setLexiconHasMore(data.pagination?.hasMore || false);
       } else {
-        setTestimonySources(prev => [...prev, ...data.sources]);
+        setTestimonySources((prev) => [...prev, ...data.sources]);
         setTestimonyPage(nextPage);
         setTestimonyHasMore(data.pagination?.hasMore || false);
       }
     } catch (error) {
-      console.error('Failed to load more sources:', error);
+      console.error("Failed to load more sources:", error);
     } finally {
       setLoadingMore(false);
     }
   };
 
-  const filteredLexiconSources = lexiconSources.filter(source =>
-    source.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    source.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    source.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredLexiconSources = lexiconSources.filter(
+    (source) =>
+      source.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      source.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      source.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
-  const filteredTestimonySources = testimonySources.filter(source =>
-    source.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    source.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    source.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredTestimonySources = testimonySources.filter(
+    (source) =>
+      source.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      source.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      source.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
-  const featuredLexicon = lexiconSources.filter(source => source.featured);
-  const featuredTestimony = testimonySources.filter(source => source.featured);
+  const featuredLexicon = lexiconSources.filter((source) => source.featured);
+  const featuredTestimony = testimonySources.filter(
+    (source) => source.featured
+  );
 
-  const SourceCard = ({ source, type }: { source: Source; type: 'lexicon' | 'testimony' }) => (
+  const SourceCard = ({
+    source,
+    type
+  }: {
+    source: Source;
+    type: "lexicon" | "testimony";
+  }) => (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
       <Link
         href={`/sources?pageType=${type}&file=${source.filename}`}
@@ -142,7 +169,7 @@ function SourceLibrary() {
         )}
         {source.tags && source.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
-            {source.tags.map(tag => (
+            {source.tags.map((tag) => (
               <span
                 key={tag}
                 className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full"
@@ -182,9 +209,13 @@ function SourceLibrary() {
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">Holocaust Education Source Library</h1>
+        <h1 className="text-3xl font-bold mb-4">
+          Holocaust Education Source Library
+        </h1>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Explore our comprehensive collection of Holocaust education resources, including authoritative lexicon entries and survivor testimonies. These sources are hosted by Zekher for its users.
+          Explore our comprehensive collection of Holocaust education resources,
+          including authoritative lexicon entries and survivor testimonies.
+          These sources are hosted by Zekher for its users.
         </p>
       </div>
 
@@ -218,31 +249,31 @@ function SourceLibrary() {
       <div className="mb-8">
         <div className="flex justify-center space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg max-w-md mx-auto">
           <button
-            onClick={() => setActiveTab('featured')}
+            onClick={() => setActiveTab("featured")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'featured'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              activeTab === "featured"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
             Featured
           </button>
           <button
-            onClick={() => setActiveTab('lexicon')}
+            onClick={() => setActiveTab("lexicon")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'lexicon'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              activeTab === "lexicon"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
             Lexicon ({filteredLexiconSources.length})
           </button>
           <button
-            onClick={() => setActiveTab('testimony')}
+            onClick={() => setActiveTab("testimony")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'testimony'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              activeTab === "testimony"
+                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
             Testimony ({filteredTestimonySources.length})
@@ -252,14 +283,20 @@ function SourceLibrary() {
 
       {/* Content */}
       <div className="grid gap-6">
-        {activeTab === 'featured' && (
+        {activeTab === "featured" && (
           <div className="space-y-8">
             {featuredLexicon.length > 0 && (
               <section>
-                <h2 className="text-2xl font-semibold mb-4">Featured Lexicon Entries</h2>
+                <h2 className="text-2xl font-semibold mb-4">
+                  Featured Lexicon Entries
+                </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredLexicon.map(source => (
-                    <SourceCard key={source.id} source={source} type="lexicon" />
+                  {featuredLexicon.map((source) => (
+                    <SourceCard
+                      key={source.id}
+                      source={source}
+                      type="lexicon"
+                    />
                   ))}
                 </div>
               </section>
@@ -267,10 +304,16 @@ function SourceLibrary() {
 
             {featuredTestimony.length > 0 && (
               <section>
-                <h2 className="text-2xl font-semibold mb-4">Featured Testimonies</h2>
+                <h2 className="text-2xl font-semibold mb-4">
+                  Featured Testimonies
+                </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredTestimony.map(source => (
-                    <SourceCard key={source.id} source={source} type="testimony" />
+                  {featuredTestimony.map((source) => (
+                    <SourceCard
+                      key={source.id}
+                      source={source}
+                      type="testimony"
+                    />
                   ))}
                 </div>
               </section>
@@ -278,23 +321,27 @@ function SourceLibrary() {
 
             {featuredLexicon.length === 0 && featuredTestimony.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-600 dark:text-gray-400">No featured sources available.</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  No featured sources available.
+                </p>
               </div>
             )}
           </div>
         )}
 
-        {activeTab === 'lexicon' && (
+        {activeTab === "lexicon" && (
           <div className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredLexiconSources.length > 0 ? (
-                filteredLexiconSources.map(source => (
+                filteredLexiconSources.map((source) => (
                   <SourceCard key={source.id} source={source} type="lexicon" />
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-600 dark:text-gray-400">
-                    {searchQuery ? 'No lexicon entries match your search.' : 'No lexicon entries available.'}
+                    {searchQuery
+                      ? "No lexicon entries match your search."
+                      : "No lexicon entries available."}
                   </p>
                 </div>
               )}
@@ -302,28 +349,34 @@ function SourceLibrary() {
             {!searchQuery && lexiconHasMore && (
               <div className="text-center">
                 <button
-                  onClick={() => loadMoreSources('lexicon')}
+                  onClick={() => loadMoreSources("lexicon")}
                   disabled={loadingMore}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingMore ? 'Loading...' : 'Load More'}
+                  {loadingMore ? "Loading..." : "Load More"}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {activeTab === 'testimony' && (
+        {activeTab === "testimony" && (
           <div className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTestimonySources.length > 0 ? (
-                filteredTestimonySources.map(source => (
-                  <SourceCard key={source.id} source={source} type="testimony" />
+                filteredTestimonySources.map((source) => (
+                  <SourceCard
+                    key={source.id}
+                    source={source}
+                    type="testimony"
+                  />
                 ))
               ) : (
                 <div className="col-span-full text-center py-12">
                   <p className="text-gray-600 dark:text-gray-400">
-                    {searchQuery ? 'No testimonies match your search.' : 'No testimonies available.'}
+                    {searchQuery
+                      ? "No testimonies match your search."
+                      : "No testimonies available."}
                   </p>
                 </div>
               )}
@@ -331,11 +384,11 @@ function SourceLibrary() {
             {!searchQuery && testimonyHasMore && (
               <div className="text-center">
                 <button
-                  onClick={() => loadMoreSources('testimony')}
+                  onClick={() => loadMoreSources("testimony")}
                   disabled={loadingMore}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingMore ? 'Loading...' : 'Load More'}
+                  {loadingMore ? "Loading..." : "Load More"}
                 </button>
               </div>
             )}
@@ -348,21 +401,21 @@ function SourceLibrary() {
 
 function SourcesPageInner() {
   const searchParams = useSearchParams();
-  const pageType = searchParams.get('pageType');
-  const id = searchParams.get('id');
-  const file = searchParams.get('file');
+  const pageType = searchParams.get("pageType");
+  const id = searchParams.get("id");
+  const file = searchParams.get("file");
   const [textContent, setTextContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [actualFilename, setActualFilename] = useState<string | null>(null);
 
   // For audio segment
-  const speakerName = searchParams.get('speakerName');
-  const startTime = searchParams.get('startTime');
-  const endTime = searchParams.get('endTime');
-  const transcriptExcerpt = searchParams.get('transcriptExcerpt');
-  const language = searchParams.get('language');
-  const significance = searchParams.get('significance');
+  const speakerName = searchParams.get("speakerName");
+  const startTime = searchParams.get("startTime");
+  const endTime = searchParams.get("endTime");
+  const transcriptExcerpt = searchParams.get("transcriptExcerpt");
+  const language = searchParams.get("language");
+  const significance = searchParams.get("significance");
 
   // Function to check if a string looks like a database ID (nanoid format)
   const looksLikeDbId = (str: string) => {
@@ -377,14 +430,14 @@ function SourcesPageInner() {
     // If the identifier looks like a database ID, fetch the actual filename
     if (looksLikeDbId(identifier)) {
       fetch(`/api/sources?type=${pageType}&id=${identifier}`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.filename) {
-            setActualFilename(data.filename.replace(/\.(pdf|txt)$/i, ''));
+            setActualFilename(data.filename.replace(/\.(pdf|txt)$/i, ""));
           }
         })
-        .catch(err => {
-          console.error('Failed to lookup filename:', err);
+        .catch((err) => {
+          console.error("Failed to lookup filename:", err);
           setActualFilename(identifier); // Fallback to original identifier
         });
     } else {
@@ -393,32 +446,35 @@ function SourcesPageInner() {
   }, [pageType, id, file]);
 
   useEffect(() => {
-    if (pageType === 'testimony' && actualFilename) {
+    if (pageType === "testimony" && actualFilename) {
       setIsLoading(true);
       setError(null);
 
-      // Fetch TXT file
-      fetch(getTestimonyUrl(`txt/${actualFilename}.txt`))
-        .then(res => {
-          if (!res.ok) throw new Error('File not found');
+      const testimonyUrl = getTestimonyUrl(`${actualFilename}.txt`);
+
+      fetch(testimonyUrl)
+        .then((res) => {
+          if (!res.ok) throw new Error("File not found");
           return res.text();
         })
-        .then(content => {
+        .then((content) => {
           setTextContent(content);
           setIsLoading(false);
         })
         .catch(() => {
-          setError('Testimony file not found.');
+          setError("Testimony file not found.");
           setIsLoading(false);
         });
     }
   }, [pageType, actualFilename]);
 
   // PDF path for lexicon - use actualFilename once lookup is complete
-  const pdfPath = actualFilename ? getLexiconUrl(`pdf/${actualFilename}.pdf`) : null;
+  const pdfPath = actualFilename
+    ? getLexiconUrl(`${actualFilename}.pdf`)
+    : null;
   // MP3 path for audio
   const audioFile = speakerName
-    ? getAudioUrl(`${speakerName.split(' ').pop()?.toLowerCase()}.mp3`)
+    ? getAudioUrl(`${speakerName.split(" ").pop()?.toLowerCase()}.mp3`)
     : null;
 
   return (
@@ -437,31 +493,59 @@ function SourcesPageInner() {
               Loading source...
             </p>
           </div>
-        ) : pageType === 'lexicon' && actualFilename ? (
+        ) : pageType === "lexicon" && actualFilename ? (
           <ErrorBoundary componentName="Lexicon PDF Viewer">
             <h2 className="text-2xl md:text-4xl text-center mb-6">
               Holocaust Lexicon Entry
             </h2>
-            <object
-              data={pdfPath!}
-              type="application/pdf"
-              width="100%"
-              height="800px"
+            <div
+              className="relative group/pdf-viewer"
+              title={`${actualFilename} - Source: Holocaust Lexicon`}
             >
-              <p>
-                PDF could not be loaded.{' '}
+              <object
+                data={pdfPath!}
+                type="application/pdf"
+                width="100%"
+                height="800px"
+                className="rounded-lg"
+              >
+                <p>
+                  PDF could not be loaded.{" "}
+                  <a
+                    href={pdfPath!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Download PDF
+                  </a>
+                </p>
+              </object>
+
+              {/* Hover overlay with title and source info */}
+              <div className="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover/pdf-viewer:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center rounded-lg pointer-events-none">
+                {/* Title and source info */}
+                <div className="bg-white bg-opacity-95 text-black px-4 py-3 rounded-lg mb-4 max-w-[80%] text-center shadow-lg">
+                  <div className="font-semibold text-base">
+                    {actualFilename}
+                  </div>
+                  <div className="text-sm text-gray-600">Holocaust Lexicon</div>
+                </div>
+
+                {/* Action button */}
                 <a
                   href={pdfPath!}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
+                  className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors pointer-events-auto shadow-lg"
                 >
-                  Download PDF
+                  <ExternalLink className="size-4" />
+                  Open in new tab
                 </a>
-              </p>
-            </object>
+              </div>
+            </div>
           </ErrorBoundary>
-        ) : pageType === 'testimony' && actualFilename ? (
+        ) : pageType === "testimony" && actualFilename ? (
           <ErrorBoundary componentName="Testimony Text Viewer">
             <h2 className="text-2xl md:text-4xl text-center mb-6">
               Survivor Testimony
@@ -493,7 +577,7 @@ function SourcesPageInner() {
               </div>
             )}
           </ErrorBoundary>
-        ) : pageType === 'audio' &&
+        ) : pageType === "audio" &&
           speakerName &&
           startTime &&
           endTime &&
@@ -505,14 +589,14 @@ function SourcesPageInner() {
             </h2>
             <AudioPlayerSuspense
               segment={{
-                testimonyId: actualFilename || '',
+                testimonyId: actualFilename || "",
                 speakerName,
                 startTime: Number(startTime),
                 endTime: Number(endTime),
                 transcriptExcerpt,
                 language: language || undefined,
                 significance,
-                audioFile: audioFile || '',
+                audioFile: audioFile || ""
               }}
             />
           </ErrorBoundary>

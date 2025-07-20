@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Main pages
+Allow: /chat
+Allow: /sources
+
+# Static assets
+Allow: /favicon.ico
+Allow: /favicon-*.png
+Allow: /android-chrome-*.png
+Allow: /apple-touch-icon.png
+Allow: /site.webmanifest
+
+# Block data files (not for public consumption)
+Disallow: /data/
+
+# Sitemap
+Sitemap: https://zekher.com/sitemap.xml

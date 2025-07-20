@@ -1,37 +1,41 @@
-// Simplified chat route
 import { lexiconTool, testimonyTool, showUsersAudio } from "@/lib/tools";
 import { google } from "@ai-sdk/google";
-import { streamText, convertToModelMessages, UIMessage } from "ai";
-
-import { holocaustEducatorPrompt } from "@/lib/prompts";
+import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import { holocaustEducatorPrompt } from "./prompts";
+import { chatApiConstants, chatApiErrors } from "./constants";
 import { logger, logApiRequest, logApiResponse } from "@/lib/utils/logger";
+import type { ChatRequest, ChatErrorResponse, ChatApiContext } from "./types";
 
-export const maxDuration = 60;
+export const maxDuration = chatApiConstants.maxDuration;
 
-export async function POST(req: Request) {
-  const startTime = Date.now();
-  const requestData = await req.json();
-
-  logApiRequest("POST", "/api/chat");
-  logger.info("Chat route called", {
-    messagesCount: requestData.messages?.length || 0,
-    component: "chat-api"
-  });
-
-  const { messages }: { messages: UIMessage[] } = requestData;
+/**
+ * Chat API endpoint for Holocaust education conversations.
+ * Provides access to lexicon search, testimony search, and audio playback tools.
+ * Uses streaming responses for real-time conversation experience.
+ */
+export async function POST(req: Request): Promise<Response> {
+  const context: ChatApiContext = {
+    startTime: Date.now()
+  };
 
   try {
-    logger.debug("Messages received", {
-      messagesCount: messages?.length || 0,
-      component: "chat-api"
-    });
+    const requestData = await req.json();
+    
+    logApiRequest("POST", chatApiConstants.endpoint);
+    logger.info("Chat started", { msgs: requestData.messages?.length || 0 });
 
-    if (!messages || !Array.isArray(messages)) {
-      throw new Error("Messages array is missing or invalid");
+    const { messages }: { messages: UIMessage[] } = requestData;
+
+    // Validate request data
+    const validationError = validateChatRequest(requestData);
+    if (validationError) {
+      return createErrorResponse(validationError, 400, context);
     }
 
+    logger.debug("Messages validated", { count: messages?.length });
+
     const streamResult = streamText({
-      model: google("gemini-2.5-pro"),
+      model: google(chatApiConstants.modelName),
       messages: convertToModelMessages(messages),
       system: holocaustEducatorPrompt,
       providerOptions: {
@@ -50,33 +54,100 @@ export async function POST(req: Request) {
 
     const response = streamResult.toUIMessageStreamResponse();
 
-    logApiResponse("POST", "/api/chat", 200, Date.now() - startTime);
-    logger.info("Chat route completed successfully", {
-      duration: Date.now() - startTime,
-      component: "chat-api"
-    });
+    const duration = Date.now() - context.startTime;
+    logApiResponse("POST", chatApiConstants.endpoint, 200, duration);
+    logger.info("Chat completed", { ms: duration });
 
     return response;
   } catch (error) {
-    const duration = Date.now() - startTime;
-    logger.error("Chat route error", {
-      error: error instanceof Error ? error : new Error(String(error)),
-      duration,
-      component: "chat-api"
-    });
-
-    logApiResponse("POST", "/api/chat", 500, duration);
-
-    return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        message:
-          "An error occurred while processing your request. Please try again."
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      }
-    );
+    return handleChatError(error, context);
   }
+}
+
+/**
+ * Validates the incoming chat request structure and content.
+ */
+function validateChatRequest(request: any): string | null {
+  if (!request) {
+    return chatApiErrors.invalidRequest;
+  }
+
+  if (!request.messages) {
+    return chatApiErrors.missingMessages;
+  }
+
+  if (!Array.isArray(request.messages)) {
+    return chatApiErrors.invalidMessages;
+  }
+
+  if (request.messages.length === 0) {
+    return chatApiErrors.missingMessages;
+  }
+
+  // Validate each message structure
+  for (const message of request.messages) {
+    if (!message.role || !message.content) {
+      return "Invalid message format: missing role or content";
+    }
+    
+    if (!['user', 'assistant', 'system'].includes(message.role)) {
+      return "Invalid message role: must be user, assistant, or system";
+    }
+    
+    if (typeof message.content !== 'string') {
+      return "Invalid message content: must be string";
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Creates a standardized error response.
+ */
+function createErrorResponse(message: string, status: number, context: ChatApiContext): Response {
+  const duration = Date.now() - context.startTime;
+  const errorResponse: ChatErrorResponse = {
+    error: status >= 500 ? chatApiErrors.internalServerError : "Validation error",
+    message,
+    timestamp: new Date().toISOString()
+  };
+
+  logger.error("Chat validation failed", { error: new Error(message), status, ms: duration });
+
+  logApiResponse("POST", chatApiConstants.endpoint, status, duration);
+
+  return new Response(
+    JSON.stringify(errorResponse),
+    {
+      status,
+      headers: { "Content-Type": "application/json" }
+    }
+  );
+}
+
+/**
+ * Handles errors that occur during chat processing.
+ */
+function handleChatError(error: unknown, context: ChatApiContext): Response {
+  const duration = Date.now() - context.startTime;
+  const errorObj = error instanceof Error ? error : new Error(String(error));
+  
+  logger.error("Chat error", { error: errorObj, ms: duration });
+
+  logApiResponse("POST", chatApiConstants.endpoint, 500, duration);
+
+  const errorResponse: ChatErrorResponse = {
+    error: chatApiErrors.internalServerError,
+    message: chatApiErrors.processingError,
+    timestamp: new Date().toISOString()
+  };
+
+  return new Response(
+    JSON.stringify(errorResponse),
+    {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    }
+  );
 }

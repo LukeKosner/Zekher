@@ -35,17 +35,22 @@ import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LexiconCarousel } from "@/components/lexiconCarousel";
-import { TestimonyCarousel } from "@/components/testimonyCarousel";
+import { LexiconCarousel } from "@/components/sources/LexiconCarousel";
+import { TestimonyCarousel } from "@/components/sources/TestimonyCarousel";
 import { generateSourceUrl } from "@/lib/utils/url-generation";
 import { MicIcon, BookOpenCheck, Users, History } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Lazy load audio player
 const AudioPlayer = dynamic(
-  () => import("@/components/audio/AudioPlayer").then((mod) => ({ default: mod.AudioPlayer })),
+  () =>
+    import("@/components/audio/AudioPlayer").then((mod) => ({
+      default: mod.AudioPlayer
+    })),
   {
-    loading: () => <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-20 rounded-md" />,
+    loading: () => (
+      <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-20 rounded-md" />
+    ),
     ssr: false
   }
 );
@@ -61,7 +66,6 @@ const suggestions = [
   "What can we learn from Holocaust survivor testimonies?"
 ];
 
-
 function ChatContent() {
   const { messages, sendMessage, status, stop } = useChat({
     maxSteps: 5,
@@ -74,13 +78,15 @@ function ChatContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = input.trim();
-    
+
     if (trimmedInput) {
       // Prevent duplicate messages
       const recentUserMessages = messages
         .filter((msg) => msg.role === "user")
         .slice(-3)
-        .map((msg) => (msg as any).parts?.[0]?.text || (msg as any).content || "");
+        .map(
+          (msg) => (msg as any).parts?.[0]?.text || (msg as any).content || ""
+        );
 
       if (!recentUserMessages.includes(trimmedInput)) {
         sendMessage({ text: trimmedInput });
@@ -97,9 +103,15 @@ function ChatContent() {
   const getToolDisplay = (toolName: string) => {
     switch (toolName) {
       case "lexiconTool":
-        return { icon: <History size={18} />, displayName: "Holocaust Lexicon" };
+        return {
+          icon: <History size={18} />,
+          displayName: "Holocaust Lexicon"
+        };
       case "testimonyTool":
-        return { icon: <Users size={18} />, displayName: "Survivor Testimonies" };
+        return {
+          icon: <Users size={18} />,
+          displayName: "Survivor Testimonies"
+        };
       case "showUsersAudio":
         return { icon: <MicIcon size={18} />, displayName: "Audio Selections" };
       default:
@@ -108,16 +120,23 @@ function ChatContent() {
   };
 
   const hasAudioSegments = (result: any) => {
-    return result && typeof result === "object" && 
-           (result.type === "audio_segments" || Array.isArray(result.segments));
+    return (
+      result &&
+      typeof result === "object" &&
+      (result.type === "audio_segments" || Array.isArray(result.segments))
+    );
   };
 
   const renderToolResult = (toolInvocation: any): React.ReactNode => {
     if (toolInvocation.state !== "result") return null;
 
     const resultData = toolInvocation.result;
-    const isLexiconResult = resultData?.entries?.some((e: any) => e.title && !e.survivorName);
-    const isTestimonyResult = resultData?.entries?.some((e: any) => e.survivorName);
+    const isLexiconResult = resultData?.entries?.some(
+      (e: any) => e.title && !e.survivorName
+    );
+    const isTestimonyResult = resultData?.entries?.some(
+      (e: any) => e.survivorName
+    );
 
     return (
       <AIToolContent>
@@ -130,22 +149,33 @@ function ChatContent() {
             {isLexiconResult && (
               <div className="space-y-1">
                 <div className="text-muted-foreground text-xs font-medium">
-                  Found {toolInvocation.result.totalResults || toolInvocation.result.entries.length} lexicon entries:
+                  Found{" "}
+                  {toolInvocation.result.totalResults ||
+                    toolInvocation.result.entries.length}{" "}
+                  lexicon entries:
                 </div>
-                {toolInvocation.result.entries.map((entry: any, idx: number) => (
-                  <div key={idx} className="text-xs bg-background rounded p-2 border">
-                    <div className="font-medium text-foreground">
-                      <a
-                        href={generateSourceUrl({ pageType: "lexicon", filename: entry.filename })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {entry.title}
-                      </a>
+                {toolInvocation.result.entries.map(
+                  (entry: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="text-xs bg-background rounded p-2 border"
+                    >
+                      <div className="font-medium text-foreground">
+                        <a
+                          href={generateSourceUrl({
+                            pageType: "lexicon",
+                            filename: entry.filename
+                          })}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                        >
+                          {entry.title}
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             )}
 
@@ -155,10 +185,16 @@ function ChatContent() {
                   Found {resultData.totalResults} testimonies:
                 </div>
                 {resultData.entries.map((testimony: any, idx: number) => (
-                  <div key={idx} className="text-xs bg-background rounded p-2 border">
+                  <div
+                    key={idx}
+                    className="text-xs bg-background rounded p-2 border"
+                  >
                     <div className="font-medium text-foreground">
                       <a
-                        href={generateSourceUrl({ pageType: "testimony", filename: testimony.filename })}
+                        href={generateSourceUrl({
+                          pageType: "testimony",
+                          filename: testimony.filename
+                        })}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:underline"
@@ -178,7 +214,9 @@ function ChatContent() {
 
             {!isLexiconResult && !isTestimonyResult && (
               <div className="text-xs text-muted-foreground">
-                {typeof resultData === "string" ? resultData : "Tool executed successfully"}
+                {typeof resultData === "string"
+                  ? resultData
+                  : "Tool executed successfully"}
               </div>
             )}
           </div>
@@ -187,14 +225,20 @@ function ChatContent() {
     );
   };
 
-  const renderToolInvocation = (part: any, messageId: string, partIndex: number): React.ReactElement | null => {
-    const isToolPart = typeof part.type === "string" && part.type.startsWith("tool-");
+  const renderToolInvocation = (
+    part: any,
+    messageId: string,
+    partIndex: number
+  ): React.ReactElement | null => {
+    const isToolPart =
+      typeof part.type === "string" && part.type.startsWith("tool-");
     if (!isToolPart) return null;
 
     const toolName = part.type.replace("tool-", "");
     const toolInvocation = {
       toolCallId: part.toolCallId,
-      state: part.state === "output-available" ? "result" : part.state || "call",
+      state:
+        part.state === "output-available" ? "result" : part.state || "call",
       args: part.input || {},
       result: part.output
     };
@@ -202,7 +246,11 @@ function ChatContent() {
     const toolDisplay = getToolDisplay(toolName);
 
     // Handle audio segments specially
-    if (toolName === "showUsersAudio" && toolInvocation.state === "result" && hasAudioSegments(toolInvocation.result)) {
+    if (
+      toolName === "showUsersAudio" &&
+      toolInvocation.state === "result" &&
+      hasAudioSegments(toolInvocation.result)
+    ) {
       const resultData = toolInvocation.result;
       const audioData = {
         type: resultData.type || "audio_segments",
@@ -222,9 +270,13 @@ function ChatContent() {
                     fallback={
                       <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                          Audio player unavailable.<br />
-                          <span className="font-medium">Transcript:</span> {segment.transcriptExcerpt}<br />
-                          <span className="font-medium">Audio File:</span> {segment.audioFile}
+                          Audio player unavailable.
+                          <br />
+                          <span className="font-medium">Transcript:</span>{" "}
+                          {segment.transcriptExcerpt}
+                          <br />
+                          <span className="font-medium">Audio File:</span>{" "}
+                          {segment.audioFile}
                         </p>
                       </div>
                     }
@@ -266,13 +318,32 @@ function ChatContent() {
 
     // Handle other tools with standard UI
     if (toolName === "showUsersAudio" && toolInvocation.state !== "result") {
-      const isRunning = toolInvocation.state === "call" || toolInvocation.state === "partial-call" || 
-                       (!toolInvocation.state && !toolInvocation.result);
-      
+      const isRunning =
+        toolInvocation.state === "call" ||
+        toolInvocation.state === "partial-call" ||
+        (!toolInvocation.state && !toolInvocation.result);
+
       return (
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <AITool status={isRunning ? "running" : toolInvocation.state === "result" ? "completed" : "pending"}>
-            <AIToolHeader name={toolDisplay.displayName} status={isRunning ? "running" : toolInvocation.state === "result" ? "completed" : "pending"} />
+          <AITool
+            status={
+              isRunning
+                ? "running"
+                : toolInvocation.state === "result"
+                  ? "completed"
+                  : "pending"
+            }
+          >
+            <AIToolHeader
+              name={toolDisplay.displayName}
+              status={
+                isRunning
+                  ? "running"
+                  : toolInvocation.state === "result"
+                    ? "completed"
+                    : "pending"
+              }
+            />
             <AIToolContent>
               {isRunning ? (
                 Object.keys(toolInvocation.args || {}).length > 0 ? (
@@ -325,29 +396,49 @@ function ChatContent() {
                   message.parts.forEach((part, partIndex) => {
                     if (part.type === "text") {
                       renderedParts.push(
-                        <AIMessage from="assistant" key={`${message.id}-text-${partIndex}`}>
+                        <AIMessage
+                          from="assistant"
+                          key={`${message.id}-text-${partIndex}`}
+                        >
                           <AIMessageContent>
                             <AIResponse>{part.text}</AIResponse>
                           </AIMessageContent>
                         </AIMessage>
                       );
                     } else if (part.type === "reasoning") {
-                      const isReasoningStreaming = (part as any).state !== "done" && status === "streaming";
+                      const isReasoningStreaming =
+                        (part as any).state !== "done" &&
+                        status === "streaming";
                       renderedParts.push(
                         <motion.div
                           key={`${message.id}-reasoning-${partIndex}-${part.text?.slice(0, 20)}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: "easeOut",
+                            delay: 0.1
+                          }}
                         >
-                          <AIReasoning isStreaming={isReasoningStreaming} defaultOpen={false}>
+                          <AIReasoning
+                            isStreaming={isReasoningStreaming}
+                            defaultOpen={false}
+                          >
                             <AIReasoningTrigger />
                             <AIReasoningContent>{part.text}</AIReasoningContent>
                           </AIReasoning>
                         </motion.div>
                       );
-                    } else if (part.type !== "step-start" && typeof part.type === "string" && part.type.startsWith("tool-")) {
-                      const toolElement = renderToolInvocation(part, message.id, partIndex);
+                    } else if (
+                      part.type !== "step-start" &&
+                      typeof part.type === "string" &&
+                      part.type.startsWith("tool-")
+                    ) {
+                      const toolElement = renderToolInvocation(
+                        part,
+                        message.id,
+                        partIndex
+                      );
                       if (toolElement) {
                         renderedParts.push(toolElement);
                       }
@@ -378,10 +469,14 @@ function ChatContent() {
                     <AIMessage from={isUser ? "user" : "assistant"}>
                       <AIMessageContent>
                         {isUser ? (
-                          (message as any).parts?.[0]?.text || (message as any).content || ""
+                          (message as any).parts?.[0]?.text ||
+                          (message as any).content ||
+                          ""
                         ) : (
                           <AIResponse>
-                            {(message as any).parts?.[0]?.text || (message as any).content || ""}
+                            {(message as any).parts?.[0]?.text ||
+                              (message as any).content ||
+                              ""}
                           </AIResponse>
                         )}
                       </AIMessageContent>

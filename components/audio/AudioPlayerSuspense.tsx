@@ -1,11 +1,11 @@
 // components/audio/AudioPlayerSuspense.tsx
 // Optimized Audio Player with Suspense boundaries
 
-'use client';
+"use client";
 
-import {Suspense} from 'react';
-import {ErrorBoundary} from '@/components/ErrorBoundary';
-import {AudioPlayer} from '@/components/audio/AudioPlayer';
+import { Suspense } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AudioPlayer } from "@/components/audio/AudioPlayer";
 
 interface AudioSegment {
   testimonyId: string;
@@ -48,7 +48,7 @@ function AudioPlayerFallback() {
 
 export function AudioPlayerSuspense({
   segment,
-  className,
+  className
 }: AudioPlayerSuspenseProps) {
   return (
     <ErrorBoundary
