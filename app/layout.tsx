@@ -12,39 +12,39 @@ import "./globals.css";
 import { ClientSidebarLayout } from "@/components/layout/ClientSidebarLayout";
 import { Analytics } from "@vercel/analytics/next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { layoutConstants } from "./constants";
+import { siteMetadata, fontConfig, iconConfig, layoutConfig } from "./layout.constants";
 import type { LayoutProps } from "./types";
 
 /**
  * Inter font configuration for consistent typography
  */
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"]
+  variable: fontConfig.variable,
+  subsets: fontConfig.subsets
 });
 
 /**
  * Application metadata configuration for SEO and social media optimization
  */
 export const metadata: Metadata = {
-  title: layoutConstants.siteName,
-  description: layoutConstants.description,
+  title: siteMetadata.siteName,
+  description: siteMetadata.description,
   openGraph: {
-    title: layoutConstants.siteName, 
-    description: layoutConstants.description,
-    url: layoutConstants.siteUrl,
+    title: siteMetadata.siteName, 
+    description: siteMetadata.description,
+    url: siteMetadata.siteUrl,
     siteName: "Zekher",
     type: "website",
-    images: [layoutConstants.icons.openGraphImage]
+    images: [iconConfig.openGraphImage]
   },
   icons: {
     icon: [
-      layoutConstants.icons.favicon32,
-      layoutConstants.icons.favicon16
+      iconConfig.favicon32,
+      iconConfig.favicon16
     ],
-    apple: layoutConstants.icons.appleTouchIcon
+    apple: iconConfig.appleTouchIcon
   },
-  manifest: layoutConstants.manifest
+  manifest: layoutConfig.manifest
 };
 
 /**
@@ -67,7 +67,7 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
   }
   
   // Validate layout constants are properly loaded
-  if (!layoutConstants.siteName || !layoutConstants.description) {
+  if (!siteMetadata.siteName || !siteMetadata.description) {
     console.error('RootLayout: Layout constants not properly configured');
   }
 
@@ -77,9 +77,9 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
         <Analytics />
           <head>
             {/* Static performance optimizations */}
-            <link rel="dns-prefetch" href={layoutConstants.dnsPreFetch.googleFonts} />
-            <link rel="dns-prefetch" href={layoutConstants.dnsPreFetch.googleFontsStatic} />
-            <meta name="theme-color" content={layoutConstants.themeColor} />
+            <link rel="dns-prefetch" href={layoutConfig.dnsPreFetch.googleFonts} />
+            <link rel="dns-prefetch" href={layoutConfig.dnsPreFetch.googleFontsStatic} />
+            <meta name="theme-color" content={siteMetadata.themeColor} />
           </head>
           <body className={`${inter.variable} antialiased`}>
             {/* Client Component boundary - only interactive parts */}

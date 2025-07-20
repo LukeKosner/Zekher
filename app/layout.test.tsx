@@ -24,18 +24,24 @@ mock.module("next/font/google", () => ({
   Inter: () => ({ variable: "--font-inter", className: "inter-font" })
 }));
 
-mock.module("./constants", () => ({
-  layoutConstants: {
+mock.module("./layout.constants", () => ({
+  siteMetadata: {
     siteName: "Test Site",
     description: "Test description",
     siteUrl: "https://test.com",
-    themeColor: "#000000",
-    icons: {
-      favicon32: { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      favicon16: { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      appleTouchIcon: { url: "/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
-      openGraphImage: { url: "/og.png", width: 512, height: 512, alt: "Test" }
-    },
+    themeColor: "#000000"
+  },
+  fontConfig: {
+    variable: "--font-inter",
+    subsets: ["latin"]
+  },
+  iconConfig: {
+    favicon32: { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    favicon16: { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    appleTouchIcon: { url: "/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
+    openGraphImage: { url: "/og.png", width: 512, height: 512, alt: "Test" }
+  },
+  layoutConfig: {
     manifest: "/site.webmanifest",
     dnsPreFetch: {
       googleFonts: "//fonts.googleapis.com",
@@ -114,13 +120,13 @@ describe("RootLayout", () => {
     expect(metadata.manifest).toBe("/site.webmanifest");
   });
 
-  test("should use layout constants from constants file", () => {
-    const { layoutConstants } = require("./constants");
+  test("should use layout constants from co-located constants file", () => {
+    const { siteMetadata, layoutConfig } = require("./layout.constants");
     const { metadata } = require("./layout");
     
-    expect(metadata.title).toBe(layoutConstants.siteName);
-    expect(metadata.description).toBe(layoutConstants.description);
-    expect(metadata.openGraph.url).toBe(layoutConstants.siteUrl);
-    expect(metadata.manifest).toBe(layoutConstants.manifest);
+    expect(metadata.title).toBe(siteMetadata.siteName);
+    expect(metadata.description).toBe(siteMetadata.description);
+    expect(metadata.openGraph.url).toBe(siteMetadata.siteUrl);
+    expect(metadata.manifest).toBe(layoutConfig.manifest);
   });
 });
