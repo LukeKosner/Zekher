@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { LexiconCard } from "./LexiconCard";
-import { sourcesPageConstants } from "@/lib/prompts";
-import { LexiconSource } from "@/lib/types";
+import { sourcesPageConstants } from "@/app/sources/constants";
+import { LexiconSource } from "@/app/sources/types";
 
 interface LexiconEntry {
   id?: string;

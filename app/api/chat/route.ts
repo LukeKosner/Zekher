@@ -6,7 +6,7 @@ import { chatApiConstants, chatApiErrors } from "./constants";
 import { logger, logApiRequest, logApiResponse } from "@/lib/utils/logger";
 import type { ChatRequest, ChatErrorResponse, ChatApiContext } from "./types";
 
-export const maxDuration = chatApiConstants.maxDuration;
+export const maxDuration = 60;
 
 /**
  * Chat API endpoint for Holocaust education conversations.

@@ -14,21 +14,23 @@ export function RouteSlugGenerator({ children }: RouteSlugGeneratorProps) {
   const pathname = usePathname();
 
   const slug = useMemo(() => {
+    if (pathname == "/sources") {
+      return "sources/library";
+    } else if (pathname.startsWith("/sources")) {
+      return pathname;
+    }
+
     switch (pathname) {
       case "/":
         return "project/home";
       case "/technology":
         return "project/technology";
       case "/chat":
-        return "everyone/chat";
+        return "/chat";
       case "/documentation":
         return "developers/documentation";
       case "/developers":
         return "developers/get started";
-      case "/sources":
-        return "everyone/sources";
-      case "/auth":
-        return "everyone/accounts";
       default:
         return "project/home";
     }

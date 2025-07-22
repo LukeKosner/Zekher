@@ -199,7 +199,7 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
           {segment.language && segment.language.toLowerCase() !== "english" && (
             <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded text-xs">
               <span className="text-amber-800 dark:text-amber-200 font-medium">
-                ⚠️ Audio is in {segment.language}
+                Audio is in {segment.language}
               </span>
               <span className="text-amber-600 dark:text-amber-300">
                 (English translation provided below)

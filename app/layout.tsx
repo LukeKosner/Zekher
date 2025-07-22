@@ -1,7 +1,7 @@
 /**
  * Root Layout Component
- * 
- * Optimized layout structure with server components by default and client components 
+ *
+ * Optimized layout structure with server components by default and client components
  * only where needed for interactivity. Provides global styles, fonts, analytics,
  * authentication, and metadata configuration.
  */
@@ -11,9 +11,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientSidebarLayout } from "@/components/layout/ClientSidebarLayout";
 import { Analytics } from "@vercel/analytics/next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { layoutConstants } from "./constants";
-import type { LayoutProps } from "./types";
+import type { LayoutProps } from "./layout.types";
 
 /**
  * Inter font configuration for consistent typography
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
   title: layoutConstants.siteName,
   description: layoutConstants.description,
   openGraph: {
-    title: layoutConstants.siteName, 
+    title: layoutConstants.siteName,
     description: layoutConstants.description,
     url: layoutConstants.siteUrl,
     siteName: "Zekher",
@@ -38,10 +37,7 @@ export const metadata: Metadata = {
     images: [layoutConstants.icons.openGraphImage]
   },
   icons: {
-    icon: [
-      layoutConstants.icons.favicon32,
-      layoutConstants.icons.favicon16
-    ],
+    icon: [layoutConstants.icons.favicon32, layoutConstants.icons.favicon16],
     apple: layoutConstants.icons.appleTouchIcon
   },
   manifest: layoutConstants.manifest
@@ -49,49 +45,53 @@ export const metadata: Metadata = {
 
 /**
  * Root Layout Component
- * 
+ *
  * Server component that handles static HTML structure and provides:
  * - Authentication context via ClerkProvider
  * - Analytics tracking
  * - Performance optimizations (DNS prefetch, font loading)
  * - Global styles and theme configuration
  * - Client component boundary for interactive elements
- * 
+ *
  * @param children - React node children to render in the layout
  * @returns JSX element representing the root HTML structure
  */
 export default function RootLayout({ children }: Readonly<LayoutProps>) {
   // Input validation
   if (!children) {
-    console.warn('RootLayout: No children provided');
+    console.warn("RootLayout: No children provided");
   }
-  
+
   // Validate layout constants are properly loaded
   if (!layoutConstants.siteName || !layoutConstants.description) {
-    console.error('RootLayout: Layout constants not properly configured');
+    console.error("RootLayout: Layout constants not properly configured");
   }
 
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <Analytics />
-          <head>
-            {/* Static performance optimizations */}
-            <link rel="dns-prefetch" href={layoutConstants.dnsPreFetch.googleFonts} />
-            <link rel="dns-prefetch" href={layoutConstants.dnsPreFetch.googleFontsStatic} />
-            <meta name="theme-color" content={layoutConstants.themeColor} />
-          </head>
-          <body className={`${inter.variable} antialiased`}>
-            {/* Client Component boundary - only interactive parts */}
-            <ClientSidebarLayout>
-              {children || (
-                <div className="flex items-center justify-center min-h-screen">
-                  <p>Loading...</p>
-                </div>
-              )}
-            </ClientSidebarLayout>
-          </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <Analytics />
+      <head>
+        {/* Static performance optimizations */}
+        <link
+          rel="dns-prefetch"
+          href={layoutConstants.dnsPreFetch.googleFonts}
+        />
+        <link
+          rel="dns-prefetch"
+          href={layoutConstants.dnsPreFetch.googleFontsStatic}
+        />
+        <meta name="theme-color" content={layoutConstants.themeColor} />
+      </head>
+      <body className={`${inter.variable} antialiased`}>
+        {/* Client Component boundary - only interactive parts */}
+        <ClientSidebarLayout>
+          {children || (
+            <div className="flex items-center justify-center min-h-screen">
+              <p>Loading...</p>
+            </div>
+          )}
+        </ClientSidebarLayout>
+      </body>
+    </html>
   );
 }

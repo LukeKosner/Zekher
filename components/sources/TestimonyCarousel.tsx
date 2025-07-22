@@ -36,8 +36,8 @@ import {
   generateAudioUrl
 } from "@/lib/utils/url-generation";
 import { TestimonyCard } from "./TestimonyCard";
-import { sourcesPageConstants } from "@/lib/prompts";
-import { TestimonySource } from "@/lib/types";
+import { sourcesPageConstants } from "@/app/sources/constants";
+import { TestimonySource } from "@/app/sources/types";
 
 interface TestimonyEntry {
   survivorName: string;

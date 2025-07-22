@@ -1,191 +1,120 @@
-/**
- * Sources Page Content Component
- * 
- * Main content component for the sources page with improved interactive cards,
- * centralized constants, and comprehensive error handling.
- */
-
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AudioPlayerSuspense } from "@/components/audio/AudioPlayerSuspense";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import Link from "next/link";
+import { LazyLoadWrapper } from "@/components/LazyLoadWrapper";
+import { LexiconCardSkeleton, TestimonyCardSkeleton } from "./skeletons";
 import {
-  getLexiconUrl,
-  getAudioUrl,
-  getTestimonyUrl
-} from "@/lib/utils/blob-urls";
-import { ExternalLink } from "lucide-react";
-import { LexiconCard } from "@/components/sources/LexiconCard";
-import { TestimonyCard } from "@/components/sources/TestimonyCard";
-import { sourcesPageConstants, errorMessages } from "@/lib/prompts";
-import { LexiconSource, TestimonySource, SourcesApiErrorResponse } from "@/lib/types";
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter
+} from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useMemo } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
+import { LexiconCard } from "@/app/sources/components/LexiconCard";
+import { TestimonyCard } from "@/app/sources/components/TestimonyCard";
+import { sourcesPageConstants } from "@/app/sources/constants";
+import { LexiconSource, TestimonySource } from "@/app/sources/types";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// Using types from @/lib/types instead of local interface
+/**
+ * @file This file defines the client-side content for the sources page.
+ * It includes the source library, search functionality, and pagination.
+ * It is wrapped in an ErrorBoundary to catch and handle any client-side errors.
+ */
 
-function SourceLibrary() {
-  const [lexiconSources, setLexiconSources] = useState<LexiconSource[]>([]);
-  const [testimonySources, setTestimonySources] = useState<TestimonySource[]>([]);
+interface SourceLibraryProps {
+  lexiconSources: LexiconSource[];
+  testimonySources: TestimonySource[];
+}
+
+function SourceLibrary({
+  lexiconSources,
+  testimonySources
+}: SourceLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<
-    "featured" | "lexicon" | "testimony"
-  >("featured");
-  const [loading, setLoading] = useState(true);
-  const [lexiconPage, setLexiconPage] = useState(1);
-  const [testimonyPage, setTestimonyPage] = useState(1);
-  const [lexiconHasMore, setLexiconHasMore] = useState(true);
-  const [testimonyHasMore, setTestimonyHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [activeTab, setActiveTab] = useState<"lexicon" | "testimony">(
+    "lexicon"
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
-  useEffect(() => {
-    const fetchSources = async () => {
-      try {
-        setLoading(true);
-        const [lexiconRes, testimonyRes] = await Promise.all([
-          fetch("/data/lexicon.json"),
-          fetch("/data/testimony.json")
-        ]);
+  const filteredLexiconSources = useMemo(
+    () =>
+      lexiconSources.filter((source) => {
+        if (!searchQuery.trim()) return true;
+        const queryLower = searchQuery.toLowerCase();
+        return (
+          source.title?.toLowerCase().includes(queryLower) ||
+          source.description?.toLowerCase().includes(queryLower) ||
+          source.tags?.some((tag) => tag.toLowerCase().includes(queryLower))
+        );
+      }),
+    [lexiconSources, searchQuery]
+  );
 
-        const lexiconData = await lexiconRes.json();
-        const testimonyData = await testimonyRes.json();
+  const filteredTestimonySources = useMemo(
+    () =>
+      testimonySources.filter((source) => {
+        if (!searchQuery.trim()) return true;
+        const queryLower = searchQuery.toLowerCase();
+        return (
+          source.title?.toLowerCase().includes(queryLower) ||
+          source.description?.toLowerCase().includes(queryLower) ||
+          source.survivor_name?.toLowerCase().includes(queryLower) ||
+          source.tags?.some((tag) => tag.toLowerCase().includes(queryLower))
+        );
+      }),
+    [testimonySources, searchQuery]
+  );
 
-        interface LexiconEntry {
-          title: string;
-          [key: string]: any;
-        }
+  const totalLexiconPages = Math.ceil(
+    filteredLexiconSources.length / itemsPerPage
+  );
+  const paginatedLexiconSources = filteredLexiconSources.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-        interface TestimonyEntry {
-          title: string;
-          interviewee: string;
-          [key: string]: any;
-        }
+  const totalTestimonyPages = Math.ceil(
+    filteredTestimonySources.length / itemsPerPage
+  );
+  const paginatedTestimonySources = filteredTestimonySources.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-        const lexiconSources =
-          lexiconData.entries?.map((entry: LexiconEntry, index: number) => ({
-            id: `lexicon-${index}`,
-            filename: entry.title,
-            title: entry.title,
-            description: `${sourcesPageConstants.lexiconOverlay.title} entry: ${entry.title}`,
-            tags: [],
-            featured: false
-          })) || [];
-
-        const testimonySources =
-          testimonyData.entries?.map(
-            (entry: TestimonyEntry, index: number) => ({
-              id: `testimony-${index}`,
-              filename: entry.interviewee,
-              survivor_name: entry.interviewee,
-              title: entry.title,
-              description: `Survivor testimony: ${entry.title}`,
-              tags: [],
-              featured: false
-            })
-          ) || [];
-
-        setLexiconSources(lexiconSources);
-        setTestimonySources(testimonySources);
-        setLexiconHasMore(false);
-        setTestimonyHasMore(false);
-      } catch (error) {
-        console.error("Failed to fetch sources:", error);
-        // Could implement error state here if needed
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSources();
-  }, []);
-
-  const loadMoreSources = async (type: "lexicon" | "testimony") => {
-    if (loadingMore) return;
-
-    const currentPage = type === "lexicon" ? lexiconPage : testimonyPage;
-    const nextPage = currentPage + 1;
-
-    try {
-      setLoadingMore(true);
-      const response = await fetch(
-        `/api/sources/library?type=${type}&page=${nextPage}`
-      );
-      const data = await response.json();
-
-      if (type === "lexicon") {
-        setLexiconSources((prev) => [...prev, ...data.sources]);
-        setLexiconPage(nextPage);
-        setLexiconHasMore(data.pagination?.hasMore || false);
-      } else {
-        setTestimonySources((prev) => [...prev, ...data.sources]);
-        setTestimonyPage(nextPage);
-        setTestimonyHasMore(data.pagination?.hasMore || false);
-      }
-    } catch (error) {
-      console.error("Failed to load more sources:", error);
-    } finally {
-      setLoadingMore(false);
+  const generatePageNumbers = (
+    currentPage: number,
+    totalPages: number
+  ): (number | string)[] => {
+    if (totalPages <= 1) return [];
+    const delta = 2;
+    const rangeWithDots: (number | string)[] = [];
+    if (totalPages > 1) rangeWithDots.push(1);
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+    if (start > 2) rangeWithDots.push("...");
+    for (let i = start; i <= end; i++) {
+      if (i !== 1 && i !== totalPages) rangeWithDots.push(i);
     }
-  };
-
-  const filteredLexiconSources = lexiconSources.filter(
-    (source) =>
-      source.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      source.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      source.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  );
-
-  const filteredTestimonySources = testimonySources.filter(
-    (source) =>
-      source.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      source.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      source.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  );
-
-  const featuredLexicon = lexiconSources.filter((source) => source.featured);
-  const featuredTestimony = testimonySources.filter(
-    (source) => source.featured
-  );
-
-  /**
-   * Renders appropriate card component based on source type
-   */
-  const SourceCard = ({
-    source,
-    type
-  }: {
-    source: LexiconSource | TestimonySource;
-    type: "lexicon" | "testimony";
-  }) => {
-    if (type === "lexicon") {
-      return <LexiconCard source={source as LexiconSource} />;
-    } else {
-      return <TestimonyCard source={source as TestimonySource} />;
+    if (end < totalPages - 1) rangeWithDots.push("...");
+    if (totalPages > 1) rangeWithDots.push(totalPages);
+    const result: (number | string)[] = [];
+    for (const item of rangeWithDots) {
+      if (result[result.length - 1] !== item) result.push(item);
     }
+    return result;
   };
-
-  if (loading) {
-    return (
-      <div className="text-center p-8">
-        <div
-          className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-blue-600 rounded-full mb-4"
-          role="status"
-          aria-label="loading"
-        >
-          <span className="sr-only">Loading...</span>
-        </div>
-        <h2 className="text-xl font-semibold mb-2">{sourcesPageConstants.loadingStates.sourceLibrary}</h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Please wait while we load the sources...
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
@@ -198,7 +127,6 @@ function SourceLibrary() {
         </p>
       </div>
 
-      {/* Search Bar */}
       <div className="mb-8">
         <div className="relative max-w-md mx-auto">
           <input
@@ -206,7 +134,7 @@ function SourceLibrary() {
             placeholder={sourcesPageConstants.pageContent.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full pl-10 pr-12 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           />
           <svg
             className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
@@ -224,373 +152,255 @@ function SourceLibrary() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-8">
-        <div className="flex justify-center space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg max-w-md mx-auto">
-          <button
-            onClick={() => setActiveTab("featured")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "featured"
-                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            }`}
+      <Tabs
+        defaultValue="lexicon"
+        className="w-full mx-auto mb-16"
+        onValueChange={(value) => {
+          setActiveTab(value as "lexicon" | "testimony");
+          setCurrentPage(1);
+        }}
+      >
+        <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50">
+          <TabsTrigger
+            value="lexicon"
+            className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
           >
-            {sourcesPageConstants.tabs.featured}
-          </button>
-          <button
-            onClick={() => setActiveTab("lexicon")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "lexicon"
-                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            }`}
+            {sourcesPageConstants.tabs.lexicon} ({filteredLexiconSources.length}
+            )
+          </TabsTrigger>
+          <TabsTrigger
+            value="testimony"
+            className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
           >
-            {sourcesPageConstants.tabs.lexicon} ({filteredLexiconSources.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("testimony")}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "testimony"
-                ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            }`}
-          >
-            {sourcesPageConstants.tabs.testimony} ({filteredTestimonySources.length})
-          </button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="grid gap-6">
-        {activeTab === "featured" && (
-          <div className="space-y-8">
-            {featuredLexicon.length > 0 && (
-              <section>
-                <h2 className="text-2xl font-semibold mb-4">
-                  {sourcesPageConstants.sections.featuredLexicon}
-                </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredLexicon.map((source) => (
-                    <SourceCard
-                      key={source.id}
-                      source={source}
-                      type="lexicon"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {featuredTestimony.length > 0 && (
-              <section>
-                <h2 className="text-2xl font-semibold mb-4">
-                  {sourcesPageConstants.sections.featuredTestimonies}
-                </h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredTestimony.map((source) => (
-                    <SourceCard
-                      key={source.id}
-                      source={source}
-                      type="testimony"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {featuredLexicon.length === 0 && featuredTestimony.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-600 dark:text-gray-400">
-                  {sourcesPageConstants.pageContent.noFeaturedSources}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "lexicon" && (
+            {sourcesPageConstants.tabs.testimony} (
+            {filteredTestimonySources.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="lexicon" className="mt-6">
           <div className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredLexiconSources.length > 0 ? (
-                filteredLexiconSources.map((source) => (
-                  <SourceCard key={source.id} source={source} type="lexicon" />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {searchQuery
-                      ? sourcesPageConstants.pageContent.noSearchResults.lexicon
-                      : sourcesPageConstants.pageContent.noLexiconEntries}
-                  </p>
-                </div>
-              )}
-            </div>
-            {!searchQuery && lexiconHasMore && (
-              <div className="text-center">
-                <button
-                  onClick={() => loadMoreSources("lexicon")}
-                  disabled={loadingMore}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingMore ? sourcesPageConstants.loadingStates.loadingMore : sourcesPageConstants.pagination.loadMore}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "testimony" && (
-          <div className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTestimonySources.length > 0 ? (
-                filteredTestimonySources.map((source) => (
-                  <SourceCard
-                    key={source.id}
-                    source={source}
-                    type="testimony"
-                  />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {searchQuery
-                      ? sourcesPageConstants.pageContent.noSearchResults.testimony
-                      : sourcesPageConstants.pageContent.noTestimonies}
-                  </p>
-                </div>
-              )}
-            </div>
-            {!searchQuery && testimonyHasMore && (
-              <div className="text-center">
-                <button
-                  onClick={() => loadMoreSources("testimony")}
-                  disabled={loadingMore}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingMore ? sourcesPageConstants.loadingStates.loadingMore : sourcesPageConstants.pagination.loadMore}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function SourcesPageInner() {
-  const searchParams = useSearchParams();
-  const pageType = searchParams.get("pageType");
-  const id = searchParams.get("id");
-  const file = searchParams.get("file");
-  const [textContent, setTextContent] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [actualFilename, setActualFilename] = useState<string | null>(null);
-
-  // For audio segment
-  const speakerName = searchParams.get("speakerName");
-  const startTime = searchParams.get("startTime");
-  const endTime = searchParams.get("endTime");
-  const transcriptExcerpt = searchParams.get("transcriptExcerpt");
-  const language = searchParams.get("language");
-  const significance = searchParams.get("significance");
-
-  // Function to check if a string looks like a database ID (nanoid format)
-  const looksLikeDbId = (str: string) => {
-    return str && str.length > 10 && /^[A-Za-z0-9_-]+$/.test(str);
-  };
-
-  // Effect to lookup filename from database if needed
-  useEffect(() => {
-    const identifier = file || id;
-    if (!identifier || !pageType) return;
-
-    // If the identifier looks like a database ID, fetch the actual filename
-    if (looksLikeDbId(identifier)) {
-      fetch(`/api/sources?type=${pageType}&id=${identifier}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.filename) {
-            setActualFilename(data.filename.replace(/\.(pdf|txt)$/i, ""));
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to lookup filename:", err);
-          setActualFilename(identifier); // Fallback to original identifier
-        });
-    } else {
-      setActualFilename(identifier);
-    }
-  }, [pageType, id, file]);
-
-  useEffect(() => {
-    if (pageType === "testimony" && actualFilename) {
-      setIsLoading(true);
-      setError(null);
-
-      const testimonyUrl = getTestimonyUrl(`${actualFilename}.txt`);
-
-      fetch(testimonyUrl)
-        .then((res) => {
-          if (!res.ok) throw new Error("File not found");
-          return res.text();
-        })
-        .then((content) => {
-          setTextContent(content);
-          setIsLoading(false);
-        })
-        .catch(() => {
-          setError("Testimony file not found.");
-          setIsLoading(false);
-        });
-    }
-  }, [pageType, actualFilename]);
-
-  // PDF path for lexicon - use actualFilename once lookup is complete
-  const pdfPath = actualFilename
-    ? getLexiconUrl(`${actualFilename}.pdf`)
-    : null;
-  // MP3 path for audio
-  const audioFile = speakerName
-    ? getAudioUrl(`${speakerName.split(" ").pop()?.toLowerCase()}.mp3`)
-    : null;
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full p-4 md:p-6">
-      <div className="w-full max-w-2xl mx-auto">
-        {!actualFilename && (file || id) ? (
-          <div className="text-center p-8">
-            <div
-              className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-blue-600 rounded-full"
-              role="status"
-              aria-label="loading"
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
-              <span className="sr-only">Loading...</span>
-            </div>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Loading source...
-            </p>
-          </div>
-        ) : pageType === "lexicon" && actualFilename ? (
-          <ErrorBoundary componentName="Lexicon PDF Viewer">
-            <h2 className="text-2xl md:text-4xl text-center mb-6">
-              Holocaust Lexicon Entry
-            </h2>
-            <div
-              className="relative group/pdf-viewer"
-              title={`${actualFilename} - Source: Holocaust Lexicon`}
-            >
-              <object
-                data={pdfPath!}
-                type="application/pdf"
-                width="100%"
-                height="800px"
-                className="rounded-lg"
-              >
-                <p>
-                  PDF could not be loaded.{" "}
-                  <a
-                    href={pdfPath!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 underline"
+              <AnimatePresence mode="wait">
+                {paginatedLexiconSources.length > 0 ? (
+                  paginatedLexiconSources.map((source, index) => (
+                    <motion.div
+                      key={source.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: index * 0.05,
+                        ease: "easeOut"
+                      }}
+                      whileHover={{
+                        y: -2,
+                        transition: { duration: 0.2 }
+                      }}
+                    >
+                      <LazyLoadWrapper placeholder={<LexiconCardSkeleton />}>
+                        <LexiconCard source={source} />
+                      </LazyLoadWrapper>
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div
+                    className="col-span-full text-center py-12"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
                   >
-                    Download PDF
-                  </a>
-                </p>
-              </object>
-
-              {/* Hover overlay with title and source info */}
-              <div className="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover/pdf-viewer:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center rounded-lg pointer-events-none">
-                {/* Title and source info */}
-                <div className="bg-white bg-opacity-95 text-black px-4 py-3 rounded-lg mb-4 max-w-[80%] text-center shadow-lg">
-                  <div className="font-semibold text-base">
-                    {actualFilename}
-                  </div>
-                  <div className="text-sm text-gray-600">Holocaust Lexicon</div>
-                </div>
-
-                {/* Action button */}
-                <a
-                  href={pdfPath!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors pointer-events-auto shadow-lg"
-                >
-                  <ExternalLink className="size-4" />
-                  Open in new tab
-                </a>
-              </div>
-            </div>
-          </ErrorBoundary>
-        ) : pageType === "testimony" && actualFilename ? (
-          <ErrorBoundary componentName="Testimony Text Viewer">
-            <h2 className="text-2xl md:text-4xl text-center mb-6">
-              Survivor Testimony
-            </h2>
-            {error ? (
-              <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-              </div>
-            ) : isLoading ? (
-              <div className="text-center p-8">
-                <div
-                  className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-blue-600 rounded-full"
-                  role="status"
-                  aria-label="loading"
-                >
-                  <span className="sr-only">Loading...</span>
-                </div>
-                <p className="mt-2 text-gray-600 dark:text-gray-400">
-                  Loading testimony...
-                </p>
-              </div>
-            ) : textContent ? (
-              <pre className="whitespace-pre-wrap bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm overflow-x-auto max-h-[700px] border">
-                {textContent}
-              </pre>
-            ) : (
-              <div className="text-center p-4 text-gray-600 dark:text-gray-400">
-                No content available for this testimony.
-              </div>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {searchQuery
+                        ? sourcesPageConstants.pageContent.noSearchResults
+                            .lexicon
+                        : sourcesPageConstants.pageContent.noLexiconEntries}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            {totalLexiconPages > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                      }}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                  {generatePageNumbers(currentPage, totalLexiconPages).map(
+                    (page, index) => (
+                      <PaginationItem key={index}>
+                        {page === "..." ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(page as number);
+                            }}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalLexiconPages)
+                          setCurrentPage(currentPage + 1);
+                      }}
+                      className={
+                        currentPage === totalLexiconPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             )}
-          </ErrorBoundary>
-        ) : pageType === "audio" &&
-          speakerName &&
-          startTime &&
-          endTime &&
-          transcriptExcerpt &&
-          significance ? (
-          <ErrorBoundary componentName="Audio Player">
-            <h2 className="text-2xl md:text-4xl text-center mb-6">
-              Testimony Audio Segment
-            </h2>
-            <AudioPlayerSuspense
-              segment={{
-                testimonyId: actualFilename || "",
-                speakerName,
-                startTime: Number(startTime),
-                endTime: Number(endTime),
-                transcriptExcerpt,
-                language: language || undefined,
-                significance,
-                audioFile: audioFile || ""
-              }}
-            />
-          </ErrorBoundary>
-        ) : (
-          <SourceLibrary />
-        )}
-      </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="testimony" className="mt-6">
+          <div className="space-y-6">
+            <motion.div
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AnimatePresence mode="wait">
+                {paginatedTestimonySources.length > 0 ? (
+                  paginatedTestimonySources.map((source, index) => (
+                    <motion.div
+                      key={source.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: index * 0.05,
+                        ease: "easeOut"
+                      }}
+                      whileHover={{
+                        y: -2,
+                        transition: { duration: 0.2 }
+                      }}
+                    >
+                      <LazyLoadWrapper placeholder={<TestimonyCardSkeleton />}>
+                        <TestimonyCard source={source} />
+                      </LazyLoadWrapper>
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div
+                    className="col-span-full text-center py-12"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {searchQuery
+                        ? sourcesPageConstants.pageContent.noSearchResults
+                            .testimony
+                        : sourcesPageConstants.pageContent.noTestimonies}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            {totalTestimonyPages > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                      }}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                  {generatePageNumbers(currentPage, totalTestimonyPages).map(
+                    (page, index) => (
+                      <PaginationItem key={index}>
+                        {page === "..." ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(page as number);
+                            }}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalTestimonyPages)
+                          setCurrentPage(currentPage + 1);
+                      }}
+                      className={
+                        currentPage === totalTestimonyPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-export function SourcesPageContent() {
+export function SourcesPageContent({
+  lexiconSources,
+  testimonySources
+}: SourceLibraryProps) {
   return (
     <ErrorBoundary componentName="Sources Page">
-      <SourcesPageInner />
+      <SourceLibrary
+        lexiconSources={lexiconSources}
+        testimonySources={testimonySources}
+      />
     </ErrorBoundary>
   );
 }

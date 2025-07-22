@@ -3,7 +3,7 @@
  */
 
 export const layoutConstants = {
-  siteName: "Zekher - Holocaust Education",
+  siteName: "Zekher זכר",
   description: "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies",
   siteUrl: "https://zekher.com",
   themeColor: "#1f2937",

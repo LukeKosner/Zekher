@@ -346,12 +346,8 @@ export function generateSourceUrl(params: SourceUrlParams): string {
       throw error;
     }
 
-    // Construct URL
-    const url = new URL("/sources", baseUrl);
-    url.searchParams.set("pageType", pageType);
-    url.searchParams.set("file", sanitizedFilename);
-
-    const generatedUrl = url.toString();
+    // Construct URL with new route structure
+    const generatedUrl = `${baseUrl}/sources/${pageType}/${sanitizedFilename}`;
 
     // Track successful URL generation
     import("./monitoring")
@@ -482,9 +478,8 @@ export function generateLexiconPdfUrl(filename: string): string {
   // Database stores .txt filenames, but PDFs have same base name with .pdf extension
   const baseFilename = filename.replace(/\.(txt|pdf)$/i, "");
   
-  // Convert hyphens back to spaces for the actual PDF filename in storage
-  const originalFilename = baseFilename.replace(/-/g, " ");
-  const pdfFilename = `${originalFilename}.pdf`;
+  // Keep the filename as-is (PDFs are stored with same format as titles)
+  const pdfFilename = `${baseFilename}.pdf`;
 
   // Try blob URL first, then fall back to Google Cloud Storage
   try {
