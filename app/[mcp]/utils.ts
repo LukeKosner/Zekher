@@ -8,10 +8,10 @@ const { logger } = Sentry;
 
 // Import shared utilities and types
 import { generateLexiconEmbeddings } from "@/lib/ingestion/embeddings";
-import { hybridSearch } from "@/lib/search/hybridSearch";
+import { hybridSearch } from "@/lib/search/hybrid-search";
 import { lexiconEmbeddings, lexiconSources } from "@/lib/db/schema";
 import { generateSourceUrl } from "@/lib/utils/url-generation";
-import type { LexiconEntry } from "@/lib/types";
+import type { ToolLexiconEntry } from "@/lib/types";
 
 // Import local constants
 import { mcpConstants } from "./constants";
@@ -136,16 +136,11 @@ export const searchLexicon = async (searchTerms: string[]) => {
       return formattedResults.trim();
     };
 
-    const lexiconEntries: LexiconEntry[] = deduplicatedResults.map((result) => {
-      const baseFilename = (result.filename || result.id)
-        .toString()
-        .replace(/\.(pdf|txt)$/i, "")
-        .replace(/\s+/g, "-")
-        .replace(/[^a-zA-Z0-9-]/g, "");
-      
+    const lexiconEntries: ToolLexiconEntry[] = deduplicatedResults.map((result) => {
+      // Use ID directly as the URL identifier
       const sourceUrl = generateSourceUrl({
         pageType: "lexicon",
-        filename: baseFilename
+        filename: result.id
       });
 
       const fullTitle = result.title || `Entry ${result.id}`;
@@ -154,7 +149,7 @@ export const searchLexicon = async (searchTerms: string[]) => {
         title: fullTitle,
         content: result.content,
         citation: `[${fullTitle}](${sourceUrl})`,
-        filename: baseFilename
+        filename: result.id // Use ID instead of processed filename
       };
     });
 

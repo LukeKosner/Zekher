@@ -6,10 +6,10 @@ import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
 import { testimonyEmbeddings, testimonySources } from "../db/schema";
 import { generateTestimonyEmbeddings } from "../ingestion/embeddings";
-import { hybridSearch } from "../search/hybridSearch";
+import { hybridSearch } from "../search/hybrid-search";
 import { db } from "../db";
 import * as Sentry from "@sentry/nextjs";
-import type { TestimonyEntry } from "../types";
+import type { ToolTestimonyEntry } from "../types";
 import { generateSourceUrl } from "../utils/url-generation";
 import { nextStepsInstructions, errorMessages, toolDescriptions } from "../prompts";
 const { logger } = Sentry;
@@ -55,7 +55,8 @@ export const searchTestimonies = async (searchTerms: string[]) => {
             date: sql`${testimonySources.date}`,
             location: sql`${testimonySources.location}`,
             filename: sql`${testimonySources.filename}`,
-            testimonyId: sql`${testimonySources.id}`
+            testimonyId: sql`${testimonySources.id}`,
+            fullContent: sql`${testimonySources.content}`
           },
           exactMatchColumns: [
             sql`${testimonySources.survivor_name}`,
@@ -67,31 +68,16 @@ export const searchTestimonies = async (searchTerms: string[]) => {
           semanticSearchLimit: 15
         });
 
-        const formattedResults = [];
-
-        for (const result of hybridResults.slice(0, 3)) {
-          const testimonyId = (result.metadata as any).testimonyId;
-          if (!testimonyId) continue;
-
-          const testimonyRecords = await db
-            .select()
-            .from(testimonySources)
-            .where(eq(testimonySources.id, testimonyId));
-
-          if (testimonyRecords.length > 0) {
-            const testimony = testimonyRecords[0];
-            formattedResults.push({
-              id: result.id,
-              survivorName: testimony.survivor_name,
-              content: testimony.content,
-              relevanceScore: result.rrfScore,
-              interviewer: testimony.interviewer,
-              date: testimony.date,
-              location: testimony.location,
-              filename: testimony.filename
-            });
-          }
-        }
+        const formattedResults = hybridResults.slice(0, 3).map(result => ({
+          id: result.id,
+          survivorName: (result.metadata as any).survivor_name,
+          content: (result.metadata as any).fullContent,
+          relevanceScore: result.rrfScore,
+          interviewer: (result.metadata as any).interviewer,
+          date: (result.metadata as any).date,
+          location: (result.metadata as any).location,
+          filename: (result.metadata as any).filename
+        }));
 
         searchResults.push(...formattedResults);
       } catch (termError) {
@@ -131,12 +117,12 @@ export const searchTestimonies = async (searchTerms: string[]) => {
       };
     }
 
-    const testimonyEntries: TestimonyEntry[] = deduplicatedResults.map(
+    const testimonyEntries: ToolTestimonyEntry[] = deduplicatedResults.map(
       (result) => {
-        const baseFilename = result.filename.replace(/\.(pdf|txt)$/i, "");
+        // Use ID directly as the URL identifier  
         const sourceUrl = generateSourceUrl({
           pageType: "testimony",
-          filename: baseFilename
+          filename: result.id
         });
         return {
           survivorName: result.survivorName,
@@ -144,7 +130,7 @@ export const searchTestimonies = async (searchTerms: string[]) => {
           timeReference: result.date || undefined,
           location: result.location || undefined,
           citation: `[${result.survivorName}](${sourceUrl})`,
-          filename: baseFilename
+          filename: result.id // Use ID instead of processed filename
         };
       }
     );

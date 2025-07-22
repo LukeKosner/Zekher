@@ -142,7 +142,7 @@ export function getLexiconUrl(filename: string): string {
   return (
     typedBlobUrls.lexicon[pdfFilename] ||
     typedBlobUrls.lexicon[filename] ||
-    `https://storage.googleapis.com/zekher-storage/lexicon/pdf/${pdfFilename.replace(/-/g, " ")}`
+    `https://storage.googleapis.com/zekher-storage/lexicon/pdf/${encodeURIComponent(pdfFilename)}`
   );
 }
 

@@ -5,8 +5,8 @@ const { logger } = Sentry;
 import { eq, sql } from "drizzle-orm";
 import { lexiconEmbeddings, lexiconSources } from "../db/schema";
 import { generateLexiconEmbeddings } from "../ingestion/embeddings";
-import { hybridSearch } from "../search/hybridSearch";
-import type { LexiconEntry } from "../types";
+import { hybridSearch } from "../search/hybrid-search";
+import type { ToolLexiconEntry } from "../types";
 import { generateSourceUrl } from "../utils/url-generation";
 import { nextStepsInstructions, errorMessages, toolDescriptions } from "../prompts";
 
@@ -106,16 +106,11 @@ export const searchLexicon = async (searchTerms: string[]) => {
       return formattedResults.trim();
     };
 
-    const lexiconEntries: LexiconEntry[] = deduplicatedResults.map((result) => {
-      const baseFilename = (result.filename || result.id)
-        .toString()
-        .replace(/\.(pdf|txt)$/i, "")
-        .replace(/\s+/g, "-")
-        .replace(/[^a-zA-Z0-9-]/g, "");
-      
+    const lexiconEntries: ToolLexiconEntry[] = deduplicatedResults.map((result) => {
+      // Use ID directly as the URL identifier
       const sourceUrl = generateSourceUrl({
         pageType: "lexicon",
-        filename: baseFilename
+        filename: result.id
       });
 
       const fullTitle = result.title || `Entry ${result.id}`;
@@ -124,7 +119,7 @@ export const searchLexicon = async (searchTerms: string[]) => {
         title: fullTitle,
         content: result.content,
         citation: `[${fullTitle}](${sourceUrl})`,
-        filename: baseFilename
+        filename: result.id // Use ID instead of processed filename
       };
     });
 

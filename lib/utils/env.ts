@@ -1,13 +1,16 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-// Only load dotenv on server side
+// Only load dotenv on server side - do it synchronously
 if (typeof window === "undefined") {
-  import("dotenv").then(({ config }) => {
-    import("path").then(({ resolve }) => {
-      config({ path: resolve(process.cwd(), ".env.local") });
-    });
-  });
+  try {
+    dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
+  } catch (error) {
+    // Fallback for environments where require might not work
+    console.warn("Could not load .env.local file:", error);
+  }
 }
 
 export const env = createEnv({
