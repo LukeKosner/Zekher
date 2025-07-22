@@ -65,18 +65,18 @@ async function updateTestimonyLanguages(): Promise<void> {
   }
 
   console.log('\nUpdate Summary:');
-  console.log(`✅ Updated: ${updated} records`);
-  console.log(`❌ Not found: ${notFound} records`);
-  console.log(`📊 Total processed: ${testimonies.length} records`);
+  console.log(`Updated: ${updated} records`);
+  console.log(`Not found: ${notFound} records`);
+  console.log(`Total processed: ${testimonies.length} records`);
 }
 
 // Run the update
 updateTestimonyLanguages()
   .then(() => {
-    console.log('✨ Language update completed successfully!');
+    console.log('Language update completed successfully!');
     process.exit(0);
   })
   .catch(error => {
-    console.error('❌ Error updating languages:', error);
+    console.error('Error updating languages:', error);
     process.exit(1);
   });

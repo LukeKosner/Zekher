@@ -273,7 +273,7 @@ async function processLexiconFile(filePath: string): Promise<void> {
     if (
       normalizedExtractedTitle.toLowerCase() !== normalizedTitle.toLowerCase()
     ) {
-      console.log(`📝 TITLE MISMATCH in ${filename}:`);
+      console.log(`TITLE MISMATCH in ${filename}:`);
       console.log(
         `   Extracted from PDF: "${result.extractedTitle}" → "${normalizedExtractedTitle}"`
       );

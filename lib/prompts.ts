@@ -56,7 +56,7 @@ export const nextStepsInstructions = {
   noSearchTermsTestimony: "Provide search terms to find survivor accounts."
 } as const;
 
-// Error messages for tools
+// Error messages for shared tools
 export const errorMessages = {
   lexicon: {
     noTerms: "No search terms provided",

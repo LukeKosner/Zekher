@@ -24,6 +24,9 @@ export const lexiconSources = pgTable('lexiconSources', {
   title: varchar('title', {length: 255}), // Lexicon entry title
   content: text('content').notNull(), // Full text content
   pdfFile: varchar('pdfFile', {length: 255}), // Path to original PDF (if available)
+  pdfUrl: varchar('pdfUrl', {length: 500}), // Direct URL to PDF in storage
+  txtUrl: varchar('txtUrl', {length: 500}), // Direct URL to TXT file in storage
+  redirectUrl: varchar('redirectUrl', {length: 500}), // External redirect URL (if entry redirects instead of showing content)
   createdAt: timestamp('created_at')
     .notNull()
     .default(sql`now()`), // Creation timestamp
@@ -69,6 +72,8 @@ export const testimonySources = pgTable('testimonySources', {
   url: varchar('url', {length: 255}), // Source URL (if available)
   mediaFile: varchar('mediaFile', {length: 255}), // Path to audio file (if available)
   transcriptionFile: varchar('transcriptionFile', {length: 255}), // Path to transcript file (if available)
+  mediaUrl: varchar('mediaUrl', {length: 500}), // Direct URL to audio file in storage
+  transcriptUrl: varchar('transcriptUrl', {length: 500}), // Direct URL to transcript file in storage
   description: text('description'), // Description or summary
   exportDate: varchar('exportDate', {length: 255}), // Date of export from source
   createdAt: timestamp('created_at')

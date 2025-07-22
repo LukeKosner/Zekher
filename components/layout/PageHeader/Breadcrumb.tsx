@@ -1,5 +1,4 @@
 // components/page-header/BreadcrumbNavigation.tsx
-// Server Component for static breadcrumb structure
 
 import {
   Breadcrumb,
@@ -15,15 +14,51 @@ interface BreadcrumbNavigationProps {
 }
 
 export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
-  const parts = slug.split('/');
-  const pageTitle = parts[parts.length - 1].replace(/-/g, ' ');
-  const pageTitleCapitalized =
-    pageTitle.charAt(0).toUpperCase() + pageTitle.slice(1);
+  const parts = slug.split('/').filter(part => part);
+
+  if (parts[0] === 'sources') {
+    const sourceTitle = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    let pageTitle = '';
+    if (parts.length > 1) {
+      pageTitle = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+    }
+
+    return (
+      <Breadcrumb className="hidden md:block">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/sources">{sourceTitle}</BreadcrumbLink>
+          </BreadcrumbItem>
+          {pageTitle && <BreadcrumbSeparator />}
+          {pageTitle && <BreadcrumbItem>
+            <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+          </BreadcrumbItem>}
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  // Default breadcrumb for other pages
+  const pageTitle = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  const pageTitleCapitalized = pageTitle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || '';
   const sectionTitle =
     parts.length > 1 ? parts[parts.length - 2].replace(/-/g, ' ') : '';
 
   const sectionTitleCapitalized =
     sectionTitle.charAt(0).toUpperCase() + sectionTitle.slice(1);
+
+  // If there's only one part (like "chat"), show just that without separator
+  if (parts.length === 1) {
+    return (
+      <Breadcrumb className="hidden md:block">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
 
   return (
     <Breadcrumb className="hidden md:block">
@@ -33,9 +68,7 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="#">
-            <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
-          </BreadcrumbLink>
+          <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

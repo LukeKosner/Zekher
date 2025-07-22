@@ -54,8 +54,10 @@ const components: Options["components"] = {
     // Correctly identify source citations by URL pattern (supports both absolute and relative URLs)
     if (
       href &&
-      (href.startsWith("/sources?pageType=") ||
-        href.includes("/sources?pageType="))
+      (href.startsWith("/sources/lexicon/") ||
+        href.startsWith("/sources/testimony/") ||
+        href.includes("/sources/lexicon/") ||
+        href.includes("/sources/testimony/"))
     ) {
       const textContent = Array.isArray(children)
         ? children.join("")
@@ -190,7 +192,7 @@ function transformCitationsToLinks(text: string): string {
     // First try footnote transformation
     const footnoteTransformed = transformCitationsToFootnotes(text);
     if (footnoteTransformed !== text) {
-      console.log("✅ Footnote transformation applied");
+      console.log("Footnote transformation applied");
       return footnoteTransformed;
     }
 
@@ -210,10 +212,10 @@ function transformCitationsToLinks(text: string): string {
     // IMPORTANT: Don't transform simple numbered citations like [1], [2], [3]
     // if they already have proper URLs - let ReactMarkdown handle them as-is
 
-    console.log("📤 Transform output:", text.substring(0, 200) + "...");
+    console.log("Transform output:", text.substring(0, 200) + "...");
     return text;
   } catch (error) {
-    console.error("❌ Error in transformCitationsToLinks:", error);
+    console.error("Error in transformCitationsToLinks:", error);
     return text;
   }
 }
