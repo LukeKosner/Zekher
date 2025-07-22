@@ -8,8 +8,27 @@ describe("TestimonyCard", () => {
   const mockSource: TestimonySource = {
     id: "1",
     filename: "test.txt",
+    content: "Test content",
     survivor_name: "Test Survivor",
-    description: "Test Description"
+    testimony_language: "English",
+    interviewer: "David P. Boder",
+    date: "1946-08-15",
+    location: "Chicago, Illinois",
+    url: "https://example.com/testimony",
+    mediaFile: "test.mp3",
+    transcriptionFile: "test.txt",
+    mediaUrl: "https://example.com/test.mp3",
+    transcriptUrl: "https://example.com/test.txt",
+    description: "Test Description",
+    exportDate: "2023-01-01",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    title: "Test Survivor",
+    tags: [],
+    featured: false,
+    survivorName: "Test Survivor",
+    excerpt: "Test excerpt from testimony",
+    citation: "Test Citation"
   };
 
   test("renders the card with the correct name and description", () => {

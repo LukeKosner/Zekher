@@ -1,4 +1,7 @@
-import { sourcesPageConstants, sourcesErrorMessages } from "@/app/sources/constants";
+import {
+  sourcesPageConstants,
+  sourcesErrorMessages
+} from "@/app/sources/constants";
 
 describe("sourcesPageConstants", () => {
   it("has correct lexicon overlay configuration", () => {
@@ -91,7 +94,7 @@ describe("sourcesErrorMessages", () => {
   });
 
   it("has non-empty error messages", () => {
-    Object.values(sourcesErrorMessages.sources).forEach(message => {
+    Object.values(sourcesErrorMessages.sources).forEach((message) => {
       expect(message).toBeTruthy();
       expect(typeof message).toBe("string");
       expect(message.length).toBeGreaterThan(0);

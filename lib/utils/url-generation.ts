@@ -321,8 +321,11 @@ export function generateSourceUrl(params: SourceUrlParams): string {
       throw error;
     }
 
-    // Sanitize filename
-    const sanitizedFilename = sanitizeFilename(filename);
+    // For database IDs, no sanitization needed (they're already URL-safe)
+    // Only sanitize if it looks like a title/name rather than an ID
+    const sanitizedFilename = filename.includes(' ') || filename.includes('.') 
+      ? sanitizeFilename(filename) 
+      : filename;
 
     if (!sanitizedFilename) {
       const error = new Error("Filename cannot be empty after sanitization");

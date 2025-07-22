@@ -3,9 +3,8 @@
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, MapPinIcon, UserIcon, LanguagesIcon } from "lucide-react";
+import { CalendarIcon, MapPinIcon, UserIcon, LanguagesIcon, PlayIcon, PauseIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PlayIcon, PauseIcon } from "lucide-react";
 import { generateAudioUrl } from "@/lib/utils/url-generation";
 
 /**

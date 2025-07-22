@@ -1,0 +1,1 @@
+ALTER TABLE "lexiconSources" ADD COLUMN "redirectUrl" varchar(500);

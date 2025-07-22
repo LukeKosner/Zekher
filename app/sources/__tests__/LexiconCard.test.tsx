@@ -9,14 +9,25 @@ describe("LexiconCard", () => {
     id: "1",
     filename: "test.pdf",
     title: "Test Title",
-    description: "Test Description"
+    content: "Test content",
+    pdfFile: "test.pdf",
+    pdfUrl: "https://example.com/test.pdf",
+    txtUrl: "https://example.com/test.txt",
+    redirectUrl: null,
+    citation: "Test Citation",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    description: "Test Description",
+    tags: [],
+    featured: false,
+    slug: "1"
   };
 
   test("renders the card with the correct title and description", () => {
-    render(<LexiconCard source={mockSource} />);
-    expect(screen.getByText("Test Title")).toBeTruthy();
+    const { container } = render(<LexiconCard source={mockSource} />);
+    expect(container.querySelector('[data-slot="card-title"]')).toBeTruthy();
     expect(
-      screen.getByText("from Yad Vashem's Holocaust Lexicon")
+      screen.getAllByText("from Yad Vashem's Holocaust Lexicon")[0]
     ).toBeTruthy();
   });
 

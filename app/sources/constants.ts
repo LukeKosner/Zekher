@@ -63,6 +63,43 @@ export const sourcesPageConstants = {
     loadMore: "Load More",
     defaultLimit: 10,
     maxLimit: 50
+  },
+
+  // Card UI text
+  cardText: {
+    lexicon: {
+      source: "from Yad Vashem's Holocaust Lexicon",
+      externalSource: "from Yad Vashem's website",
+      pdfPreviewFallback: "PDF preview not available.",
+      openInNewTab: "Open PDF in a new tab",
+      textPreview: "Text Preview",
+      viewFullText: "View Full Text",
+      viewFullPdf: "View Full PDF",
+      downloadPdf: "Download PDF",
+      visitExternal: "Visit External Resource"
+    },
+    testimony: {
+      source: "from the David P. Boder interviews",
+      readFull: "Read Full Testimony"
+    }
+  },
+
+  // Page metadata
+  metadata: {
+    lexicon: {
+      notFoundTitle: "Lexicon Entry Not Found",
+      notFoundDescription: "The requested lexicon entry could not be found.",
+      defaultTitle: "Holocaust Lexicon",
+      defaultDescription: "Yad Vashem Holocaust Lexicon entry",
+      archiveFooter: "This lexicon entry is part of the Zekher Holocaust Education Archive."
+    },
+    testimony: {
+      notFoundTitle: "Testimony Not Found",
+      notFoundDescription: "The requested testimony could not be found.",
+      defaultTitle: "Testimony",
+      defaultDescription: "Holocaust survivor testimony",
+      archiveFooter: "This testimony is part of the Zekher Holocaust Education Archive."
+    }
   }
 } as const;
 

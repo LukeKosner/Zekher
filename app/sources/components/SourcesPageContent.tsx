@@ -2,12 +2,6 @@
 
 import { LazyLoadWrapper } from "@/components/LazyLoadWrapper";
 import { LexiconCardSkeleton, TestimonyCardSkeleton } from "./skeletons";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardFooter
-} from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

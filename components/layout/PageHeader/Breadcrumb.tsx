@@ -40,12 +40,25 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
 
   // Default breadcrumb for other pages
   const pageTitle = parts.length > 1 ? parts[parts.length - 1] : parts[0];
-  const pageTitleCapitalized = pageTitle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const pageTitleCapitalized = pageTitle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || '';
   const sectionTitle =
     parts.length > 1 ? parts[parts.length - 2].replace(/-/g, ' ') : '';
 
   const sectionTitleCapitalized =
     sectionTitle.charAt(0).toUpperCase() + sectionTitle.slice(1);
+
+  // If there's only one part (like "chat"), show just that without separator
+  if (parts.length === 1) {
+    return (
+      <Breadcrumb className="hidden md:block">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
 
   return (
     <Breadcrumb className="hidden md:block">
@@ -53,10 +66,10 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
         <BreadcrumbItem>
           {sectionTitleCapitalized}
         </BreadcrumbItem>
-        {pageTitle && <BreadcrumbSeparator />}
-        {pageTitle && <BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
           <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
-        </BreadcrumbItem>}
+        </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
   );

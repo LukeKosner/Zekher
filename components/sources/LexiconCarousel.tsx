@@ -1,6 +1,6 @@
 /**
  * Lexicon Carousel Component
- * 
+ *
  * Displays lexicon entries in a carousel format with interactive cards.
  * Uses the new LexiconCard component with hover overlays for better UX.
  */
@@ -27,7 +27,7 @@ import {
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { LexiconCard } from "./LexiconCard";
+import { LexiconCard } from "@/app/sources/components/LexiconCard";
 import { sourcesPageConstants } from "@/app/sources/constants";
 import { LexiconSource } from "@/app/sources/types";
 
@@ -35,6 +35,7 @@ interface LexiconEntry {
   id?: string;
   title: string;
   filename: string;
+  content?: string;
 }
 
 interface LexiconCarouselProps {
@@ -46,12 +47,25 @@ interface LexiconCarouselProps {
 /**
  * Converts LexiconEntry to LexiconSource for card component
  */
-function convertToLexiconSource(entry: LexiconEntry, index: number): LexiconSource {
+function convertToLexiconSource(
+  entry: LexiconEntry,
+  index: number
+): LexiconSource {
   return {
     id: entry.id || `lexicon-${index}`,
     filename: entry.filename,
     title: entry.title,
+    content: entry.content || "",
+    pdfFile: null,
+    pdfUrl: null,
+    txtUrl: null,
+    redirectUrl: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    slug: entry.id || `lexicon-${index}`,
+    citation: "Yad Vashem's Holocaust Lexicon",
     description: `${sourcesPageConstants.lexiconOverlay.title} entry: ${entry.title}`,
+    tags: [],
     featured: false
   };
 }
@@ -96,9 +110,12 @@ export const LexiconCarousel = ({
               {sources.map((source, index) => {
                 const lexiconSource = convertToLexiconSource(source, index);
                 return (
-                  <CarouselItem key={source.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                  <CarouselItem
+                    key={source.id || index}
+                    className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
+                  >
                     <div className="p-1">
-                      <LexiconCard 
+                      <LexiconCard
                         source={lexiconSource}
                         className="h-[300px] flex flex-col"
                       />

@@ -26,6 +26,7 @@ export const lexiconSources = pgTable('lexiconSources', {
   pdfFile: varchar('pdfFile', {length: 255}), // Path to original PDF (if available)
   pdfUrl: varchar('pdfUrl', {length: 500}), // Direct URL to PDF in storage
   txtUrl: varchar('txtUrl', {length: 500}), // Direct URL to TXT file in storage
+  redirectUrl: varchar('redirectUrl', {length: 500}), // External redirect URL (if entry redirects instead of showing content)
   createdAt: timestamp('created_at')
     .notNull()
     .default(sql`now()`), // Creation timestamp

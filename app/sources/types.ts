@@ -1,68 +1,30 @@
 /**
- * @file This file defines the TypeScript types and interfaces for the sources page feature.
- * These types are used to ensure data consistency between the server-side data fetching and the client-side components.
+ * @fileoverview Types and interfaces for the sources page feature.
+ * Re-exports shared types from lib/types.ts and defines component-specific interfaces.
  */
 
-// Sources page data types
-export interface LexiconSource {
-  id: string;
-  filename: string;
-  title?: string;
-  content?: string;
-  pdfFile?: string;
-  pdfUrl?: string;
-  txtUrl?: string;
-  created_at?: string;
-  updated_at?: string;
-  description?: string;
-  tags?: string[];
-  date?: string;
-  featured?: boolean;
-}
+import type { LexiconEntry, TestimonyEntry } from "@/lib/types";
 
-export interface TestimonySource {
-  id: string;
-  filename: string;
-  survivor_name?: string;
-  title?: string;
-  description?: string;
-  tags?: string[];
-  date?: string;
-  featured?: boolean;
-  testimony_language?: string;
-  interviewer?: string;
-  location?: string;
-  url?: string;
-}
+// Re-export shared types for convenience
+export type LexiconSource = LexiconEntry;
+export type TestimonySource = TestimonyEntry;
 
-// Interactive card component props
+/**
+ * Component props for interactive card components.
+ */
+
+/** Props for LexiconCard component */
 export interface LexiconCardProps {
+  /** The lexicon source data to display */
   source: LexiconSource;
+  /** Optional CSS class for styling */
   className?: string;
 }
 
+/** Props for TestimonyCard component */
 export interface TestimonyCardProps {
+  /** The testimony source data to display */
   source: TestimonySource;
+  /** Optional CSS class for styling */
   className?: string;
-}
-
-// API response types for sources
-export interface SourcesApiResponse {
-  sources: (LexiconSource | TestimonySource)[];
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    hasMore: boolean;
-  };
-}
-
-export interface SourcesApiErrorResponse {
-  error: string;
-  errorType: "VALIDATION_ERROR" | "NOT_FOUND" | "SYSTEM_ERROR";
-  metadata: {
-    timestamp: string;
-    type?: string;
-    id?: string;
-  };
 }

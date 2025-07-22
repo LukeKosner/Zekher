@@ -6,35 +6,42 @@
  */
 
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { getLexiconEntryBySlug } from "@/lib/utils/lexicon-db";
+import { notFound, redirect } from "next/navigation";
+import { getLexiconEntryBySlug } from "@/lib/utils/lexicon";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, ArrowLeft } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { LexiconPageFallback } from "@/app/sources/components/skeletons";
 
 /**
  * Server component for lexicon content
  */
 async function LexiconPageContent(props: any) {
-  const filename = props.params.id;
-  
-  if (!filename) {
-    notFound();
-  }
-  
-  // Get the lexicon entry from database - this has the authoritative URL
-  const lexiconEntry = await getLexiconEntryBySlug(filename);
-  
-  if (!lexiconEntry) {
-    notFound();
-  }
-  
-  // Use the authoritative PDF URL directly from database
-  const displayTitle = lexiconEntry.title;
-  const pdfUrl = lexiconEntry.pdfUrl;
+  try {
+    const params = await props.params;
+    const id = params.id;
+    
+    if (!id) {
+      notFound();
+    }
+    
+    // Get the lexicon entry from database using ID
+    const lexiconEntry = await getLexiconEntryBySlug(id);
+    
+    if (!lexiconEntry) {
+      notFound();
+    }
+    
+    // Check if this entry should redirect to an external URL
+    if (lexiconEntry.redirectUrl) {
+      redirect(lexiconEntry.redirectUrl);
+    }
+    
+    // Use the authoritative PDF URL directly from database
+    const displayTitle = lexiconEntry.title;
+    const pdfUrl = lexiconEntry.pdfUrl || undefined;
   
   // Debug: Log the PDF URL from database
-  console.log(`PDF URL from database for ${filename} (${displayTitle}):`, pdfUrl);
+  console.log(`PDF URL from database for ${id} (${displayTitle}):`, pdfUrl);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
@@ -46,18 +53,22 @@ async function LexiconPageContent(props: any) {
         
         {/* Action buttons */}
         <div className="flex flex-wrap gap-3">
-          <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </Button>
-          </a>
-          <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in New Tab
-            </Button>
-          </a>
+          {pdfUrl && (
+            <>
+              <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </a>
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open in New Tab
+                </Button>
+              </a>
+            </>
+          )}
         </div>
       </div>
 
@@ -81,18 +92,22 @@ async function LexiconPageContent(props: any) {
                   URL: {pdfUrl}
                 </div>
                 <div className="flex gap-2 justify-center">
-                  <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
-                    <Button>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download PDF
-                    </Button>
-                  </a>
-                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Open in New Tab
-                    </Button>
-                  </a>
+                  {pdfUrl && (
+                    <>
+                      <a href={pdfUrl} download target="_blank" rel="noopener noreferrer">
+                        <Button>
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </Button>
+                      </a>
+                      <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Open in New Tab
+                        </Button>
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -106,6 +121,10 @@ async function LexiconPageContent(props: any) {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('Error loading lexicon entry:', error);
+    notFound();
+  }
 }
 
 /**
@@ -123,14 +142,38 @@ export default function LexiconPage(props: any) {
  * Generate metadata for the page
  */
 export async function generateMetadata(props: any) {
-  const filename = props.params.id;
-  
-  // Get the title from the database
-  const lexiconEntry = await getLexiconEntryBySlug(filename);
-  const displayTitle = lexiconEntry?.title || filename.replace(/-/g, " ");
-  
-  return {
-    title: `${displayTitle} - Holocaust Lexicon`,
-    description: `Holocaust Lexicon entry: ${displayTitle}`,
-  };
+  try {
+    const params = await props.params;
+    const id = params.id;
+    
+    if (!id) {
+      return {
+        title: "Lexicon Entry Not Found",
+        description: "The requested lexicon entry could not be found."
+      };
+    }
+    
+    // Get the title from the database
+    const lexiconEntry = await getLexiconEntryBySlug(id);
+    
+    if (!lexiconEntry) {
+      return {
+        title: "Lexicon Entry Not Found",
+        description: "The requested lexicon entry could not be found."
+      };
+    }
+    
+    const displayTitle = lexiconEntry.title || `Entry ${id}`;
+    
+    return {
+      title: `${displayTitle} - Holocaust Lexicon`,
+      description: `Holocaust Lexicon entry: ${displayTitle}`,
+    };
+  } catch (error) {
+    console.error('Error generating metadata for lexicon entry:', error);
+    return {
+      title: "Holocaust Lexicon",
+      description: "Yad Vashem Holocaust Lexicon entry"
+    };
+  }
 }

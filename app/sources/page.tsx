@@ -1,89 +1,143 @@
-import { Suspense } from "react";
-import { SourcesPageContent } from "./components/SourcesPageContent";
-import { SourcesPageFallback } from "./components/skeletons";
-import { getAllLexiconEntries } from "@/lib/utils/lexicon-db";
-import { getAllTestimonies } from "@/lib/utils/testimony";
-import { LexiconSource, TestimonySource } from "./types";
-import { sourcesPageConstants } from "./constants";
-
 /**
- * @file This file defines the main page for the sources section.
- * It fetches lexicon and testimony data, formats it for display, and renders the main sources page component.
- * It also includes a fallback skeleton for a better user experience during data loading.
+ * @fileoverview Sources page component for displaying Holocaust Lexicon and Testimony sources.
+ * Handles server-side data fetching, formatting, and rendering with proper loading states.
  */
 
-async function getSources() {
-  const lexiconEntries = await getAllLexiconEntries();
-  const testimonyEntries = await getAllTestimonies();
+import { Suspense } from "react";
+import type { JSX } from "react";
+import { SourcesPageContent } from "./components/SourcesPageContent";
+import { SourcesPageFallback } from "./components/skeletons";
+import { getAllLexiconEntries } from "@/lib/utils/lexicon";
+import { getAllTestimonies } from "@/lib/utils/testimony";
+import { LexiconSource, TestimonySource } from "./types";
+import { sourcesPageConstants } from "@/app/sources/constants";
 
-  const lexiconSources: LexiconSource[] = lexiconEntries.map(
-    (entry, index) => ({
-      id: entry.id || `lexicon-${index}`,
-      filename: entry.filename,
-      title: entry.title,
-      content: entry.content,
-      pdfFile: entry.pdfFile,
-      pdfUrl: entry.pdfUrl,
-      txtUrl: entry.txtUrl,
-      created_at: entry.created_at,
-      updated_at: entry.updated_at,
-      description: `${sourcesPageConstants.lexiconOverlay.title} entry: ${entry.title}`,
-      tags: [],
-      featured: Math.random() < 0.2
-    })
-  );
-
-  const testimonySources: TestimonySource[] = testimonyEntries.map((entry) => {
-    let contentPreview = `Survivor testimony: ${entry.survivor_name}`;
-
-    if (entry.content) {
-      // Remove timestamp markers for preview
-      const content = entry.content.replace(/\[[\d:]+\]/g, "");
-      const lines = content.split("\n").filter((line) => line.trim());
-
-      const survivorLines = lines.filter(
-        (line) =>
-          !line.trim().startsWith("David Boder:") &&
-          !line.trim().startsWith("Dr. Boder:") &&
-          !line.trim().startsWith("DAVID BODER:") &&
-          line.trim().length > 50
-      );
-
-      if (survivorLines.length > 0) {
-        contentPreview = survivorLines.slice(0, 3).join(" ").substring(0, 200);
-        if (contentPreview.length >= 200) contentPreview += "...";
-      }
-    }
-
-    return {
-      id: entry.id,
-      filename: entry.filename,
-      survivor_name: entry.survivor_name,
-      title: entry.survivor_name, // Use survivor name as title for display
-      description: entry.description || contentPreview,
-      tags: [],
-      featured: Math.random() < 0.2,
-      testimony_language: entry.testimony_language,
-      interviewer: entry.interviewer,
-      location: entry.location,
-      url: entry.url
-    };
-  });
-
-  return { lexiconSources, testimonySources };
+/**
+ * Utility function to convert null values to undefined for UI consistency.
+ * Database returns null for optional fields, but UI components expect undefined.
+ * @param obj - Object with potentially null values
+ * @returns Object with null values converted to undefined
+ */
+function nullToUndefined<T extends Record<string, any>>(obj: T): any {
+  const result = {} as any;
+  for (const [key, value] of Object.entries(obj)) {
+    result[key] = value === null ? undefined : value;
+  }
+  return result;
 }
 
-export default async function SourcesPage() {
-  const { lexiconSources, testimonySources } = await getSources();
+/**
+ * Server-side function to fetch and format all sources data.
+ * Combines lexicon and testimony data with UI-specific formatting.
+ * @returns Formatted sources data ready for display
+ */
+async function getSources(): Promise<{
+  lexiconSources: LexiconSource[];
+  testimonySources: TestimonySource[];
+}> {
+  try {
+    const lexiconEntries = await getAllLexiconEntries();
+    const testimonyEntries = await getAllTestimonies();
 
-  return (
-    <div className="flex-1 min-h-0">
-      <Suspense fallback={<SourcesPageFallback />}>
-        <SourcesPageContent
-          lexiconSources={lexiconSources}
-          testimonySources={testimonySources}
-        />
-      </Suspense>
-    </div>
-  );
+    console.log(
+      "🔍 First few lexicon entries from getAllLexiconEntries():",
+      lexiconEntries
+        .slice(0, 3)
+        .map((e) => ({ id: e.id, title: e.title, slug: e.slug }))
+    );
+
+    const lexiconSources: LexiconSource[] = lexiconEntries.map(
+      (entry, index) => ({
+        ...nullToUndefined(entry),
+        description: `${sourcesPageConstants.lexiconOverlay.title} entry: ${entry.title}`,
+        tags: [],
+        featured: Math.random() < 0.2
+      })
+    );
+
+    const testimonySources: TestimonySource[] = testimonyEntries.map(
+      (entry) => {
+        let contentPreview = `Survivor testimony: ${entry.survivor_name}`;
+
+        if (entry.content) {
+          // Remove timestamp markers for preview
+          const content = entry.content.replace(/\[[\d:]+\]/g, "");
+          const lines = content.split("\n").filter((line) => line.trim());
+
+          const survivorLines = lines.filter(
+            (line) =>
+              !line.trim().startsWith("David Boder:") &&
+              !line.trim().startsWith("Dr. Boder:") &&
+              !line.trim().startsWith("DAVID BODER:") &&
+              line.trim().length > 50
+          );
+
+          if (survivorLines.length > 0) {
+            contentPreview = survivorLines
+              .slice(0, 3)
+              .join(" ")
+              .substring(0, 200);
+            if (contentPreview.length >= 200) contentPreview += "...";
+          }
+        }
+
+        return {
+          ...nullToUndefined(entry),
+          title: entry.survivor_name || undefined, // Use survivor name as title for display
+          description: entry.description || contentPreview,
+          tags: [],
+          featured: Math.random() < 0.2
+        };
+      }
+    );
+
+    return { lexiconSources, testimonySources };
+  } catch (error) {
+    console.error("Error fetching sources data:", error);
+
+    // Return empty arrays to prevent app crash
+    return {
+      lexiconSources: [],
+      testimonySources: []
+    };
+  }
+}
+
+/**
+ * Main sources page component.
+ * Server component that fetches data and renders with proper loading states.
+ * @returns JSX element containing the sources page
+ */
+export default async function SourcesPage(): Promise<JSX.Element> {
+  try {
+    const { lexiconSources, testimonySources } = await getSources();
+
+    return (
+      <div className="flex-1 min-h-0">
+        <Suspense fallback={<SourcesPageFallback />}>
+          <SourcesPageContent
+            lexiconSources={lexiconSources}
+            testimonySources={testimonySources}
+          />
+        </Suspense>
+      </div>
+    );
+  } catch (error) {
+    console.error("Critical error in SourcesPage:", error);
+
+    // Return a fallback error state
+    return (
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-red-600">
+            Unable to Load Sources
+          </h1>
+          <p className="text-gray-600">
+            We're experiencing technical difficulties. Please try refreshing the
+            page.
+          </p>
+        </div>
+      </div>
+    );
+  }
 }

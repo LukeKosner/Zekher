@@ -39,6 +39,7 @@ import { LexiconCarousel } from "@/components/sources/LexiconCarousel";
 import { TestimonyCarousel } from "@/components/sources/TestimonyCarousel";
 import { generateSourceUrl } from "@/lib/utils/url-generation";
 import { MicIcon, BookOpenCheck, Users, History } from "lucide-react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 
 // Lazy load audio player
@@ -514,6 +515,13 @@ function ChatContent() {
               onClick={status === "streaming" ? stop : undefined}
             />
           </AIInput>
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Zekher is in beta and can make mistakes. Check{" "}
+            <Link href="/sources" className="underline">
+              sources
+            </Link>{" "}
+            for verification.
+          </p>
         </div>
       </div>
     </div>

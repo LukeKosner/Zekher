@@ -1,6 +1,6 @@
 /**
  * Testimony Carousel Component
- * 
+ *
  * Displays survivor testimony entries in a carousel format with interactive cards.
  * Uses the new TestimonyCard component with hover overlays for better UX.
  * Maintains audio playback functionality for timestamp segments.
@@ -35,7 +35,7 @@ import {
   generateSourceUrl,
   generateAudioUrl
 } from "@/lib/utils/url-generation";
-import { TestimonyCard } from "./TestimonyCard";
+import { TestimonyCard } from "@/app/sources/components/TestimonyCard";
 import { sourcesPageConstants } from "@/app/sources/constants";
 import { TestimonySource } from "@/app/sources/types";
 
@@ -66,14 +66,30 @@ interface TestimonyCarouselProps {
 /**
  * Converts TestimonyEntry to TestimonySource for card component
  */
-function convertToTestimonySource(entry: TestimonyEntry, index: number): TestimonySource {
+function convertToTestimonySource(
+  entry: TestimonyEntry,
+  index: number
+): TestimonySource {
   return {
     id: `testimony-${index}`,
     filename: entry.filename,
+    content: "Testimony content",
     survivor_name: entry.survivorName,
-    title: entry.title,
+    testimony_language: null,
+    interviewer: null,
+    date: null,
+    location: entry.location || null,
+    url: null,
+    mediaFile: null,
+    transcriptionFile: null,
+    mediaUrl: null,
+    transcriptUrl: null,
     description: `Survivor testimony by ${entry.survivorName}`,
-    location: entry.location,
+    exportDate: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    title: entry.title,
+    tags: [],
     featured: false
   };
 }
@@ -155,10 +171,10 @@ export const TestimonyCarousel = ({
     if (audioRef.current) {
       // Cancel any pending play promise
       currentPlayPromise.current = null;
-      
+
       // Pause current audio
       audioRef.current.pause();
-      
+
       // Remove any existing event listeners
       const oldListeners = audioRef.current.cloneNode(true) as HTMLAudioElement;
       audioRef.current.replaceWith(oldListeners);
@@ -216,7 +232,10 @@ export const TestimonyCarousel = ({
 
               // Clean up event listeners if playback failed
               if (audioRef.current) {
-                audioRef.current.removeEventListener("timeupdate", handleTimeUpdate);
+                audioRef.current.removeEventListener(
+                  "timeupdate",
+                  handleTimeUpdate
+                );
                 audioRef.current.removeEventListener("ended", handleEnded);
               }
             }
@@ -241,7 +260,9 @@ export const TestimonyCarousel = ({
             ) : (
               <ClockIcon className="size-4 animate-pulse" />
             )}
-            {status === "result" ? "Completed" : loadingStates.findingTestimonies}
+            {status === "result"
+              ? "Completed"
+              : loadingStates.findingTestimonies}
           </Badge>
         </div>
         {status === "result" && (
@@ -259,24 +280,32 @@ export const TestimonyCarousel = ({
           <Carousel className="w-full max-w-4xl mx-auto">
             <CarouselContent className="-ml-2 md:-ml-4">
               {sources.map((testimony, index) => {
-                const testimonySource = convertToTestimonySource(testimony, index);
+                const testimonySource = convertToTestimonySource(
+                  testimony,
+                  index
+                );
                 const timestamps = parseTimestamps(
                   testimony.fullTranscript || testimony.excerpt || ""
                 );
 
                 return (
-                  <CarouselItem key={testimony.filename || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                  <CarouselItem
+                    key={testimony.filename || index}
+                    className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
+                  >
                     <div className="p-1">
                       {/* Interactive Card */}
-                      <TestimonyCard 
+                      <TestimonyCard
                         source={testimonySource}
                         className="h-[300px] flex flex-col mb-4"
                       />
-                      
+
                       {/* Audio Segments Section */}
                       {timestamps.length > 0 && (
                         <div className="max-h-48 overflow-y-auto space-y-2 bg-muted/30 rounded-lg p-3">
-                          <h4 className="text-xs font-medium text-muted-foreground mb-2">Audio Segments</h4>
+                          <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                            Audio Segments
+                          </h4>
                           {timestamps.map((segment, segIndex) => {
                             const isPlaying =
                               playingSegment?.testimony === testimony &&

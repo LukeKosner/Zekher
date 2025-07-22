@@ -1,70 +1,80 @@
 /**
- * Lexicon utilities for handling title and slug conversions
+ * Database-backed lexicon utilities
+ * Uses the authoritative lexicon database instead of JSON files
  */
 
-interface LexiconEntry {
-  title: string;
-  content: string;
-  txtFile: string;
-  pdfFile: string;
-}
-
-interface LexiconData {
-  generated: string;
-  totalEntries: number;
-  entries: LexiconEntry[];
-}
-
-// Cache for lexicon data
-let lexiconDataCache: LexiconData | null = null;
-
-// Static slug-to-title mapping for synchronous lookups
-// This will be populated when lexicon data is first loaded
-export const slugToTitleMap = new Map<string, string>();
+import { db } from '@/lib/db';
+import { lexiconSources } from '@/lib/db/schema';
+import { asc, eq, sql } from 'drizzle-orm';
+import type { LexiconEntry } from '@/lib/types';
 
 /**
- * Load lexicon data from JSON file and populate slug mapping
+ * Get lexicon entry by ID (now used as slug for URLs)
  */
-export async function loadLexiconData(): Promise<LexiconData> {
-  if (lexiconDataCache) {
-    return lexiconDataCache;
-  }
-
+export async function getLexiconEntryBySlug(id: string): Promise<LexiconEntry | null> {
   try {
-    // Check if we're in a server environment
-    if (typeof window === 'undefined') {
-      // Server-side: read from file system
-      const fs = await import('fs/promises');
-      const path = await import('path');
-      const filePath = path.join(process.cwd(), 'public/data/lexicon.json');
-      const fileContent = await fs.readFile(filePath, 'utf-8');
-      lexiconDataCache = JSON.parse(fileContent);
-    } else {
-      // Client-side: use fetch
-      const response = await fetch('/data/lexicon.json');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch lexicon data: ${response.statusText}`);
-      }
-      lexiconDataCache = await response.json();
+    console.log(`🔍 Looking for lexicon entry with ID: "${id}"`);
+    
+    const results = await db.select()
+      .from(lexiconSources)
+      .where(eq(lexiconSources.id, id));
+    
+    console.log(`📊 Found ${results.length} results for ID "${id}"`);
+    
+    const entry = results[0];
+    if (!entry) {
+      // Let's see what entries actually exist
+      const allEntries = await db.select({ id: lexiconSources.id, title: lexiconSources.title })
+        .from(lexiconSources)
+        .limit(5);
+      
+      console.log('📝 Sample lexicon entries in database:', allEntries);
+      return null;
     }
     
-    // Populate the slug-to-title mapping
-    if (lexiconDataCache) {
-      lexiconDataCache.entries.forEach(entry => {
-        const slug = titleToSlug(entry.title);
-        slugToTitleMap.set(slug, entry.title);
-      });
-    }
+    console.log(`✅ Found lexicon entry: ${entry.title} (ID: ${entry.id})`);
     
-    return lexiconDataCache!;
+    return {
+      ...entry,
+      slug: entry.id, // Use ID as slug
+      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all lexicon entries
+    };
   } catch (error) {
-    console.error('Error loading lexicon data:', error);
-    throw error;
+    console.error('Error fetching lexicon entry:', error);
+    return null;
   }
 }
 
 /**
- * Convert title to URL-safe slug
+ * Get lexicon entry by ID (alias for consistency)
+ */
+export async function getLexiconEntryById(id: string): Promise<LexiconEntry | null> {
+  return getLexiconEntryBySlug(id);
+}
+
+/**
+ * Get all lexicon entries for cards/carousels
+ */
+export async function getAllLexiconEntries(limit?: number): Promise<LexiconEntry[]> {
+  try {
+    const baseQuery = db.select().from(lexiconSources).orderBy(asc(lexiconSources.title));
+    const finalQuery = limit ? baseQuery.limit(limit) : baseQuery;
+    
+    const results = await finalQuery;
+    
+    return results.map(entry => ({
+      ...entry,
+      slug: entry.id, // Use ID as slug
+      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all lexicon entries
+    }));
+  } catch (error) {
+    console.error('Error fetching lexicon entries:', error);
+    return [];
+  }
+}
+
+/**
+ * Convert title to URL-safe slug (for consistency)
  */
 export function titleToSlug(title: string): string {
   return title
@@ -76,47 +86,25 @@ export function titleToSlug(title: string): string {
 }
 
 /**
- * Get the original title from a URL slug by looking up in lexicon data
+ * Search lexicon entries by title (deprecated - use hybrid search in tools/lexicon.ts)
+ * @deprecated Use hybridSearch via lexiconTool for better search results
  */
-export async function getOriginalTitle(slug: string): Promise<string | null> {
+export async function searchLexiconEntries(query: string, limit = 20): Promise<LexiconEntry[]> {
+  console.warn('searchLexiconEntries is deprecated. Use hybridSearch via lexiconTool for better results.');
   try {
-    const lexiconData = await loadLexiconData();
+    // Use a simple ILIKE search for backward compatibility
+    const results = await db.select()
+      .from(lexiconSources)
+      .where(sql`${lexiconSources.title} ILIKE ${`%${query}%`}`)
+      .limit(limit);
     
-    // Find the entry that matches the slug
-    const entry = lexiconData.entries.find(entry => 
-      titleToSlug(entry.title) === slug
-    );
-    
-    return entry ? entry.title : null;
+    return results.map(entry => ({
+      ...entry,
+      slug: entry.id, // Use ID as slug
+      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all lexicon entries
+    }));
   } catch (error) {
-    console.error('Error getting original title:', error);
-    return null;
-  }
-}
-
-/**
- * Get the original title from a URL slug synchronously (for client components)
- * Note: This will only work if the slug mapping has been populated first
- */
-export function getTitleFromSlug(slug: string): string | null {
-  return slugToTitleMap.get(slug) || null;
-}
-
-/**
- * Get lexicon entry by slug
- */
-export async function getLexiconEntry(slug: string): Promise<LexiconEntry | null> {
-  try {
-    const lexiconData = await loadLexiconData();
-    
-    // Find the entry that matches the slug
-    const entry = lexiconData.entries.find(entry => 
-      titleToSlug(entry.title) === slug
-    );
-    
-    return entry || null;
-  } catch (error) {
-    console.error('Error getting lexicon entry:', error);
-    return null;
+    console.error('Error searching lexicon entries:', error);
+    return [];
   }
 }

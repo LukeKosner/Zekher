@@ -16,13 +16,28 @@ import { TestimonyPageFallback } from "@/app/sources/components/skeletons";
  * Server component for data fetching
  */
 async function TestimonyPageContent(props: any) {
-  const testimony = await getTestimonyBySlug(props.params.id);
+  const params = await props.params;
+  const testimony = await getTestimonyBySlug(params.id); // Now expects ID
   
   if (!testimony) {
     notFound();
   }
 
-  return <TestimonyPageClient testimony={testimony} />;
+  // Convert database testimony to client format
+  const clientTestimony = {
+    id: testimony.id,
+    survivor_name: testimony.survivor_name,
+    filename: testimony.filename,
+    content: testimony.content,
+    testimony_language: testimony.testimony_language || undefined,
+    interviewer: testimony.interviewer || undefined,
+    date: testimony.date || undefined,
+    location: testimony.location || undefined,
+    description: testimony.description || undefined,
+    createdAt: testimony.createdAt?.toISOString()
+  };
+
+  return <TestimonyPageClient testimony={clientTestimony} />;
 }
 
 /**
@@ -41,7 +56,8 @@ export default function TestimonyPage(props: any) {
  */
 export async function generateMetadata(props: any) {
   try {
-    const testimony = await getTestimonyBySlug(props.params.id);
+    const params = await props.params;
+    const testimony = await getTestimonyBySlug(params.id);
     
     if (!testimony) {
       return {

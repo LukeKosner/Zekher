@@ -1,12 +1,12 @@
 import { test, describe, expect, beforeEach, mock } from "bun:test";
 import { render, screen, waitFor } from "@testing-library/react";
 import SourcesPage from "@/app/sources/page";
-import { getAllLexiconEntries } from "@/lib/utils/lexicon-db";
+import { getAllLexiconEntries } from "@/lib/utils/lexicon";
 import { getAllTestimonies } from "@/lib/utils/testimony";
 import "@testing-library/jest-dom";
 
 // Mock dependencies
-mock.module("@/lib/utils/lexicon-db", () => ({
+mock.module("@/lib/utils/lexicon", () => ({
   getAllLexiconEntries: mock(),
 }));
 

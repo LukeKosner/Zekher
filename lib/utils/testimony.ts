@@ -2,7 +2,8 @@
 
 import { db } from "@/lib/db";
 import { testimonySources } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import type { TestimonyEntry } from "@/lib/types";
 
 /**
  * Convert survivor name to URL-safe slug (for consistency with lexicon)
@@ -26,30 +27,39 @@ export async function getTestimonyById(id: string) {
 }
 
 /**
- * Get testimony by slug (converted from survivor name)
+ * Get testimony by ID (now used as slug for URLs)
  */
-export async function getTestimonyBySlug(slug: string) {
+export async function getTestimonyBySlug(id: string) {
   try {
-    // Get all testimonies and find the one whose survivor_name converts to this slug
-    const results = await db.select().from(testimonySources);
+    const results = await db.select()
+      .from(testimonySources)
+      .where(eq(testimonySources.id, id));
     
-    // Find entry where survivor_name converts to the requested slug
-    const testimony = results.find(t => 
-      t.survivor_name && nameToSlug(t.survivor_name) === slug
-    );
-    
-    return testimony || null;
+    return results[0] || null;
   } catch (error) {
-    console.error('Error fetching testimony by slug:', error);
+    console.error('Error fetching testimony by ID:', error);
     return null;
   }
 }
 
-export async function getAllTestimonies() {
+/**
+ * Get testimony by ID (alias for consistency)
+ */
+export async function getTestimonyByIdAlias(id: string) {
+  return getTestimonyBySlug(id);
+}
+
+export async function getAllTestimonies(): Promise<TestimonyEntry[]> {
   const testimonies = await db
     .select()
     .from(testimonySources)
     .orderBy(testimonySources.createdAt);
 
-  return testimonies;
+  return testimonies.map(testimony => ({
+    ...testimony,
+    title: testimony.survivor_name,
+    survivorName: testimony.survivor_name,
+    excerpt: testimony.content.slice(0, 200) + (testimony.content.length > 200 ? "..." : ""),
+    citation: "USC Shoah Foundation"
+  }));
 }
