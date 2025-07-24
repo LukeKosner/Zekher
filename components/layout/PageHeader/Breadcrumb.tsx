@@ -8,67 +8,122 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { getNavigationItemByPath } from '@/lib/navigation';
 
 interface BreadcrumbNavigationProps {
   slug: string;
 }
 
 export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
+  if (!slug) {
+    return null;
+  }
+
   const parts = slug.split('/').filter(part => part);
+  let navigationItem = getNavigationItemByPath(slug);
+  
+  // Special case: if we're on /developers, show the MCP breadcrumb since it redirects there
+  if (slug === '/developers') {
+    navigationItem = getNavigationItemByPath('/developers/mcp');
+  }
 
-  if (parts[0] === 'sources') {
-    const sourceTitle = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-    let pageTitle = '';
-    if (parts.length > 1) {
-      pageTitle = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+  // For root path
+  if (slug === '/') {
+    return (
+      <Breadcrumb className="hidden md:block">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Project</BreadcrumbPage>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Home</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  // For known navigation items
+  if (navigationItem) {
+    return (
+      <Breadcrumb className="hidden md:block">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>{navigationItem.section}</BreadcrumbPage>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{navigationItem.breadcrumbLabel || navigationItem.label}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  // For sub-pages (like /sources/lexicon/123 or /developers/mcp)
+  if (parts.length > 1) {
+    // Try to find exact match for the full path first
+    const fullPath = `/${parts.join('/')}`;
+    const exactNavigationItem = getNavigationItemByPath(fullPath);
+    
+    if (exactNavigationItem) {
+      return (
+        <Breadcrumb className="hidden md:block">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>{exactNavigationItem.section}</BreadcrumbPage>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{exactNavigationItem.breadcrumbLabel || exactNavigationItem.label}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      );
     }
+    
+    // Fallback to base path logic for deeper nested routes
+    const basePath = `/${parts[0]}`;
+    const baseNavigationItem = getNavigationItemByPath(basePath);
+    
+    if (baseNavigationItem) {
+      const pageTitle = parts[parts.length - 1]
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 
-    return (
-      <Breadcrumb className="hidden md:block">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/sources">{sourceTitle}</BreadcrumbLink>
-          </BreadcrumbItem>
-          {pageTitle && <BreadcrumbSeparator />}
-          {pageTitle && <BreadcrumbItem>
-            <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
-          </BreadcrumbItem>}
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
+      return (
+        <Breadcrumb className="hidden md:block">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href={basePath}>{baseNavigationItem.section}</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href={basePath}>{baseNavigationItem.label}</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      );
+    }
   }
 
-  // Default breadcrumb for other pages
-  const pageTitle = parts.length > 1 ? parts[parts.length - 1] : parts[0];
-  const pageTitleCapitalized = pageTitle?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || '';
-  const sectionTitle =
-    parts.length > 1 ? parts[parts.length - 2].replace(/-/g, ' ') : '';
-
-  const sectionTitleCapitalized =
-    sectionTitle.charAt(0).toUpperCase() + sectionTitle.slice(1);
-
-  // If there's only one part (like "chat"), show just that without separator
-  if (parts.length === 1) {
-    return (
-      <Breadcrumb className="hidden md:block">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
+  // Fallback for unknown paths
+  const pageTitle = parts[0]
+    ?.split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ') || '';
 
   return (
     <Breadcrumb className="hidden md:block">
       <BreadcrumbList>
         <BreadcrumbItem>
-          {sectionTitleCapitalized}
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>{pageTitleCapitalized}</BreadcrumbPage>
+          <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

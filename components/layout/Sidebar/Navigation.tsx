@@ -4,18 +4,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { MessagesSquare, Database, Code, BookOpen } from "lucide-react";
 import { SidebarSection } from "./Section";
-
-const EVERYONE_ITEMS = [
-  { href: "/chat", icon: MessagesSquare, label: "Chat" },
-  { href: "/sources", icon: Database, label: "Sources" }
-];
-
-const DEVELOPERS_ITEMS = [
-  { href: "/developers", icon: Code, label: "Get Started" },
-  { href: "/documentation", icon: BookOpen, label: "Documentation" }
-];
+import { getNavigationItemsBySection, getAllSections } from "@/lib/navigation";
 
 export function SidebarNavigation() {
   const pathname = usePathname();
@@ -28,18 +18,18 @@ export function SidebarNavigation() {
     return pathname.startsWith(path);
   };
 
+  const sections = getAllSections();
+
   return (
     <>
-      <SidebarSection
-        title="Everyone"
-        items={EVERYONE_ITEMS}
-        activePathChecker={isActivePath}
-      />
-      <SidebarSection
-        title="Developers"
-        items={DEVELOPERS_ITEMS}
-        activePathChecker={isActivePath}
-      />
+      {sections.map((section) => (
+        <SidebarSection
+          key={section}
+          title={section}
+          items={getNavigationItemsBySection(section)}
+          activePathChecker={isActivePath}
+        />
+      ))}
     </>
   );
 }

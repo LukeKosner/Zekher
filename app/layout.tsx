@@ -26,7 +26,7 @@ const inter = Inter({
  * Application metadata configuration for SEO and social media optimization
  */
 export const metadata: Metadata = {
-  title: layoutConstants.siteName,
+  title: "Zekher",
   description: layoutConstants.description,
   openGraph: {
     title: layoutConstants.siteName,

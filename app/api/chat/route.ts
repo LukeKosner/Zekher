@@ -4,7 +4,7 @@ import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { holocaustEducatorPrompt } from "./prompts";
 import { chatApiConstants, chatApiErrors } from "./constants";
 import { logger, logApiRequest, logApiResponse } from "@/lib/utils/logger";
-import type { ChatRequest, ChatErrorResponse, ChatApiContext } from "./types";
+import type { ChatErrorResponse, ChatApiContext } from "./types";
 
 export const maxDuration = 60;
 
@@ -55,7 +55,6 @@ export async function POST(req: Request): Promise<Response> {
     return handleChatError(error, context);
   }
 }
-
 
 /**
  * Handles errors that occur during chat processing.

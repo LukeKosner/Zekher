@@ -18,21 +18,21 @@ export function RouteSlugGenerator({ children }: RouteSlugGeneratorProps) {
       return "sources/library";
     } else if (pathname.startsWith("/sources")) {
       return pathname;
+    } else if (pathname.startsWith("/developers")) {
+      return pathname;
     }
 
     switch (pathname) {
       case "/":
-        return "project/home";
+        return "/";
+      case "/about":
+        return "/about";
       case "/technology":
-        return "project/technology";
+        return "/technology";
       case "/chat":
         return "/chat";
-      case "/documentation":
-        return "developers/documentation";
-      case "/developers":
-        return "developers/get started";
       default:
-        return "project/home";
+        return pathname;
     }
   }, [pathname]);
 

@@ -10,6 +10,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface AudioSegment {
   testimonyId: string;
@@ -20,6 +21,7 @@ interface AudioSegment {
   language?: string;
   significance: string;
   audioFile: string;
+  url?: string;
 }
 
 interface AudioPlayerProps {
@@ -239,7 +241,18 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
       <div className="flex items-start gap-3">
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">{segment.speakerName}</h4>
+            <h4 className="font-semibold text-sm">
+              {segment.testimonyId ? (
+                <Link 
+                  href={`/sources/testimony/${segment.testimonyId}`}
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  {segment.speakerName}
+                </Link>
+              ) : (
+                segment.speakerName
+              )}
+            </h4>
             <span className="text-xs text-gray-500">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
@@ -388,6 +401,37 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
             <span className="font-medium">Why this matters:</span>{" "}
             {segment.significance}
           </p>
+
+          {/* Credit and source links */}
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500">
+              David P. Boder Collection
+              {segment.url && (
+                <>
+                  {" • "}
+                  <a 
+                    href={segment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-blue-600 transition-colors underline"
+                  >
+                    Source
+                  </a>
+                </>
+              )}
+              {segment.testimonyId && (
+                <>
+                  {" • "}
+                  <Link 
+                    href={`/sources/testimony/${segment.testimonyId}`}
+                    className="hover:text-blue-600 transition-colors underline"
+                  >
+                    Full Testimony
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 

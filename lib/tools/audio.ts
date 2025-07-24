@@ -12,6 +12,7 @@ import {
   type AudioLoadingMetrics
 } from "@/lib/utils/monitoring";
 import { getTestimonyMetadata } from "@/lib/ingestion/processors/testimony-languages";
+import { getTestimonyById } from "@/lib/utils/testimony";
 import { getAudioUrl } from "@/lib/utils/blob-urls";
 import { logger } from "@/lib/utils/logger";
 import { toolDescriptions, nextStepsInstructions } from "@/lib/prompts";
@@ -124,10 +125,24 @@ export const showUsersAudio = tool({
 
     console.log("Audio tool executing with segments:", segments.length);
 
-    const processedSegments = segments.map((segment, index) => {
+    const processedSegments = await Promise.all(segments.map(async (segment, index) => {
       const startTime = Date.now();
       let fallbackUsed = false;
       let urlSource: "blob" | "gcs" | "fallback" = "gcs";
+
+      // Look up testimony URL from database using testimonyId (outside try-catch so it's available in error handling)
+      let testimonyUrl: string | undefined;
+      try {
+        if (segment.testimonyId) {
+          const testimony = await getTestimonyById(segment.testimonyId);
+          testimonyUrl = testimony?.url || undefined;
+        }
+      } catch (error) {
+        logger.warn("Failed to look up testimony URL", {
+          testimonyId: segment.testimonyId,
+          error: error instanceof Error ? error : new Error(String(error))
+        });
+      }
 
       try {
         // Get testimony metadata for the speaker
@@ -142,7 +157,8 @@ export const showUsersAudio = tool({
           ...segment,
           audioFile, // Always generated internally, never from AI input
           language: segment.language || metadata.language,
-          languageCode: (segment as any).languageCode || metadata.languageCode
+          languageCode: (segment as any).languageCode || metadata.languageCode,
+          url: testimonyUrl
         };
 
         const loadTimeMs = Date.now() - startTime;
@@ -221,7 +237,8 @@ export const showUsersAudio = tool({
 
           return {
             ...segment,
-            audioFile: fallbackUrl
+            audioFile: fallbackUrl,
+            url: testimonyUrl
           };
         } catch (fallbackError) {
           // If even fallback fails, use direct GCS URL
@@ -244,11 +261,12 @@ export const showUsersAudio = tool({
 
           return {
             ...segment,
-            audioFile: finalFallbackUrl
+            audioFile: finalFallbackUrl,
+            url: testimonyUrl
           };
         }
       }
-    });
+    }));
 
     // Finish monitoring context and get summary metrics
     const summaryMetrics = monitoringContext.finish();

@@ -23,7 +23,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <Link href="#">
+            <Link href="/developers/mcp" className="no-underline">
               <Announcement>
                 <AnnouncementTag className="bg-green-200">
                   v3 Beta
@@ -113,10 +113,6 @@ export default function Home() {
             </Badge>
           </AspectRatio>
         </motion.div>
-
-        <p className="text-center text-muted-foreground text-xs sm:text-sm">
-          Made with ♥︎ in New York City, USA
-        </p>
       </div>
     </main>
   );

@@ -56,7 +56,8 @@ export const searchTestimonies = async (searchTerms: string[]) => {
             location: sql`${testimonySources.location}`,
             filename: sql`${testimonySources.filename}`,
             testimonyId: sql`${testimonySources.id}`,
-            fullContent: sql`${testimonySources.content}`
+            fullContent: sql`${testimonySources.content}`,
+            url: sql`${testimonySources.url}`
           },
           exactMatchColumns: [
             sql`${testimonySources.survivor_name}`,
@@ -69,14 +70,15 @@ export const searchTestimonies = async (searchTerms: string[]) => {
         });
 
         const formattedResults = hybridResults.slice(0, 3).map(result => ({
-          id: result.id,
+          id: (result.metadata as any).testimonyId, // Use testimonyId (testimonySources.id) not embedding id
           survivorName: (result.metadata as any).survivor_name,
           content: (result.metadata as any).fullContent,
           relevanceScore: result.rrfScore,
           interviewer: (result.metadata as any).interviewer,
           date: (result.metadata as any).date,
           location: (result.metadata as any).location,
-          filename: (result.metadata as any).filename
+          filename: (result.metadata as any).filename,
+          url: (result.metadata as any).url
         }));
 
         searchResults.push(...formattedResults);
@@ -130,7 +132,8 @@ export const searchTestimonies = async (searchTerms: string[]) => {
           timeReference: result.date || undefined,
           location: result.location || undefined,
           citation: `[${result.survivorName}](${sourceUrl})`,
-          filename: result.id // Use ID instead of processed filename
+          filename: result.id, // Use ID instead of processed filename
+          url: result.url || undefined
         };
       }
     );

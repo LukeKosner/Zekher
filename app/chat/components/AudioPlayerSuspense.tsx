@@ -5,7 +5,7 @@
 
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AudioPlayer } from "@/components/audio/AudioPlayer";
+import { AudioPlayer } from "@/app/chat/components/AudioPlayer";
 
 interface AudioSegment {
   testimonyId: string;

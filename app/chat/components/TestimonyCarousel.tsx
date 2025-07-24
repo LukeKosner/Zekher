@@ -12,7 +12,8 @@ import {
   ClockIcon,
   PlayIcon,
   PauseIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ExternalLink
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,8 +31,16 @@ import {
 } from "@/components/ui/collapsible";
 import { useState, useRef } from "react";
 import { generateAudioUrl } from "@/lib/utils/url-generation";
+import Link from "next/link";
+
+// Utility function to truncate text for display
+const truncateText = (text: string, maxLength = 50) => {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength).trim() + "...";
+};
 
 interface TestimonyEntry {
+  id?: string;
   survivorName: string;
   title: string;
   excerpt: string;
@@ -41,6 +50,7 @@ interface TestimonyEntry {
   fullTranscript?: string;
   citation: string;
   filename: string;
+  url?: string;
 }
 
 interface TimestampSegment {
@@ -232,86 +242,114 @@ export const TestimonyCarousel = ({
 
       {status === "result" && (
         <CollapsibleContent className="grid gap-4 overflow-hidden border-t p-4 text-sm">
-          <Carousel className="w-full max-w-4xl mx-auto">
-            <CarouselContent>
+          <Carousel className="w-full max-w-full mx-auto">
+            <CarouselContent className="-ml-2 md:-ml-4">
               {sources.map((testimony, index) => {
-                const timestamps = parseTimestamps(
-                  testimony.fullTranscript || testimony.excerpt || ""
-                );
-
+                const testimonyUrl = testimony.filename ? `/sources/testimony/${testimony.filename}` : '#';
+                
                 return (
-                  <CarouselItem key={testimony.filename || index}>
+                  <CarouselItem key={testimony.filename || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                     <div className="p-1">
-                      <div className="text-center mb-4">
-                        <h3 className="text-xl font-semibold mb-1">
-                          {testimony.survivorName}
-                        </h3>
-                        {(testimony.location || testimony.timeReference) && (
-                          <p className="text-muted-foreground text-xs mt-1">
-                            {testimony.location}
-                            {testimony.location &&
-                              testimony.timeReference &&
-                              ` • `}
-                            {testimony.timeReference}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="max-h-96 overflow-y-auto space-y-3 bg-muted/30 rounded-lg p-4">
-                        {timestamps.length > 0 ? (
-                          timestamps.map((segment, segIndex) => {
-                            const isPlaying =
-                              playingSegment?.testimony === testimony &&
-                              playingSegment?.segmentIndex === segIndex;
-                            return (
-                              <div key={segIndex} className="group">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 mb-1 h-auto p-1 font-mono"
-                                  onClick={() =>
-                                    handleTimestampClick(
-                                      testimony,
-                                      segment,
-                                      segIndex,
-                                      timestamps
-                                    )
-                                  }
-                                >
-                                  {isPlaying ? (
-                                    <PauseIcon className="size-3 mr-1" />
-                                  ) : (
-                                    <PlayIcon className="size-3 mr-1" />
-                                  )}
-                                  {segment.timestamp}
-                                </Button>
-                                <p className="text-sm leading-relaxed pl-2 border-l-2 border-muted">
-                                  {segment.text}
+                      <a
+                        href={testimonyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block relative group/testimony-item cursor-pointer"
+                        title={`${testimony.survivorName} - Dr. David P. Boder Collection`}
+                      >
+                        <div className="relative w-full h-[400px] rounded-md overflow-hidden bg-muted/30 border">
+                          {/* Testimony Preview Content */}
+                          <div className="p-4 h-full flex flex-col transition-all duration-200 group-hover/testimony-item:brightness-50">
+                            {/* Header */}
+                            <div className="text-center mb-4">
+                              <h3 className="text-lg font-semibold mb-1">
+                                {truncateText(testimony.survivorName, 30)}
+                              </h3>
+                              {(testimony.location || testimony.timeReference) && (
+                                <p className="text-muted-foreground text-xs">
+                                  {testimony.location}
+                                  {testimony.location && testimony.timeReference && ` • `}
+                                  {testimony.timeReference}
                                 </p>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <div className="text-center text-muted-foreground">
-                            <p className="text-sm leading-relaxed">
-                              {testimony.excerpt ||
-                                "No transcript segments available"}
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                              )}
+                            </div>
 
+                            {/* Content Preview */}
+                            <div className="flex-1 overflow-hidden">
+                              <div className="space-y-3 max-h-full overflow-y-auto group-hover/testimony-item:overflow-hidden">
+                                {parseTimestamps(testimony.fullTranscript || testimony.excerpt || '').slice(0, 5).map((segment, segIndex) => (
+                                  <div key={segIndex} className="text-xs">
+                                    <div className="font-mono text-blue-600 mb-1">
+                                      [{segment.timestamp}]
+                                    </div>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                      {segment.text.length > 180 ? segment.text.slice(0, 180) + '...' : segment.text}
+                                    </p>
+                                  </div>
+                                ))}
+                                {parseTimestamps(testimony.fullTranscript || testimony.excerpt || '').length === 0 && (
+                                  <p className="text-muted-foreground text-xs leading-relaxed">
+                                    {testimony.excerpt && testimony.excerpt.length > 300 
+                                      ? testimony.excerpt.slice(0, 300) + '...' 
+                                      : testimony.excerpt || "No transcript segments available"}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 group-hover/testimony-item:flex hidden flex-col items-center justify-center pointer-events-none transition-all duration-200">
+                            <div className="flex flex-col items-center">
+                              {/* Title and source info */}
+                              <div className="bg-white bg-opacity-95 text-black px-3 py-2 rounded-lg mb-3 max-w-[90%] text-center shadow-lg">
+                                <div className="font-semibold text-sm">{truncateText(testimony.survivorName, 30)}</div>
+                                <div className="text-xs text-gray-600">Survivor Testimony</div>
+                              </div>
+                              
+                              {/* Action button */}
+                              <div className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg font-medium shadow-lg">
+                                <ExternalLink className="size-4" />
+                                View Full Testimony
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                      
+                      {/* Credit link below the card */}
+                      <div className="mt-2 text-center">
+                        <p className="text-xs text-muted-foreground">
+                          {testimony.url ? (
+                            <a 
+                              href={testimony.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-blue-600 transition-colors underline"
+                              title="View original source"
+                            >
+                              Dr. David P. Boder Collection
+                            </a>
+                          ) : (
+                            <a 
+                              href="https://voices.library.iit.edu/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-blue-600 transition-colors underline"
+                              title="Visit David P. Boder Collection"
+                            >
+                              Dr. David P. Boder Collection
+                            </a>
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </CarouselItem>
                 );
               })}
             </CarouselContent>
-            {sources.length > 1 && (
-              <>
-                <CarouselPrevious />
-                <CarouselNext />
-              </>
-            )}
+            <CarouselPrevious className="left-0 md:left-4" />
+            <CarouselNext className="right-0 md:right-4" />
           </Carousel>
         </CollapsibleContent>
       )}

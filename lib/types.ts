@@ -18,6 +18,7 @@ export interface ToolTestimonyEntry {
   location?: string;
   citation: string;
   filename: string;
+  url?: string;
 }
 
 export interface LexiconResponse {
