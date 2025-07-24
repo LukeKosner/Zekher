@@ -40,7 +40,7 @@ async function getSources(): Promise<{
     const testimonyEntries = await getAllTestimonies();
 
     console.log(
-      "🔍 First few lexicon entries from getAllLexiconEntries():",
+      "🔍 First few Lexicon entries from getAllLexiconEntries():",
       lexiconEntries
         .slice(0, 3)
         .map((e) => ({ id: e.id, title: e.title, slug: e.slug }))
@@ -61,7 +61,7 @@ async function getSources(): Promise<{
 
         if (entry.content) {
           // Remove timestamp markers for preview
-          const content = entry.content.replace(/\[[\d:]+\]/g, "");
+          const content = entry.content.replace(/[\[\d:]+\]/g, "");
           const lines = content.split("\n").filter((line) => line.trim());
 
           const survivorLines = lines.filter(

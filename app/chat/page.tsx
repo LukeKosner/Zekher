@@ -35,17 +35,17 @@ import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LexiconCarousel } from "@/components/sources/LexiconCarousel";
-import { TestimonyCarousel } from "@/components/sources/TestimonyCarousel";
+import { LexiconCarousel } from "@/app/chat/components/LexiconCarousel";
+import { TestimonyCarousel } from "@/app/chat/components/TestimonyCarousel";
 import { generateSourceUrl } from "@/lib/utils/url-generation";
-import { MicIcon, BookOpenCheck, Users, History } from "lucide-react";
+import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
 // Lazy load audio player
 const AudioPlayer = dynamic(
   () =>
-    import("@/components/audio/AudioPlayer").then((mod) => ({
+    import("@/app/chat/components/AudioPlayer").then((mod) => ({
       default: mod.AudioPlayer
     })),
   {
@@ -114,7 +114,7 @@ function ChatContent() {
           displayName: "Survivor Testimonies"
         };
       case "showUsersAudio":
-        return { icon: <MicIcon size={18} />, displayName: "Audio Selections" };
+        return { icon: <AudioWaveform size={18} />, displayName: "Audio Selections" };
       default:
         return { icon: <BookOpenCheck size={18} />, displayName: toolName };
     }
@@ -165,7 +165,7 @@ function ChatContent() {
                         <a
                           href={generateSourceUrl({
                             pageType: "lexicon",
-                            filename: entry.filename
+                            filename: entry.id || entry.filename
                           })}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -194,7 +194,7 @@ function ChatContent() {
                       <a
                         href={generateSourceUrl({
                           pageType: "testimony",
-                          filename: testimony.filename
+                          filename: testimony.id || testimony.filename
                         })}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -261,7 +261,11 @@ function ChatContent() {
       return (
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
           <AITool status="completed">
-            <AIToolHeader name={toolDisplay.displayName} status="completed" />
+            <AIToolHeader 
+              name={toolDisplay.displayName} 
+              status="completed" 
+              icon={<span className="size-4 text-muted-foreground">{toolDisplay.icon}</span>}
+            />
             <AIToolContent>
               <div className="space-y-4">
                 {audioData.segments.map((segment: any, segIdx: number) => (
@@ -344,6 +348,7 @@ function ChatContent() {
                     ? "completed"
                     : "pending"
               }
+              icon={<span className="size-4 text-muted-foreground">{toolDisplay.icon}</span>}
             />
             <AIToolContent>
               {isRunning ? (
@@ -410,20 +415,23 @@ function ChatContent() {
                       const isReasoningStreaming =
                         (part as any).state !== "done" &&
                         status === "streaming";
+                      const reasoningCount = message.parts
+                        .slice(0, partIndex)
+                        .filter((p) => p.type === "reasoning").length;
                       renderedParts.push(
                         <motion.div
-                          key={`${message.id}-reasoning-${partIndex}-${part.text?.slice(0, 20)}`}
+                          key={`${message.id}-reasoning-${reasoningCount}-${part.text?.slice(0, 50)?.replace(/\s+/g, "") || partIndex}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{
                             duration: 0.3,
                             ease: "easeOut",
-                            delay: 0.1
+                            delay: reasoningCount * 0.15
                           }}
                         >
                           <AIReasoning
                             isStreaming={isReasoningStreaming}
-                            defaultOpen={false}
+                            defaultOpen={true}
                           >
                             <AIReasoningTrigger />
                             <AIReasoningContent>{part.text}</AIReasoningContent>
@@ -553,6 +561,13 @@ function ChatLoading() {
 
         <div className="w-full px-4 pb-4">
           <Skeleton className="h-14 w-full rounded-lg" />
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Zekher is in beta and can make mistakes. Check{" "}
+            <Link href="/sources" className="underline">
+              sources
+            </Link>{" "}
+            for verification.
+          </p>
         </div>
       </div>
     </div>

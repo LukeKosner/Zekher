@@ -38,6 +38,7 @@ export type AIToolHeaderProps = ComponentProps<typeof CollapsibleTrigger> & {
   status?: AIToolStatus;
   name: string;
   description?: string;
+  icon?: ReactNode;
 };
 
 const getStatusBadge = (status: AIToolStatus) => {
@@ -68,6 +69,7 @@ export const AIToolHeader = ({
   status = 'pending',
   name,
   description,
+  icon,
   ...props
 }: AIToolHeaderProps) => (
   <CollapsibleTrigger
@@ -78,7 +80,7 @@ export const AIToolHeader = ({
     {...props}
   >
     <div className="flex items-center gap-2">
-      <WrenchIcon className="size-4 text-muted-foreground" />
+      {icon || <WrenchIcon className="size-4 text-muted-foreground" />}
       <span className="font-medium text-sm">{name}</span>
       {getStatusBadge(status)}
     </div>

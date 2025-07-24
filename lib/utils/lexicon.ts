@@ -13,7 +13,7 @@ import type { LexiconEntry } from '@/lib/types';
  */
 export async function getLexiconEntryBySlug(id: string): Promise<LexiconEntry | null> {
   try {
-    console.log(`🔍 Looking for lexicon entry with ID: "${id}"`);
+    console.log(`🔍 Looking for Lexicon entry with ID: "${id}"`);
     
     const results = await db.select()
       .from(lexiconSources)
@@ -28,19 +28,19 @@ export async function getLexiconEntryBySlug(id: string): Promise<LexiconEntry | 
         .from(lexiconSources)
         .limit(5);
       
-      console.log('📝 Sample lexicon entries in database:', allEntries);
+      console.log('📝 Sample Lexicon entries in database:', allEntries);
       return null;
     }
     
-    console.log(`✅ Found lexicon entry: ${entry.title} (ID: ${entry.id})`);
+    console.log(`✅ Found Lexicon entry: ${entry.title} (ID: ${entry.id})`);
     
     return {
       ...entry,
       slug: entry.id, // Use ID as slug
-      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all lexicon entries
+      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all Lexicon entries
     };
   } catch (error) {
-    console.error('Error fetching lexicon entry:', error);
+    console.error('Error fetching Lexicon entry:', error);
     return null;
   }
 }
@@ -65,10 +65,10 @@ export async function getAllLexiconEntries(limit?: number): Promise<LexiconEntry
     return results.map(entry => ({
       ...entry,
       slug: entry.id, // Use ID as slug
-      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all lexicon entries
+      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all Lexicon entries
     }));
   } catch (error) {
-    console.error('Error fetching lexicon entries:', error);
+    console.error('Error fetching Lexicon entries:', error);
     return [];
   }
 }
@@ -86,7 +86,7 @@ export function titleToSlug(title: string): string {
 }
 
 /**
- * Search lexicon entries by title (deprecated - use hybrid search in tools/lexicon.ts)
+ * Search Lexicon entries by title (deprecated - use hybrid search in tools/lexicon.ts)
  * @deprecated Use hybridSearch via lexiconTool for better search results
  */
 export async function searchLexiconEntries(query: string, limit = 20): Promise<LexiconEntry[]> {
@@ -101,10 +101,10 @@ export async function searchLexiconEntries(query: string, limit = 20): Promise<L
     return results.map(entry => ({
       ...entry,
       slug: entry.id, // Use ID as slug
-      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all lexicon entries
+      citation: "Yad Vashem's Holocaust Lexicon" // Standard citation for all Lexicon entries
     }));
   } catch (error) {
-    console.error('Error searching lexicon entries:', error);
+    console.error('Error searching Lexicon entries:', error);
     return [];
   }
 }

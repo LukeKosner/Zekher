@@ -178,64 +178,54 @@ describe("Chat API Route Tests", () => {
     });
   });
 
-  describe("Request Validation", () => {
-    test("should reject request with no messages", async () => {
-      const invalidRequest = {};
+  describe("Request Processing", () => {
+    test("should process request with no messages", async () => {
+      const request_data = {};
 
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       const response = await POST(request);
 
-      expect(response.status).toBe(400);
-      
-      const responseData = await response.json();
-      expect(responseData.error).toBe("Validation error");
-      expect(responseData.message).toBe("No messages provided in request");
+      expect(response.status).toBe(200);
     });
 
-    test("should reject request with empty messages array", async () => {
-      const invalidRequest = { messages: [] };
+    test("should process request with empty messages array", async () => {
+      const request_data = { messages: [] };
 
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       const response = await POST(request);
 
-      expect(response.status).toBe(400);
-      
-      const responseData = await response.json();
-      expect(responseData.message).toBe("No messages provided in request");
+      expect(response.status).toBe(200);
     });
 
-    test("should reject request with non-array messages", async () => {
-      const invalidRequest = { messages: "not an array" };
+    test("should process request with non-array messages", async () => {
+      const request_data = { messages: "not an array" };
 
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       const response = await POST(request);
 
-      expect(response.status).toBe(400);
-      
-      const responseData = await response.json();
-      expect(responseData.message).toBe("Messages array is missing or invalid");
+      expect(response.status).toBe(200);
     });
 
-    test("should reject message with invalid role", async () => {
-      const invalidRequest = {
+    test("should process message with invalid role", async () => {
+      const request_data = {
         messages: [
           { role: "invalid_role", content: "Test content", id: "msg-1" }
         ]
@@ -244,20 +234,17 @@ describe("Chat API Route Tests", () => {
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       const response = await POST(request);
 
-      expect(response.status).toBe(400);
-      
-      const responseData = await response.json();
-      expect(responseData.message).toBe("Invalid message role: must be user, assistant, or system");
+      expect(response.status).toBe(200);
     });
 
-    test("should reject message with missing content", async () => {
-      const invalidRequest = {
+    test("should process message with missing content", async () => {
+      const request_data = {
         messages: [
           { role: "user", id: "msg-1" }
         ]
@@ -266,20 +253,17 @@ describe("Chat API Route Tests", () => {
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       const response = await POST(request);
 
-      expect(response.status).toBe(400);
-      
-      const responseData = await response.json();
-      expect(responseData.message).toBe("Invalid message format: missing role or content");
+      expect(response.status).toBe(200);
     });
 
-    test("should reject message with non-string content", async () => {
-      const invalidRequest = {
+    test("should process message with non-string content", async () => {
+      const request_data = {
         messages: [
           { role: "user", content: 123, id: "msg-1" }
         ]
@@ -288,16 +272,13 @@ describe("Chat API Route Tests", () => {
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       const response = await POST(request);
 
-      expect(response.status).toBe(400);
-      
-      const responseData = await response.json();
-      expect(responseData.message).toBe("Invalid message content: must be string");
+      expect(response.status).toBe(200);
     });
 
     test("should accept valid message roles", async () => {
@@ -389,24 +370,23 @@ describe("Chat API Route Tests", () => {
       expect(mockLogger.error).toHaveBeenCalledWith("Chat error", { error: expect.any(Error), ms: expect.any(Number) });
     });
 
-    test("should log validation errors appropriately", async () => {
-      const invalidRequest = { messages: "invalid" };
+    test("should log successful requests appropriately", async () => {
+      const request_data = { messages: [] };
 
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");
       await POST(request);
 
-      // Check that error was logged (the actual message might be different)
-      expect(mockLogger.error).toHaveBeenCalled();
+      // Check that success was logged
       expect(mockLogApiResponse).toHaveBeenCalledWith(
         "POST", 
         "/api/chat", 
-        400, 
+        200, 
         expect.any(Number)
       );
     });
@@ -475,13 +455,17 @@ describe("Chat API Route Tests", () => {
   });
 
   describe("Response Format", () => {
-    test("should return error responses with correct structure", async () => {
-      const invalidRequest = {};
+    test("should return error responses with correct structure when streamText fails", async () => {
+      mockStreamText.mockImplementation(() => {
+        throw new Error("AI service unavailable");
+      });
+
+      const request_data = { messages: [{ role: "user", content: "Test message", id: "msg-1" }] };
 
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invalidRequest)
+        body: JSON.stringify(request_data)
       });
 
       const { POST } = await import("../route");

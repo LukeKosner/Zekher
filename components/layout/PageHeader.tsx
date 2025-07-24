@@ -19,7 +19,7 @@ export function PageHeader({
   isMobile?: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 bg-white/20 dark:bg-gray-900/20 backdrop-blur-lg backdrop-saturate-150 border-b border-white/10 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
       <div className="items-center gap-2 px-4 hidden md:flex">
         <SidebarTrigger className="-ml-1" />
         <Separator

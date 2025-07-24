@@ -4,17 +4,19 @@
 
 export const layoutConstants = {
   siteName: "Zekher זכר",
-  description: "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies",
+  description:
+    "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies",
   siteUrl: "https://zekher.com",
   themeColor: "#1f2937",
-  fontConfig: {
-    variable: "--font-inter",
-    subsets: ["latin"] as const
-  },
+
   icons: {
     favicon32: { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     favicon16: { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-    appleTouchIcon: { url: "/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
+    appleTouchIcon: {
+      url: "/apple-touch-icon.png",
+      sizes: "192x192",
+      type: "image/png"
+    },
     openGraphImage: {
       url: "/opengraph-image.png",
       width: 512,

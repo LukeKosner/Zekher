@@ -2,12 +2,7 @@
 
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import Image from "next/image";
-import {
-  BookOpenCheckIcon,
-  Code,
-  MessagesSquare,
-  ArrowUpRight
-} from "lucide-react";
+import { BookOpenCheckIcon, MessagesSquare, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

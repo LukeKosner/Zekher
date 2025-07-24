@@ -20,19 +20,11 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const requestData = await req.json();
-    
+
     logApiRequest("POST", chatApiConstants.endpoint);
     logger.info("Chat started", { msgs: requestData.messages?.length || 0 });
 
     const { messages }: { messages: UIMessage[] } = requestData;
-
-    // Validate request data
-    const validationError = validateChatRequest(requestData);
-    if (validationError) {
-      return createErrorResponse(validationError, 400, context);
-    }
-
-    logger.debug("Messages validated", { count: messages?.length });
 
     const streamResult = streamText({
       model: google(chatApiConstants.modelName),
@@ -64,67 +56,6 @@ export async function POST(req: Request): Promise<Response> {
   }
 }
 
-/**
- * Validates the incoming chat request structure and content.
- */
-function validateChatRequest(request: any): string | null {
-  if (!request) {
-    return chatApiErrors.invalidRequest;
-  }
-
-  if (!request.messages) {
-    return chatApiErrors.missingMessages;
-  }
-
-  if (!Array.isArray(request.messages)) {
-    return chatApiErrors.invalidMessages;
-  }
-
-  if (request.messages.length === 0) {
-    return chatApiErrors.missingMessages;
-  }
-
-  // Validate each message structure
-  for (const message of request.messages) {
-    if (!message.role || !message.content) {
-      return "Invalid message format: missing role or content";
-    }
-    
-    if (!['user', 'assistant', 'system'].includes(message.role)) {
-      return "Invalid message role: must be user, assistant, or system";
-    }
-    
-    if (typeof message.content !== 'string') {
-      return "Invalid message content: must be string";
-    }
-  }
-
-  return null;
-}
-
-/**
- * Creates a standardized error response.
- */
-function createErrorResponse(message: string, status: number, context: ChatApiContext): Response {
-  const duration = Date.now() - context.startTime;
-  const errorResponse: ChatErrorResponse = {
-    error: status >= 500 ? chatApiErrors.internalServerError : "Validation error",
-    message,
-    timestamp: new Date().toISOString()
-  };
-
-  logger.error("Chat validation failed", { error: new Error(message), status, ms: duration });
-
-  logApiResponse("POST", chatApiConstants.endpoint, status, duration);
-
-  return new Response(
-    JSON.stringify(errorResponse),
-    {
-      status,
-      headers: { "Content-Type": "application/json" }
-    }
-  );
-}
 
 /**
  * Handles errors that occur during chat processing.
@@ -132,7 +63,7 @@ function createErrorResponse(message: string, status: number, context: ChatApiCo
 function handleChatError(error: unknown, context: ChatApiContext): Response {
   const duration = Date.now() - context.startTime;
   const errorObj = error instanceof Error ? error : new Error(String(error));
-  
+
   logger.error("Chat error", { error: errorObj, ms: duration });
 
   logApiResponse("POST", chatApiConstants.endpoint, 500, duration);
@@ -143,11 +74,8 @@ function handleChatError(error: unknown, context: ChatApiContext): Response {
     timestamp: new Date().toISOString()
   };
 
-  return new Response(
-    JSON.stringify(errorResponse),
-    {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    }
-  );
+  return new Response(JSON.stringify(errorResponse), {
+    status: 500,
+    headers: { "Content-Type": "application/json" }
+  });
 }

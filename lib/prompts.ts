@@ -6,7 +6,7 @@
 export const toolDescriptions = {
   lexiconTool: {
     description:
-      "Get authoritative historical information from Yad Vashem's Holocaust Lexicon. Use for factual/historical questions (what, when, where, who, how many, definitions). Maximum 6 search terms. Returns up to 6 lexicon entries with next steps instructions.",
+      "Get authoritative historical information from Yad Vashem's Holocaust Lexicon. Use for factual/historical questions (what, when, where, who, how many, definitions). Maximum 6 search terms. Returns up to 6 Lexicon entries with next steps instructions.",
     inputDescription:
       "Array of Holocaust-related terms to search. Use specific, relevant terms from the user's question. Maximum 6 terms.",
     maxTerms: 6
@@ -61,7 +61,7 @@ export const errorMessages = {
   lexicon: {
     noTerms: "No search terms provided",
     noResults: "No results found",
-    systemError: "An error occurred while searching the lexicon."
+    systemError: "An error occurred while searching the Lexicon."
   },
 
   testimony: {

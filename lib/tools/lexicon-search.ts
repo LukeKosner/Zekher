@@ -39,7 +39,9 @@ export const searchLexicon = async (searchTerms: string[]) => {
           joinCondition: eq(lexiconEmbeddings.resourceId, lexiconSources.id),
           additionalColumns: {
             title: sql`${lexiconSources.title}`,
-            filename: sql`${lexiconSources.filename}`
+            filename: sql`${lexiconSources.filename}`,
+            pdfUrl: sql`${lexiconSources.pdfUrl}`,
+            sourceId: sql`${lexiconSources.id}`
           },
           exactMatchColumns: [sql`${lexiconSources.title}`],
           exactMatchBoost: 5.0,
@@ -49,9 +51,10 @@ export const searchLexicon = async (searchTerms: string[]) => {
         });
 
         const formattedResults = hybridResults.slice(0, 6).map((result) => ({
-          id: result.id,
+          id: (result.metadata as any).sourceId, // Use the actual lexiconSources.id
           title: (result.metadata as any).title,
           filename: (result.metadata as any).filename,
+          pdfUrl: (result.metadata as any).pdfUrl,
           content: result.content,
           relevanceScore: result.rrfScore
         }));
@@ -119,7 +122,8 @@ export const searchLexicon = async (searchTerms: string[]) => {
         title: fullTitle,
         content: result.content,
         citation: `[${fullTitle}](${sourceUrl})`,
-        filename: result.id // Use ID instead of processed filename
+        filename: result.id, // This is now the correct lexiconSources.id
+        pdfUrl: result.pdfUrl // Include PDF URL from database
       };
     });
 

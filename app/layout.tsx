@@ -18,8 +18,8 @@ import type { LayoutProps } from "./layout.types";
  * Inter font configuration for consistent typography
  */
 const inter = Inter({
-  variable: layoutConstants.fontConfig.variable,
-  subsets: layoutConstants.fontConfig.subsets
+  variable: "--font-inter",
+  subsets: ["latin"]
 });
 
 /**

@@ -37,10 +37,10 @@ export const sourcesPageConstants = {
       "Zekher hosts the entirety of Yad Vashem's Holocaust Lexicon and a selection of survivor interviews with David P. Boder.",
     searchPlaceholder: "Search sources...",
     noFeaturedSources: "No featured sources available.",
-    noLexiconEntries: "No lexicon entries available.",
+    noLexiconEntries: "No Lexicon entries available.",
     noTestimonies: "No testimonies available.",
     noSearchResults: {
-      lexicon: "No lexicon entries match your search.",
+      lexicon: "No Lexicon entries match your search.",
       testimony: "No testimonies match your search."
     }
   },
@@ -88,10 +88,10 @@ export const sourcesPageConstants = {
   metadata: {
     lexicon: {
       notFoundTitle: "Lexicon Entry Not Found",
-      notFoundDescription: "The requested lexicon entry could not be found.",
+      notFoundDescription: "The requested Lexicon entry could not be found.",
       defaultTitle: "Holocaust Lexicon",
       defaultDescription: "Yad Vashem Holocaust Lexicon entry",
-      archiveFooter: "This lexicon entry is part of the Zekher Holocaust Education Archive."
+      archiveFooter: "This Lexicon entry is part of the Zekher Holocaust Education Archive."
     },
     testimony: {
       notFoundTitle: "Testimony Not Found",

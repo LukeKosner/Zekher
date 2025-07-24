@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Play,
+  Pause,
+  AlertCircle,
+  Loader2,
+  Languages,
+  ChevronDown
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AudioSegment {
@@ -27,6 +34,10 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [translationError, setTranslationError] = useState<string | null>(null);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -177,6 +188,46 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const handleTranslate = async () => {
+    if (translatedText) {
+      setShowTranslation(!showTranslation);
+      return;
+    }
+
+    setIsTranslating(true);
+    setTranslationError(null);
+
+    try {
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          text: segment.transcriptExcerpt,
+          targetLanguage: "en",
+          sourceLanguage:
+            segment.language?.toLowerCase() === "english"
+              ? undefined
+              : segment.language
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Translation failed");
+      }
+
+      const data = await response.json();
+      setTranslatedText(data.translatedText);
+      setShowTranslation(true);
+    } catch (error) {
+      setTranslationError("Translation failed. Please try again.");
+      console.error("Translation error:", error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   return (
     <div
       data-testid="audio-player"
@@ -186,7 +237,6 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
       )}
     >
       <div className="flex items-start gap-3">
-        <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5" />
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">{segment.speakerName}</h4>
@@ -201,18 +251,69 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
               <span className="text-amber-800 dark:text-amber-200 font-medium">
                 Audio is in {segment.language}
               </span>
-              <span className="text-amber-600 dark:text-amber-300">
-                (English translation provided below)
-              </span>
             </div>
           )}
 
-          <p
-            id={`audio-transcript-${segment.testimonyId}`}
-            className="text-xs text-gray-600 dark:text-gray-400 italic line-clamp-2"
-          >
-            &quot;{segment.transcriptExcerpt}&quot;
-          </p>
+          <div className="space-y-2">
+            <p
+              id={`audio-transcript-${segment.testimonyId}`}
+              className="text-xs text-gray-600 dark:text-gray-400 italic"
+            >
+              &quot;{segment.transcriptExcerpt}&quot;
+            </p>
+
+            {/* Translation Button */}
+            {segment.language &&
+              segment.language.toLowerCase() !== "english" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleTranslate}
+                    disabled={isTranslating}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isTranslating ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Languages className="w-3 h-3" />
+                    )}
+                    {translatedText ? (
+                      <>
+                        <span>
+                          {showTranslation ? "Hide" : "Show"} Translation
+                        </span>
+                        <ChevronDown
+                          className={`w-3 h-3 transition-transform ${showTranslation ? "rotate-180" : ""}`}
+                        />
+                      </>
+                    ) : (
+                      <span>Use Machine Translate</span>
+                    )}
+                  </button>
+                </div>
+              )}
+
+            {/* Translation Display */}
+            {showTranslation && translatedText && (
+              <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                <p className="text-xs text-blue-800 dark:text-blue-200 font-medium mb-1">
+                  English Translation:
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300 italic">
+                  &quot;{translatedText}&quot;
+                </p>
+              </div>
+            )}
+
+            {/* Translation Error */}
+            {translationError && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {translationError}
+                </p>
+              </div>
+            )}
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">

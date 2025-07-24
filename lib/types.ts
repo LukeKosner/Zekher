@@ -8,6 +8,7 @@ export interface ToolLexiconEntry {
   content: string;
   citation: string;
   filename: string;
+  pdfUrl?: string | null;
 }
 
 export interface ToolTestimonyEntry {

@@ -3,9 +3,17 @@
 import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, MapPinIcon, UserIcon, LanguagesIcon, PlayIcon, PauseIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  MapPinIcon,
+  UserIcon,
+  LanguagesIcon,
+  PlayIcon,
+  PauseIcon
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateAudioUrl } from "@/lib/utils/url-generation";
+import Link from "next/link";
 
 /**
  * @file This file defines the client-side component for displaying a single testimony.
@@ -37,17 +45,21 @@ interface TestimonyData {
  */
 function formatTestimonyContent(content: string): string[] {
   if (!content) return [];
-  
+
   // Split by double newlines to create paragraphs
   const paragraphs = content
     .split(/\n\s*\n/)
-    .map(p => p.trim())
-    .filter(p => p.length > 0);
-    
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
   return paragraphs;
 }
 
-export function TestimonyPageClient({ testimony }: { testimony: TestimonyData }) {
+export function TestimonyPageClient({
+  testimony
+}: {
+  testimony: TestimonyData;
+}) {
   const [playingSegment, setPlayingSegment] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentPlayPromise = useRef<Promise<void> | null>(null);
@@ -89,8 +101,13 @@ export function TestimonyPageClient({ testimony }: { testimony: TestimonyData })
 
   const timestamps = parseTimestamps(testimony.content || "");
 
-  const handleTimestampClick = async (segment: TimestampSegment, segmentIndex: number) => {
-    const audioFile = generateAudioUrl({ speakerName: testimony.survivor_name });
+  const handleTimestampClick = async (
+    segment: TimestampSegment,
+    segmentIndex: number
+  ) => {
+    const audioFile = generateAudioUrl({
+      speakerName: testimony.survivor_name
+    });
 
     // If this segment is already playing, pause it
     if (playingSegment === segmentIndex) {
@@ -158,17 +175,16 @@ export function TestimonyPageClient({ testimony }: { testimony: TestimonyData })
   };
 
   const paragraphs = formatTestimonyContent(testimony.content);
-  const formattedDate = testimony.date ? new Date(testimony.date).toLocaleDateString() : null;
+  const formattedDate = testimony.date
+    ? new Date(testimony.date).toLocaleDateString()
+    : null;
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
-
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6">
-          {testimony.survivor_name}
-        </h1>
-        
+        <h1 className="text-3xl font-bold mb-6">{testimony.survivor_name}</h1>
+
         {/* Metadata */}
         <div className="flex flex-wrap gap-3">
           {formattedDate && (
@@ -209,12 +225,17 @@ export function TestimonyPageClient({ testimony }: { testimony: TestimonyData })
               {timestamps.map((segment, segmentIndex) => {
                 const isPlaying = playingSegment === segmentIndex;
                 return (
-                  <div key={segmentIndex} className="group border-l-2 border-muted pl-4 py-3">
+                  <div
+                    key={segmentIndex}
+                    className="group border-l-2 border-muted pl-4 py-3"
+                  >
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 mb-2 h-auto p-2 font-mono"
-                      onClick={() => handleTimestampClick(segment, segmentIndex)}
+                      onClick={() =>
+                        handleTimestampClick(segment, segmentIndex)
+                      }
                     >
                       {isPlaying ? (
                         <PauseIcon className="size-4 mr-2" />
@@ -223,9 +244,7 @@ export function TestimonyPageClient({ testimony }: { testimony: TestimonyData })
                       )}
                       {segment.timestamp}
                     </Button>
-                    <p className="text-sm leading-relaxed">
-                      {segment.text}
-                    </p>
+                    <p className="text-sm leading-relaxed">{segment.text}</p>
                   </div>
                 );
               })}
@@ -254,7 +273,12 @@ export function TestimonyPageClient({ testimony }: { testimony: TestimonyData })
       {/* Footer */}
       <div className="mt-8 text-sm text-muted-foreground text-center">
         <p>
-          This testimony is part of the Zekher Holocaust Education Archive.
+          This testimony comes from the{" "}
+          <Link href="https://voices.library.iit.edu/">
+            David P. Boder collection
+          </Link>
+          . Zekher hosts these documents to avoid putting pressure on Aviary
+          servers. Zekher claims no ownership over this content.
           {testimony.createdAt && (
             <> Added on {new Date(testimony.createdAt).toLocaleDateString()}.</>
           )}
