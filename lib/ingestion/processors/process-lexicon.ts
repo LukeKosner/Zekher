@@ -1,6 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 async function getTextSizes(pdfDoc: any, pageNum: number) {
   const page = await pdfDoc.getPage(pageNum);
@@ -298,7 +301,7 @@ async function processLexiconFile(filePath: string): Promise<void> {
 
 async function processTxtFile(filePath: string): Promise<void> {
   const filename = path.basename(filePath);
-  console.log(`Processing txt file: ${filename}`);
+  logger.info("Processing txt file", { filename });
 
   // Read the txt file content
   const content = await fs.readFile(filePath, "utf-8");
@@ -401,7 +404,7 @@ async function main() {
 }
 
 async function generateLexiconJson(): Promise<void> {
-  console.log("Generating lexicon.json...");
+  logger.info("Generating lexicon.json");
 
   const txtDir = path.join(process.env.LEXICON_PROCESSED_TXT_ROOT!);
   const pdfDir = path.join(process.env.LEXICON_PROCESSED_PDF_ROOT!);
@@ -451,7 +454,9 @@ async function generateLexiconJson(): Promise<void> {
   };
 
   await fs.writeFile(lexiconPath, JSON.stringify(lexiconData, null, 2));
-  console.log(`Generated lexicon.json with ${lexiconEntries.length} entries`);
+  logger.info("Generated lexicon.json", { 
+    entryCount: lexiconEntries.length 
+  });
 }
 
 async function fixExistingProcessedFiles(): Promise<void> {
@@ -516,9 +521,11 @@ async function fixExistingProcessedFiles(): Promise<void> {
       }
     }
 
-    console.log("Finished fixing existing processed files");
+    logger.info("Finished fixing existing processed files");
   } catch (error) {
-    console.log("Error fixing existing processed files:", error);
+    logger.error("Error fixing existing processed files", { 
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 }
 

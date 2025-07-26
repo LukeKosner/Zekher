@@ -2,7 +2,7 @@
  * MCP (Model Context Protocol) feature types
  */
 
-import type { ToolLexiconEntry } from "@/lib/types";
+import type { ToolLexiconEntry } from "@/lib/shared";
 
 // MCP-specific response interface
 export interface McpLexiconResponse {

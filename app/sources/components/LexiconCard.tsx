@@ -17,9 +17,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, ArrowUpRight } from "lucide-react";
 import { LexiconCardProps } from "@/app/sources/types";
-import { cn } from "@/lib/utils";
-import { generateSourceUrl } from "@/lib/utils/url-generation";
+import { cn } from "@/lib";
+import { generateSourceUrl } from "@/lib";
 import { sourcesPageConstants } from "@/app/sources/constants";
+import Link from "next/link";
 
 export function LexiconCard({ source, className }: LexiconCardProps) {
   // Use the authoritative title from the database
@@ -161,20 +162,20 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
         ) : (
           <>
             {pdfUrl ? (
-              <a href={routeUrl} className="w-full">
+              <Link href={routeUrl} className="w-full">
                 <Button variant="outline" className="w-full">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   {sourcesPageConstants.cardText.lexicon.viewFullPdf}
                 </Button>
-              </a>
+              </Link>
             ) : (
               txtUrl && (
-                <a href={routeUrl + "?view=txt"} className="w-full">
+                <Link href={routeUrl + "?view=txt"} className="w-full">
                   <Button variant="outline" className="w-full">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     {sourcesPageConstants.cardText.lexicon.viewFullText}
                   </Button>
-                </a>
+                </Link>
               )
             )}
           </>

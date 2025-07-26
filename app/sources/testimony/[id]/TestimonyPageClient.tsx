@@ -12,7 +12,7 @@ import {
   PauseIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { generateAudioUrl } from "@/lib/utils/url-generation";
+import { generateAudioUrl } from "@/lib";
 import Link from "next/link";
 
 /**

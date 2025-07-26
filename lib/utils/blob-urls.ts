@@ -74,7 +74,7 @@ function loadBlobUrlConfig(): BlobUrls {
       console.warn(errorMessage);
 
       // Track configuration error
-      import("./monitoring")
+      import("@/lib/monitoring")
         .then(({ trackBlobUrlConfigError }) => {
           trackBlobUrlConfigError(errorMessage, "validation");
         })
@@ -95,7 +95,7 @@ function loadBlobUrlConfig(): BlobUrls {
     console.warn(errorMessage);
 
     // Track loading error
-    import("./monitoring")
+    import("@/lib/monitoring")
       .then(({ trackBlobUrlConfigError }) => {
         trackBlobUrlConfigError(errorMessage, "loading");
       })

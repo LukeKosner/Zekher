@@ -9,9 +9,9 @@ const { logger } = Sentry;
 // Import shared utilities and types
 import { generateLexiconEmbeddings } from "@/lib/ingestion/embeddings";
 import { hybridSearch } from "@/lib/search/hybrid-search";
-import { lexiconEmbeddings, lexiconSources } from "@/lib/db/schema";
-import { generateSourceUrl } from "@/lib/utils/url-generation";
-import type { ToolLexiconEntry } from "@/lib/types";
+import { lexiconEmbeddings, lexiconSources } from "@/lib/database/schema";
+import { generateSourceUrl } from "@/lib";
+import type { ToolLexiconEntry } from "@/lib/shared";
 
 // Import local constants
 import { mcpConstants } from "./constants";
@@ -29,7 +29,8 @@ const errorMessages = {
  * Next steps instructions for search results
  */
 const nextStepsInstructions = {
-  lexicon: "Provide your answer using multiple sources from this historical data, then ask if the user would like to hear survivor accounts.",
+  lexicon:
+    "Provide your answer using multiple sources from this historical data, then ask if the user would like to hear survivor accounts.",
   noResults: "Try different search terms.",
   noResultsLexicon: "Try different terms for historical information.",
   noSearchTerms: "Provide search terms to find information."
@@ -136,22 +137,24 @@ export const searchLexicon = async (searchTerms: string[]) => {
       return formattedResults.trim();
     };
 
-    const lexiconEntries: ToolLexiconEntry[] = deduplicatedResults.map((result) => {
-      // Use ID directly as the URL identifier
-      const sourceUrl = generateSourceUrl({
-        pageType: "lexicon",
-        filename: result.id
-      });
+    const lexiconEntries: ToolLexiconEntry[] = deduplicatedResults.map(
+      (result) => {
+        // Use ID directly as the URL identifier
+        const sourceUrl = generateSourceUrl({
+          pageType: "lexicon",
+          filename: result.id
+        });
 
-      const fullTitle = result.title || `Entry ${result.id}`;
-      
-      return {
-        title: fullTitle,
-        content: result.content,
-        citation: `[${fullTitle}](${sourceUrl})`,
-        filename: result.id // Use ID instead of processed filename
-      };
-    });
+        const fullTitle = result.title || `Entry ${result.id}`;
+
+        return {
+          title: fullTitle,
+          content: result.content,
+          citation: `[${fullTitle}](${sourceUrl})`,
+          filename: result.id // Use ID instead of processed filename
+        };
+      }
+    );
 
     const displayText = generateFormattedText(deduplicatedResults);
 

@@ -1,12 +1,15 @@
 "use client";
 
 import type { HTMLAttributes } from "react";
-import { memo, createContext, useContext } from "react";
+import { memo, createContext } from "react";
 import ReactMarkdown, { type Options } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
+import { cn } from "@/lib";
 import { getSourceLink } from "./source";
 import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 export type AIResponseProps = HTMLAttributes<HTMLDivElement> & {
   options?: Options;
@@ -23,22 +26,53 @@ export interface CitationInfo {
 
 const CitationContext = createContext<CitationInfo[]>([]);
 
+const fadeUp = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } }
+};
+
+// Helper to create motion components with proper prop filtering
+const createMotionComponent =
+  (Tag: keyof typeof motion, defaultClassName = "") =>
+  ({ node, children, className, ...props }: any) => {
+    // Filter out conflicting props that have different signatures in Motion vs React
+    const {
+      onDrag,
+      onDragStart,
+      onDragEnd,
+      onDragOver,
+      onDragEnter,
+      onDragLeave,
+      onDrop,
+      onAnimationStart,
+      onAnimationEnd,
+      onAnimationIteration,
+      onTransitionEnd,
+      ...htmlProps
+    } = props;
+    const MotionTag = motion[Tag] as any;
+    return (
+      <MotionTag
+        key={node?.position?.start.offset}
+        className={cn(defaultClassName, className)}
+        {...fadeUp}
+        {...htmlProps}
+      >
+        {children}
+      </MotionTag>
+    );
+  };
+
 const components: Options["components"] = {
-  ol: ({ node, children, className, ...props }) => (
-    <ol className={cn("ml-4 list-outside list-decimal", className)} {...props}>
-      {children}
-    </ol>
-  ),
+  ol: createMotionComponent("ol", "ml-4 list-outside list-decimal"),
   li: ({ node, children, className, ...props }) => (
     <li className={cn("py-1", className)} {...props}>
       {children}
     </li>
   ),
-  ul: ({ node, children, className, ...props }) => (
-    <ul className={cn("ml-4 list-outside list-decimal", className)} {...props}>
-      {children}
-    </ul>
-  ),
+  ul: createMotionComponent("ul", "ml-4 list-outside list-decimal"),
+  p: createMotionComponent("p"),
   strong: ({ node, children, className, ...props }) => (
     <span className={cn("font-semibold", className)} {...props}>
       {children}
@@ -91,45 +125,12 @@ const components: Options["components"] = {
       </a>
     );
   },
-  h1: ({ node, children, className, ...props }) => (
-    <h1
-      className={cn("mt-6 mb-2 font-semibold text-3xl", className)}
-      {...props}
-    >
-      {children}
-    </h1>
-  ),
-  h2: ({ node, children, className, ...props }) => (
-    <h2
-      className={cn("mt-6 mb-2 font-semibold text-2xl", className)}
-      {...props}
-    >
-      {children}
-    </h2>
-  ),
-  h3: ({ node, children, className, ...props }) => (
-    <h3 className={cn("mt-6 mb-2 font-semibold text-xl", className)} {...props}>
-      {children}
-    </h3>
-  ),
-  h4: ({ node, children, className, ...props }) => (
-    <h4 className={cn("mt-6 mb-2 font-semibold text-lg", className)} {...props}>
-      {children}
-    </h4>
-  ),
-  h5: ({ node, children, className, ...props }) => (
-    <h5
-      className={cn("mt-6 mb-2 font-semibold text-base", className)}
-      {...props}
-    >
-      {children}
-    </h5>
-  ),
-  h6: ({ node, children, className, ...props }) => (
-    <h6 className={cn("mt-6 mb-2 font-semibold text-sm", className)} {...props}>
-      {children}
-    </h6>
-  )
+  h1: createMotionComponent("h1", "mt-6 mb-2 font-semibold text-3xl"),
+  h2: createMotionComponent("h2", "mt-6 mb-2 font-semibold text-2xl"),
+  h3: createMotionComponent("h3", "mt-6 mb-2 font-semibold text-xl"),
+  h4: createMotionComponent("h4", "mt-6 mb-2 font-semibold text-lg"),
+  h5: createMotionComponent("h5", "mt-6 mb-2 font-semibold text-base"),
+  h6: createMotionComponent("h6", "mt-6 mb-2 font-semibold text-sm")
 };
 
 function transformCitationsToFootnotes(text: string): string {
@@ -180,19 +181,24 @@ function transformCitationsToFootnotes(text: string): string {
 
     return transformedText.trim();
   } catch (error) {
-    console.error("Error processing footnotes:", error);
+    logger.error("Error processing footnotes", {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    Sentry.captureException(error, {
+      tags: {
+        component: "ai-response",
+        operation: "transformCitationsToFootnotes"
+      }
+    });
     return text;
   }
 }
 
 function transformCitationsToLinks(text: string): string {
-  console.log("🔄 Transform input:", text.substring(0, 200) + "...");
-
   try {
     // First try footnote transformation
     const footnoteTransformed = transformCitationsToFootnotes(text);
     if (footnoteTransformed !== text) {
-      console.log("Footnote transformation applied");
       return footnoteTransformed;
     }
 
@@ -212,10 +218,14 @@ function transformCitationsToLinks(text: string): string {
     // IMPORTANT: Don't transform simple numbered citations like [1], [2], [3]
     // if they already have proper URLs - let ReactMarkdown handle them as-is
 
-    console.log("Transform output:", text.substring(0, 200) + "...");
     return text;
   } catch (error) {
-    console.error("Error in transformCitationsToLinks:", error);
+    logger.error("Error in transformCitationsToLinks", {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    Sentry.captureException(error, {
+      tags: { component: "ai-response", operation: "transformCitationsToLinks" }
+    });
     return text;
   }
 }

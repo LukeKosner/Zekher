@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import {BookIcon, ChevronDownIcon} from 'lucide-react';
-import type {ComponentProps} from 'react';
+import { BookIcon, ChevronDownIcon } from "lucide-react";
+import type { ComponentProps } from "react";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {cn} from '@/lib/utils';
-import { generateSourceUrl } from '@/lib/utils/url-generation';
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib";
+import { generateSourceUrl } from "@/lib";
 
-export type AISourcesProps = ComponentProps<'div'>;
+export type AISourcesProps = ComponentProps<"div">;
 
-export const AISources = ({className, ...props}: AISourcesProps) => (
+export const AISources = ({ className, ...props }: AISourcesProps) => (
   <Collapsible
-    className={cn('not-prose mb-4 text-primary text-xs', className)}
+    className={cn("not-prose mb-4 text-primary text-xs", className)}
     {...props}
   />
 );
@@ -48,14 +48,19 @@ export const AISourcesContent = ({
   ...props
 }: AISourcesContentProps) => (
   <CollapsibleContent
-    className={cn('mt-3 flex flex-col gap-2', className)}
+    className={cn("mt-3 flex flex-col gap-2", className)}
     {...props}
   />
 );
 
-export type AISourceProps = ComponentProps<'a'>;
+export type AISourceProps = ComponentProps<"a">;
 
-export const AISource = ({href, title, children, ...props}: AISourceProps) => (
+export const AISource = ({
+  href,
+  title,
+  children,
+  ...props
+}: AISourceProps) => (
   <a
     className="flex items-center gap-2"
     href={href}
@@ -81,9 +86,9 @@ export function getSourceLink({
   endTime,
   transcriptExcerpt,
   language,
-  significance,
+  significance
 }: {
-  type: 'lexicon' | 'testimony' | 'audio';
+  type: "lexicon" | "testimony" | "audio";
   id: string;
   speakerName?: string;
   startTime?: number;
@@ -92,14 +97,14 @@ export function getSourceLink({
   language?: string;
   significance?: string;
 }): string {
-  if (type === 'lexicon') {
-    return generateSourceUrl({ pageType: 'lexicon', filename: id });
+  if (type === "lexicon") {
+    return generateSourceUrl({ pageType: "lexicon", filename: id });
   }
-  if (type === 'testimony') {
-    return generateSourceUrl({ pageType: 'testimony', filename: id });
+  if (type === "testimony") {
+    return generateSourceUrl({ pageType: "testimony", filename: id });
   }
   if (
-    type === 'audio' &&
+    type === "audio" &&
     speakerName &&
     startTime !== undefined &&
     endTime !== undefined &&
@@ -107,16 +112,16 @@ export function getSourceLink({
     significance
   ) {
     const params = new URLSearchParams({
-      pageType: 'audio',
+      pageType: "audio",
       id,
       speakerName,
       startTime: String(startTime),
       endTime: String(endTime),
       transcriptExcerpt,
-      significance,
+      significance
     });
-    if (language) params.set('language', language);
+    if (language) params.set("language", language);
     return `/sources?${params.toString()}`;
   }
-  return '#';
+  return "#";
 }

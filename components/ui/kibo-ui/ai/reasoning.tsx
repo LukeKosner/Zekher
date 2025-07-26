@@ -9,7 +9,7 @@ import { ChevronDownIcon, BrainIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib";
 import { AIResponse } from "./response";
 type AIReasoningContextValue = {
   isStreaming: boolean;
@@ -121,10 +121,12 @@ export const AIReasoningTrigger = memo(
         {children ?? (
           <>
             <div className="flex items-center gap-1">
-              <BrainIcon className={cn(
-                "size-4 text-muted-foreground transition-all duration-200 ease-out",
-                isStreaming && "animate-pulse"
-              )} />
+              <BrainIcon
+                className={cn(
+                  "size-4 text-muted-foreground transition-all duration-200 ease-out",
+                  isStreaming && "animate-pulse"
+                )}
+              />
               <div className="transition-all duration-200 ease-out">
                 {isStreaming && duration === 0 ? (
                   <p>Thinking...</p>

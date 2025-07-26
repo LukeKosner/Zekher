@@ -3,12 +3,34 @@
  * Handles server-side data fetching, formatting, and rendering with proper loading states.
  */
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sources - Zekher",
+  description:
+    "Browse Yad Vashem's Holocaust Lexicon entries and David P. Boder's survivor interview collection. Comprehensive Holocaust education resources.",
+  keywords: [
+    "Holocaust sources",
+    "Yad Vashem Lexicon",
+    "David Boder interviews",
+    "Holocaust testimonies",
+    "Holocaust education",
+    "survivor stories"
+  ],
+  openGraph: {
+    title: "Sources - Zekher",
+    description:
+      "Browse Yad Vashem's Holocaust Lexicon entries and David P. Boder's survivor interview collection.",
+    type: "website"
+  }
+};
+
 import { Suspense } from "react";
 import type { JSX } from "react";
 import { SourcesPageContent } from "./components/SourcesPageContent";
 import { SourcesPageFallback } from "./components/skeletons";
-import { getAllLexiconEntries } from "@/lib/utils/lexicon";
-import { getAllTestimonies } from "@/lib/utils/testimony";
+import { getAllLexiconEntries } from "@/lib/database";
+import { getAllTestimonies } from "@/lib/database";
 import { LexiconSource, TestimonySource } from "./types";
 import { sourcesPageConstants } from "@/app/sources/constants";
 

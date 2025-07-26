@@ -15,6 +15,7 @@ Sentry.init({
   _experiments: {enableLogs: true},
   integrations: [
     Sentry.vercelAIIntegration(),
-    Sentry.consoleLoggingIntegration({levels: ['error', 'warn']}),
+    // Send console.log, console.error, and console.warn calls as logs to Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
   ],
 });

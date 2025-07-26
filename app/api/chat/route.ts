@@ -1,10 +1,16 @@
 import { lexiconTool, testimonyTool, showUsersAudio } from "@/lib/tools";
 import { google } from "@ai-sdk/google";
-import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  type UIMessage,
+  hasToolCall
+} from "ai";
 import { holocaustEducatorPrompt } from "./prompts";
 import { chatApiConstants, chatApiErrors } from "./constants";
-import { logger, logApiRequest, logApiResponse } from "@/lib/utils/logger";
+import { logger, logApiRequest, logApiResponse } from "@/lib/monitoring";
 import type { ChatErrorResponse, ChatApiContext } from "./types";
+import * as Sentry from "@sentry/nextjs";
 
 export const maxDuration = 60;
 
@@ -30,6 +36,8 @@ export async function POST(req: Request): Promise<Response> {
       model: google(chatApiConstants.modelName),
       messages: convertToModelMessages(messages),
       system: holocaustEducatorPrompt,
+      stopWhen: hasToolCall("showUsersAudio"),
+      temperature: 0,
       providerOptions: {
         google: {
           thinkingConfig: {
@@ -47,7 +55,7 @@ export async function POST(req: Request): Promise<Response> {
     const response = streamResult.toUIMessageStreamResponse();
 
     const duration = Date.now() - context.startTime;
-    logApiResponse("POST", chatApiConstants.endpoint, 200, duration);
+    logApiResponse("POST", chatApiConstants.endpoint, 200, { duration });
     logger.info("Chat completed", { ms: duration });
 
     return response;
@@ -65,7 +73,20 @@ function handleChatError(error: unknown, context: ChatApiContext): Response {
 
   logger.error("Chat error", { error: errorObj, ms: duration });
 
-  logApiResponse("POST", chatApiConstants.endpoint, 500, duration);
+  // Capture error in Sentry with context
+  Sentry.captureException(errorObj, {
+    tags: {
+      component: "api",
+      endpoint: "chat",
+      operation: "POST"
+    },
+    extra: {
+      duration,
+      timestamp: new Date().toISOString()
+    }
+  });
+
+  logApiResponse("POST", chatApiConstants.endpoint, 500, { duration });
 
   const errorResponse: ChatErrorResponse = {
     error: chatApiErrors.internalServerError,

@@ -1,5 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
+import * as Sentry from '@sentry/node';
+
+const logger = Sentry;
 
 interface TestimonyEntry {
   title: string;
@@ -163,7 +166,14 @@ function cleanTranscription(content: string): string {
 
 async function processTestimonyFile(filePath: string): Promise<void> {
   const filename = path.basename(filePath);
-  console.log(`Processing testimony file: ${filename}`);
+  logger.addBreadcrumb({
+    message: 'Starting testimony file processing',
+    level: 'info',
+    data: {
+      filename,
+      filePath
+    }
+  });
 
   try {
     const content = await fs.readFile(filePath, 'utf-8');
@@ -171,7 +181,14 @@ async function processTestimonyFile(filePath: string): Promise<void> {
     const {metadata, transcriptionStart} = extractMetadata(content);
 
     if (transcriptionStart === -1) {
-      console.log(`Could not find transcription start in ${filename}`);
+      logger.addBreadcrumb({
+        message: 'Could not find transcription start in file',
+        level: 'warning',
+        data: {
+          filename,
+          filePath
+        }
+      });
       return;
     }
 
@@ -213,14 +230,38 @@ async function processTestimonyFile(filePath: string): Promise<void> {
     );
     await fs.writeFile(txtOutputPath, cleanedContent);
 
-    console.log(`Processed: ${safeFilename}`);
+    logger.addBreadcrumb({
+      message: 'Successfully processed testimony file',
+      level: 'info',
+      data: {
+        filename,
+        safeFilename,
+        outputPath: txtOutputPath,
+        interviewee: metadata.interviewee,
+        interviewer: metadata.interviewer,
+        date: metadata.date,
+        location: metadata.location
+      }
+    });
   } catch (error) {
-    console.error(`Error processing ${filename}:`, error);
+    logger.captureException(error, {
+      tags: {
+        operation: 'process_testimony_file',
+        filename
+      },
+      extra: {
+        filePath,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    });
   }
 }
 
 async function generateTestimonyJson(): Promise<void> {
-  console.log('Generating testimony.json...');
+  logger.addBreadcrumb({
+    message: 'Starting testimony.json generation',
+    level: 'info'
+  });
 
   const txtDir = path.join(
     `${process.env.USER_DATA_PATH}/hf-custom-backup-processed/testimony/txt`,
@@ -259,7 +300,14 @@ async function generateTestimonyJson(): Promise<void> {
             metadata = extractedMetadata;
           }
         } catch (error) {
-          console.log(`Could not find raw file for ${title}`);
+          logger.addBreadcrumb({
+            message: 'Could not find raw file for testimony entry',
+            level: 'warning',
+            data: {
+              title,
+              txtFile
+            }
+          });
         }
 
         // Create testimony entry
@@ -300,11 +348,25 @@ async function generateTestimonyJson(): Promise<void> {
     };
 
     await fs.writeFile(testimonyPath, JSON.stringify(testimonyData, null, 2));
-    console.log(
-      `Generated testimony.json with ${testimonyEntries.length} entries`,
-    );
+    logger.addBreadcrumb({
+      message: 'Successfully generated testimony.json',
+      level: 'info',
+      data: {
+        totalEntries: testimonyEntries.length,
+        outputPath: testimonyPath,
+        generatedAt: testimonyData.generated
+      }
+    });
   } catch (error) {
-    console.error('Error generating testimony.json:', error);
+    logger.captureException(error, {
+      tags: {
+        operation: 'generate_testimony_json'
+      },
+      extra: {
+        txtDir,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    });
   }
 }
 
@@ -318,10 +380,24 @@ async function deleteProcessedTestimonyFiles(): Promise<void> {
     for (const file of txtFiles) {
       const filePath = path.join(txtDir, file);
       await fs.unlink(filePath);
-      console.log(`Deleted testimony file: ${file}`);
+      logger.addBreadcrumb({
+        message: 'Deleted testimony file',
+        level: 'info',
+        data: {
+          filename: file,
+          filePath
+        }
+      });
     }
   } catch (error) {
-    console.log('No testimony files to delete or directory does not exist');
+    logger.addBreadcrumb({
+      message: 'No testimony files to delete or directory does not exist',
+      level: 'info',
+      data: {
+        txtDir,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    });
   }
 }
 
@@ -345,21 +421,57 @@ async function main() {
         const filePath = path.join(testimonyDir, file);
         await processTestimonyFile(filePath);
       } else {
-        console.log(`Skipping non-txt file: ${file}`);
+        logger.addBreadcrumb({
+          message: 'Skipping non-txt file',
+          level: 'info',
+          data: {
+            filename: file,
+            directory: testimonyDir
+          }
+        });
       }
     }
 
     // Generate testimony.json after processing all files
     await generateTestimonyJson();
   } catch (error) {
-    console.error('Error processing testimony files:', error);
+    logger.captureException(error, {
+      tags: {
+        operation: 'process_testimony_main'
+      },
+      extra: {
+        testimonyDir,
+        processedTxtDir,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    });
   }
 }
 
 // Check command line arguments
 const args = process.argv.slice(2);
 if (args.includes('--delete') || args.includes('-d')) {
-  deleteProcessedTestimonyFiles().catch(console.error);
+  deleteProcessedTestimonyFiles().catch(error => {
+    logger.captureException(error, {
+      tags: {
+        operation: 'delete_testimony_files'
+      },
+      extra: {
+        args,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    });
+  });
 } else {
-  main().catch(console.error);
+  main().catch(error => {
+    logger.captureException(error, {
+      tags: {
+        operation: 'testimony_processor_main'
+      },
+      extra: {
+        args,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    });
+  });
 }

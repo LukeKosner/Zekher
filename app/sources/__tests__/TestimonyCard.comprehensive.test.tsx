@@ -16,7 +16,7 @@ import { sourcesPageConstants } from "@/app/sources/constants";
 import type { TestimonySource } from "@/app/sources/types";
 
 // Mock URL generation
-mock.module("@/lib/utils/url-generation", () => ({
+mock.module("@/lib", () => ({
   generateSourceUrl: ({ pageType, filename }: any) =>
     `http://localhost:3000/sources/${pageType}/${filename}`
 }));
@@ -212,7 +212,7 @@ describe("TestimonyCard - Essential Tests", () => {
         updatedAt: new Date()
       }));
 
-      sources.forEach(source => {
+      sources.forEach((source) => {
         const { container } = render(<TestimonyCard source={source} />);
         expect(container.firstChild).toBeTruthy();
       });

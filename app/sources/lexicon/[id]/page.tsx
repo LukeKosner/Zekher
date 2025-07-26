@@ -6,7 +6,7 @@
 
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
-import { getLexiconEntryBySlug } from "@/lib/utils/lexicon";
+import { getLexiconEntryBySlug } from "@/lib/database";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink } from "lucide-react";
 import { LexiconPageFallback } from "@/app/sources/components/skeletons";
@@ -64,12 +64,12 @@ async function LexiconPageContent(props: any) {
                     Download PDF
                   </Button>
                 </a>
-                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                <Link href={pdfUrl} target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" size="sm">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Open in New Tab
                   </Button>
-                </a>
+                </Link>
               </>
             )}
           </div>
@@ -190,8 +190,21 @@ export async function generateMetadata(props: any) {
     const displayTitle = lexiconEntry.title || `Entry ${id}`;
 
     return {
-      title: `${displayTitle} - Holocaust Lexicon`,
-      description: `Holocaust Lexicon entry: ${displayTitle}`
+      title: `${displayTitle} - Holocaust Lexicon - Zekher`,
+      description: `Holocaust Lexicon entry: ${displayTitle}. From Yad Vashem's authoritative Holocaust education resources.`,
+      keywords: [
+        "Holocaust",
+        "Lexicon",
+        "Yad Vashem",
+        displayTitle,
+        "Holocaust education",
+        "Holocaust history"
+      ],
+      openGraph: {
+        title: `${displayTitle} - Holocaust Lexicon`,
+        description: `Holocaust Lexicon entry: ${displayTitle}. From Yad Vashem's authoritative Holocaust education resources.`,
+        type: "article"
+      }
     };
   } catch (error) {
     console.error("Error generating metadata for Lexicon entry:", error);

@@ -4,14 +4,18 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
-import { testimonyEmbeddings, testimonySources } from "../db/schema";
+import { testimonyEmbeddings, testimonySources } from "../database/schema";
 import { generateTestimonyEmbeddings } from "../ingestion/embeddings";
 import { hybridSearch } from "../search/hybrid-search";
-import { db } from "../db";
+import { db } from "../database";
 import * as Sentry from "@sentry/nextjs";
-import type { ToolTestimonyEntry } from "../types";
-import { generateSourceUrl } from "../utils/url-generation";
-import { nextStepsInstructions, errorMessages, toolDescriptions } from "../prompts";
+import type { ToolTestimonyEntry } from "../shared";
+import { generateSourceUrl } from "@/lib";
+import {
+  nextStepsInstructions,
+  errorMessages,
+  toolDescriptions
+} from "./prompts";
 const { logger } = Sentry;
 
 /**
@@ -69,7 +73,7 @@ export const searchTestimonies = async (searchTerms: string[]) => {
           semanticSearchLimit: 15
         });
 
-        const formattedResults = hybridResults.slice(0, 3).map(result => ({
+        const formattedResults = hybridResults.slice(0, 3).map((result) => ({
           id: (result.metadata as any).testimonyId, // Use testimonyId (testimonySources.id) not embedding id
           survivorName: (result.metadata as any).survivor_name,
           content: (result.metadata as any).fullContent,
@@ -121,7 +125,7 @@ export const searchTestimonies = async (searchTerms: string[]) => {
 
     const testimonyEntries: ToolTestimonyEntry[] = deduplicatedResults.map(
       (result) => {
-        // Use ID directly as the URL identifier  
+        // Use ID directly as the URL identifier
         const sourceUrl = generateSourceUrl({
           pageType: "testimony",
           filename: result.id
@@ -149,10 +153,25 @@ export const searchTestimonies = async (searchTerms: string[]) => {
     };
   } catch (error) {
     logger.error("Testimony tool error:", { error });
+    Sentry.captureException(
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        tags: {
+          component: "testimony-search",
+          operation: "searchTestimonies"
+        }
+      }
+    );
     return {
-      error: error instanceof Error ? error.message : errorMessages.testimony.systemError,
+      error:
+        error instanceof Error
+          ? error.message
+          : errorMessages.testimony.systemError,
       entries: [],
-      formattedText: error instanceof Error ? error.message : errorMessages.testimony.systemError,
+      formattedText:
+        error instanceof Error
+          ? error.message
+          : errorMessages.testimony.systemError,
       nextSteps: nextStepsInstructions.noResults
     };
   }
@@ -190,11 +209,22 @@ export const testimonyTool = tool({
       const duration = Date.now() - startTime;
       logger.error("Testimony tool error", {
         terms,
-        error:
-          error instanceof Error ? error : new Error(String(error)),
+        error: error instanceof Error ? error : new Error(String(error)),
         duration,
         component: "testimony-tool"
       });
+
+      Sentry.captureException(
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          tags: {
+            component: "testimony-tool",
+            operation: "execute"
+          },
+          extra: { terms, duration }
+        }
+      );
+
       throw error;
     }
   }

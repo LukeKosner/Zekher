@@ -10,7 +10,7 @@ import "@testing-library/jest-dom";
 GlobalRegistrator.register();
 
 // Mock environment utilities
-mock.module("@/lib/utils/env", () => ({
+mock.module("@/lib/shared", () => ({
   env: {
     NODE_ENV: "test",
     DATABASE_URL: "test://localhost",

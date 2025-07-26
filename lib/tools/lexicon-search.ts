@@ -3,12 +3,16 @@ import { z } from "zod";
 import * as Sentry from "@sentry/nextjs";
 const { logger } = Sentry;
 import { eq, sql } from "drizzle-orm";
-import { lexiconEmbeddings, lexiconSources } from "../db/schema";
+import { lexiconEmbeddings, lexiconSources } from "../database/schema";
 import { generateLexiconEmbeddings } from "../ingestion/embeddings";
 import { hybridSearch } from "../search/hybrid-search";
-import type { ToolLexiconEntry } from "../types";
-import { generateSourceUrl } from "../utils/url-generation";
-import { nextStepsInstructions, errorMessages, toolDescriptions } from "../prompts";
+import type { ToolLexiconEntry } from "../shared";
+import { generateSourceUrl } from "@/lib";
+import {
+  nextStepsInstructions,
+  errorMessages,
+  toolDescriptions
+} from "./prompts";
 
 export const searchLexicon = async (searchTerms: string[]) => {
   try {
@@ -109,23 +113,25 @@ export const searchLexicon = async (searchTerms: string[]) => {
       return formattedResults.trim();
     };
 
-    const lexiconEntries: ToolLexiconEntry[] = deduplicatedResults.map((result) => {
-      // Use ID directly as the URL identifier
-      const sourceUrl = generateSourceUrl({
-        pageType: "lexicon",
-        filename: result.id
-      });
+    const lexiconEntries: ToolLexiconEntry[] = deduplicatedResults.map(
+      (result) => {
+        // Use ID directly as the URL identifier
+        const sourceUrl = generateSourceUrl({
+          pageType: "lexicon",
+          filename: result.id
+        });
 
-      const fullTitle = result.title || `Entry ${result.id}`;
-      
-      return {
-        title: fullTitle,
-        content: result.content,
-        citation: `[${fullTitle}](${sourceUrl})`,
-        filename: result.id, // This is now the correct lexiconSources.id
-        pdfUrl: result.pdfUrl // Include PDF URL from database
-      };
-    });
+        const fullTitle = result.title || `Entry ${result.id}`;
+
+        return {
+          title: fullTitle,
+          content: result.content,
+          citation: `[${fullTitle}](${sourceUrl})`,
+          filename: result.id, // This is now the correct lexiconSources.id
+          pdfUrl: result.pdfUrl // Include PDF URL from database
+        };
+      }
+    );
 
     const displayText = generateFormattedText(deduplicatedResults);
 
@@ -136,6 +142,15 @@ export const searchLexicon = async (searchTerms: string[]) => {
     };
   } catch (error) {
     logger.error("Lexicon tool error:", { error });
+    Sentry.captureException(
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        tags: {
+          component: "lexicon-search",
+          operation: "searchLexicon"
+        }
+      }
+    );
     return {
       error: errorMessages.lexicon.systemError,
       entries: [],
@@ -177,11 +192,22 @@ export const lexiconTool = tool({
       const duration = Date.now() - startTime;
       logger.error("Lexicon tool error", {
         terms,
-        error:
-          error instanceof Error ? error : new Error(String(error)),
+        error: error instanceof Error ? error : new Error(String(error)),
         duration,
         component: "lexicon-tool"
       });
+
+      Sentry.captureException(
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          tags: {
+            component: "lexicon-tool",
+            operation: "execute"
+          },
+          extra: { terms, duration }
+        }
+      );
+
       throw error;
     }
   }

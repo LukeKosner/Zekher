@@ -3,7 +3,7 @@
  * Re-exports shared types from lib/types.ts and defines component-specific interfaces.
  */
 
-import type { LexiconEntry, TestimonyEntry } from "@/lib/types";
+import type { LexiconEntry, TestimonyEntry } from "@/lib/shared";
 
 // Re-export shared types for convenience
 export type LexiconSource = LexiconEntry;

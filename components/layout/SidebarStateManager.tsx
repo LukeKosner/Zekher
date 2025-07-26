@@ -36,11 +36,9 @@ export function SidebarStateManager({ children }: SidebarStateManagerProps) {
             />
           )}
         </RouteSlugGenerator>
-        <main className="flex-1 flex flex-col min-h-0 overflow-auto">
-          <div className="flex flex-col min-h-full">
-            <div className="flex-1">{children}</div>
-            {!isChatRoute && <PageFooter />}
-          </div>
+        <main className="flex-1 overflow-y-auto">
+          {children}
+          {!isChatRoute && <PageFooter />}
         </main>
       </SidebarInset>
     </>

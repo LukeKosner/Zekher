@@ -1,7 +1,10 @@
 import { describe, test, expect, mock, beforeEach } from "bun:test";
 
 // Set test environment variables
-Object.defineProperty(process.env, 'NODE_ENV', { value: 'test', writable: true });
+Object.defineProperty(process.env, "NODE_ENV", {
+  value: "test",
+  writable: true
+});
 process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
 process.env.REDIS_URL = "redis://localhost:6379";
 
@@ -51,14 +54,15 @@ mock.module("../constants", () => ({
   chatApiErrors: {
     invalidMessages: "Messages array is missing or invalid",
     internalServerError: "Internal server error",
-    processingError: "An error occurred while processing your request. Please try again.",
+    processingError:
+      "An error occurred while processing your request. Please try again.",
     invalidRequest: "Invalid request format",
     missingMessages: "No messages provided in request"
   }
 }));
 
 // Mock logger utilities
-mock.module("@/lib/utils/logger", () => ({
+mock.module("@/lib/logger", () => ({
   logger: mockLogger,
   logApiRequest: mockLogApiRequest,
   logApiResponse: mockLogApiResponse
@@ -86,9 +90,11 @@ describe("Chat API Route Tests", () => {
     // Set up default mock behavior
     mockGoogle.mockReturnValue("mock-model");
     mockConvertToModelMessages.mockReturnValue([]);
-    
+
     const mockStreamResult = {
-      toUIMessageStreamResponse: mock().mockReturnValue(new Response("mock stream"))
+      toUIMessageStreamResponse: mock().mockReturnValue(
+        new Response("mock stream")
+      )
     };
     mockStreamText.mockReturnValue(mockStreamResult);
   });
@@ -136,7 +142,11 @@ describe("Chat API Route Tests", () => {
         messages: [
           { role: "user", content: "Hello", id: "msg-1" },
           { role: "assistant", content: "Hi there!", id: "msg-2" },
-          { role: "user", content: "Tell me about concentration camps", id: "msg-3" }
+          {
+            role: "user",
+            content: "Tell me about concentration camps",
+            id: "msg-3"
+          }
         ]
       };
 
@@ -151,7 +161,9 @@ describe("Chat API Route Tests", () => {
 
       expect(response).toBeInstanceOf(Response);
       expect(mockLogger.info).toHaveBeenCalledWith("Chat started", { msgs: 3 });
-      expect(mockConvertToModelMessages).toHaveBeenCalledWith(validRequest.messages);
+      expect(mockConvertToModelMessages).toHaveBeenCalledWith(
+        validRequest.messages
+      );
     });
 
     test("should log successful completion", async () => {
@@ -174,7 +186,9 @@ describe("Chat API Route Tests", () => {
         200,
         expect.any(Number)
       );
-      expect(mockLogger.info).toHaveBeenCalledWith("Chat completed", { ms: expect.any(Number) });
+      expect(mockLogger.info).toHaveBeenCalledWith("Chat completed", {
+        ms: expect.any(Number)
+      });
     });
   });
 
@@ -245,9 +259,7 @@ describe("Chat API Route Tests", () => {
 
     test("should process message with missing content", async () => {
       const request_data = {
-        messages: [
-          { role: "user", id: "msg-1" }
-        ]
+        messages: [{ role: "user", id: "msg-1" }]
       };
 
       const request = new Request("http://localhost:3000/api/chat", {
@@ -264,9 +276,7 @@ describe("Chat API Route Tests", () => {
 
     test("should process message with non-string content", async () => {
       const request_data = {
-        messages: [
-          { role: "user", content: 123, id: "msg-1" }
-        ]
+        messages: [{ role: "user", content: 123, id: "msg-1" }]
       };
 
       const request = new Request("http://localhost:3000/api/chat", {
@@ -283,12 +293,10 @@ describe("Chat API Route Tests", () => {
 
     test("should accept valid message roles", async () => {
       const validRoles = ["user", "assistant", "system"];
-      
+
       for (const role of validRoles) {
         const validRequest = {
-          messages: [
-            { role, content: "Test content", id: "msg-1" }
-          ]
+          messages: [{ role, content: "Test content", id: "msg-1" }]
         };
 
         const request = new Request("http://localhost:3000/api/chat", {
@@ -325,10 +333,12 @@ describe("Chat API Route Tests", () => {
       const response = await POST(request);
 
       expect(response.status).toBe(500);
-      
+
       const responseData = await response.json();
       expect(responseData.error).toBe("Internal server error");
-      expect(responseData.message).toBe("An error occurred while processing your request. Please try again.");
+      expect(responseData.message).toBe(
+        "An error occurred while processing your request. Please try again."
+      );
       expect(responseData.timestamp).toBeDefined();
     });
 
@@ -343,7 +353,7 @@ describe("Chat API Route Tests", () => {
       const response = await POST(request);
 
       expect(response.status).toBe(500);
-      
+
       const responseData = await response.json();
       expect(responseData.error).toBe("Internal server error");
     });
@@ -367,7 +377,10 @@ describe("Chat API Route Tests", () => {
       const response = await POST(request);
 
       expect(response.status).toBe(500);
-      expect(mockLogger.error).toHaveBeenCalledWith("Chat error", { error: expect.any(Error), ms: expect.any(Number) });
+      expect(mockLogger.error).toHaveBeenCalledWith("Chat error", {
+        error: expect.any(Error),
+        ms: expect.any(Number)
+      });
     });
 
     test("should log successful requests appropriately", async () => {
@@ -384,9 +397,9 @@ describe("Chat API Route Tests", () => {
 
       // Check that success was logged
       expect(mockLogApiResponse).toHaveBeenCalledWith(
-        "POST", 
-        "/api/chat", 
-        200, 
+        "POST",
+        "/api/chat",
+        200,
         expect.any(Number)
       );
     });
@@ -460,7 +473,9 @@ describe("Chat API Route Tests", () => {
         throw new Error("AI service unavailable");
       });
 
-      const request_data = { messages: [{ role: "user", content: "Test message", id: "msg-1" }] };
+      const request_data = {
+        messages: [{ role: "user", content: "Test message", id: "msg-1" }]
+      };
 
       const request = new Request("http://localhost:3000/api/chat", {
         method: "POST",
@@ -472,12 +487,14 @@ describe("Chat API Route Tests", () => {
       const response = await POST(request);
 
       expect(response.headers.get("Content-Type")).toBe("application/json");
-      
+
       const responseData = await response.json();
       expect(responseData).toHaveProperty("error");
       expect(responseData).toHaveProperty("message");
       expect(responseData).toHaveProperty("timestamp");
-      expect(responseData.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
+      expect(responseData.timestamp).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/
+      );
     });
 
     test("should handle successful responses correctly", async () => {

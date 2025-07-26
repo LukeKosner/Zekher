@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+CONSTANTS_TYPES_EXTRACTION.md
+CLAUDE.md
+
 # testing
 /coverage
 /test-results

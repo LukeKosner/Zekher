@@ -37,10 +37,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LexiconCarousel } from "@/app/chat/components/LexiconCarousel";
 import { TestimonyCarousel } from "@/app/chat/components/TestimonyCarousel";
-import { generateSourceUrl } from "@/lib/utils/url-generation";
+import { HolocaustImageSlideshow } from "@/app/chat/components/HolocaustImageSlideshow";
+import { generateSourceUrl } from "@/lib";
 import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 // Lazy load audio player
 const AudioPlayer = dynamic(
@@ -70,7 +74,15 @@ const suggestions = [
 function ChatContent() {
   const { messages, sendMessage, status, stop } = useChat({
     maxSteps: 5,
-    onError: (err) => console.error("Chat error:", err)
+    onError: (err) => {
+      logger.error("Chat error occurred", {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      Sentry.captureException(err, {
+        tags: { component: "chat", operation: "useChat" }
+      });
+    }
   });
 
   const [input, setInput] = useState("");
@@ -100,7 +112,35 @@ function ChatContent() {
     setInput(suggestion);
   };
 
+  const handleQuestionClick = (question: string) => {
+    setInput(question);
+  };
+
   // Helper functions
+  const isErrorContent = (text: string) => {
+    return (
+      text.includes("<ctrl46>") ||
+      text.toLowerCase().includes("error:") ||
+      text.toLowerCase().includes("failed:") ||
+      text.toLowerCase().includes("exception:")
+    );
+  };
+
+  const renderErrorContent = (text: string) => {
+    return (
+      <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md p-3">
+        <div className="flex items-start gap-2">
+          <div className="text-red-600 dark:text-red-400 text-xs font-medium">
+            Error
+          </div>
+        </div>
+        <div className="text-red-700 dark:text-red-300 text-sm mt-1 font-mono whitespace-pre-wrap">
+          {text}
+        </div>
+      </div>
+    );
+  };
+
   const getToolDisplay = (toolName: string) => {
     switch (toolName) {
       case "lexiconTool":
@@ -114,7 +154,10 @@ function ChatContent() {
           displayName: "Survivor Testimonies"
         };
       case "showUsersAudio":
-        return { icon: <AudioWaveform size={18} />, displayName: "Audio Selections" };
+        return {
+          icon: <AudioWaveform size={18} />,
+          displayName: "Audio Selections"
+        };
       default:
         return { icon: <BookOpenCheck size={18} />, displayName: toolName };
     }
@@ -249,10 +292,12 @@ function ChatContent() {
     // Handle audio segments specially
     if (
       toolName === "showUsersAudio" &&
-      toolInvocation.state === "result" &&
-      hasAudioSegments(toolInvocation.result)
+      (toolInvocation.state === "result" ||
+        part.state === "output-available" ||
+        part.output) &&
+      hasAudioSegments(toolInvocation.result || part.output)
     ) {
-      const resultData = toolInvocation.result;
+      const resultData = toolInvocation.result || part.output;
       const audioData = {
         type: resultData.type || "audio_segments",
         segments: resultData.segments || resultData
@@ -260,11 +305,15 @@ function ChatContent() {
 
       return (
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <AITool status="completed">
-            <AIToolHeader 
-              name={toolDisplay.displayName} 
-              status="completed" 
-              icon={<span className="size-4 text-muted-foreground">{toolDisplay.icon}</span>}
+          <AITool status="completed" defaultOpen={true}>
+            <AIToolHeader
+              name={toolDisplay.displayName}
+              status="completed"
+              icon={
+                <span className="size-4 text-muted-foreground">
+                  {toolDisplay.icon}
+                </span>
+              }
             />
             <AIToolContent>
               <div className="space-y-4">
@@ -338,6 +387,7 @@ function ChatContent() {
                   ? "completed"
                   : "pending"
             }
+            defaultOpen={true}
           >
             <AIToolHeader
               name={toolDisplay.displayName}
@@ -348,7 +398,11 @@ function ChatContent() {
                     ? "completed"
                     : "pending"
               }
-              icon={<span className="size-4 text-muted-foreground">{toolDisplay.icon}</span>}
+              icon={
+                <span className="size-4 text-muted-foreground">
+                  {toolDisplay.icon}
+                </span>
+              }
             />
             <AIToolContent>
               {isRunning ? (
@@ -372,6 +426,26 @@ function ChatContent() {
       );
     }
 
+    // Handle showUsersAudio tool that completed but doesn't have audio segments
+    if (toolName === "showUsersAudio" && toolInvocation.state === "result") {
+      return (
+        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+          <AITool status="completed" defaultOpen={true}>
+            <AIToolHeader
+              name={toolDisplay.displayName}
+              status="completed"
+              icon={
+                <span className="size-4 text-muted-foreground">
+                  {toolDisplay.icon}
+                </span>
+              }
+            />
+            <AIToolContent>{renderToolResult(toolInvocation)}</AIToolContent>
+          </AITool>
+        </AIMessage>
+      );
+    }
+
     return null;
   };
 
@@ -380,15 +454,8 @@ function ChatContent() {
       <AIConversation className="flex-1 min-h-0">
         <AIConversationContent>
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center min-h-[60vh] px-6">
-              <div className="text-center space-y-6 max-w-3xl mx-auto">
-                <h2 className="text-3xl md:text-5xl font-semibold leading-tight">
-                  Ask anything about the Holocaust
-                </h2>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                  Get answers from survivor testimony and leading data sources
-                </p>
-              </div>
+            <div className="flex items-center justify-center min-h-[70vh] px-6">
+              <HolocaustImageSlideshow onQuestionClick={handleQuestionClick} />
             </div>
           ) : (
             <AnimatePresence>
@@ -401,16 +468,30 @@ function ChatContent() {
 
                   message.parts.forEach((part, partIndex) => {
                     if (part.type === "text") {
-                      renderedParts.push(
-                        <AIMessage
-                          from="assistant"
-                          key={`${message.id}-text-${partIndex}`}
-                        >
-                          <AIMessageContent>
-                            <AIResponse>{part.text}</AIResponse>
-                          </AIMessageContent>
-                        </AIMessage>
-                      );
+                      // Split text on double newlines to create separate bubbles
+                      const textSegments = part.text
+                        .split("\n\n")
+                        .filter((segment) => segment.trim().length > 0);
+
+                      textSegments.forEach((segment, segmentIndex) => {
+                        const trimmedSegment = segment.trim();
+                        const isError = isErrorContent(trimmedSegment);
+
+                        renderedParts.push(
+                          <AIMessage
+                            from="assistant"
+                            key={`${message.id}-text-${partIndex}-${segmentIndex}`}
+                          >
+                            <AIMessageContent>
+                              {isError ? (
+                                renderErrorContent(trimmedSegment)
+                              ) : (
+                                <AIResponse>{trimmedSegment}</AIResponse>
+                              )}
+                            </AIMessageContent>
+                          </AIMessage>
+                        );
+                      });
                     } else if (part.type === "reasoning") {
                       const isReasoningStreaming =
                         (part as any).state !== "done" &&
@@ -431,7 +512,7 @@ function ChatContent() {
                         >
                           <AIReasoning
                             isStreaming={isReasoningStreaming}
-                            defaultOpen={true}
+                            defaultOpen={false}
                           >
                             <AIReasoningTrigger />
                             <AIReasoningContent>{part.text}</AIReasoningContent>
@@ -477,17 +558,23 @@ function ChatContent() {
                   >
                     <AIMessage from={isUser ? "user" : "assistant"}>
                       <AIMessageContent>
-                        {isUser ? (
-                          (message as any).parts?.[0]?.text ||
-                          (message as any).content ||
-                          ""
-                        ) : (
-                          <AIResponse>
-                            {(message as any).parts?.[0]?.text ||
-                              (message as any).content ||
-                              ""}
-                          </AIResponse>
-                        )}
+                        {isUser
+                          ? (message as any).parts?.[0]?.text ||
+                            (message as any).content ||
+                            ""
+                          : (() => {
+                              const content =
+                                (message as any).parts?.[0]?.text ||
+                                (message as any).content ||
+                                "";
+                              const isError = isErrorContent(content);
+
+                              return isError ? (
+                                renderErrorContent(content)
+                              ) : (
+                                <AIResponse>{content}</AIResponse>
+                              );
+                            })()}
                       </AIMessageContent>
                     </AIMessage>
                   </motion.div>

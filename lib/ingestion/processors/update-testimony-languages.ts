@@ -3,8 +3,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {db} from '../../db';
-import {testimonySources} from '../../db/schema';
+import {db} from '../../database';
+import {testimonySources} from '../../database/schema';
 import {eq} from 'drizzle-orm';
 
 async function updateTestimonyLanguages(): Promise<void> {

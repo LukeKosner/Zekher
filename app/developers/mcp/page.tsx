@@ -1,27 +1,26 @@
 "use client";
 
-import { motion, Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowUpRight, Code, Terminal } from "lucide-react";
 import Link from "next/link";
+import {
+  ANIMATION_CONFIG,
+  EXTERNAL_LINKS,
+  MCP_SERVER_CONFIG,
+  CONTACT,
+  MCP_CAPABILITIES,
+  PAGE_STYLING,
+} from '../constants';
+import type { SectionVariants } from '../types';
 
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2
-    }
-  }
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
+const sectionVariants: SectionVariants = {
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
-      ease: "easeOut"
+      duration: ANIMATION_CONFIG.duration,
+      ease: ANIMATION_CONFIG.ease
     }
   }
 };
@@ -30,15 +29,19 @@ const DevelopersPage = () => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-      <motion.div
-        className="space-y-12"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <motion.div className="space-y-8" variants={itemVariants}>
-          <div>
+    <div className={PAGE_STYLING.container}>
+      <div className={PAGE_STYLING.spacing}>
+        <motion.div 
+          className={PAGE_STYLING.sectionSpacing}
+          initial="hidden"
+          animate="visible"
+          variants={sectionVariants}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          >
             <h2 className="text-2xl font-semibold">Zekher's MCP Server</h2>
             <p className="mt-4 text-lg">
               Zekher provides a Model Context Protocol (MCP) server that enables
@@ -52,7 +55,7 @@ const DevelopersPage = () => {
               >
                 Claude
               </Link>
-              <ArrowUpRight className="inline-block w-4 h-4 mb-0.5 ml-1" />,
+              <ArrowUpRight className="inline w-4 h-4" />,
               OpenAI's{" "}
               <Link
                 className="underline"
@@ -62,16 +65,20 @@ const DevelopersPage = () => {
               >
                 ChatGPT
               </Link>
-              <ArrowUpRight className="inline-block w-4 h-4 mb-0.5 ml-1" />, and
+              <ArrowUpRight className="inline w-4 h-4" />, and
               custom applications. The server provides structured access to
               historical information with proper citations and usage guidelines.
               Unfortunately, no major AI apps support MCP free of charge. Once
               there is an option, this will cease being simply a developer
               feature.
             </p>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          >
             <h2 className="text-2xl font-semibold">Claude Setup</h2>
             <p className="mt-4 text-lg">
               To add Zekher's MCP server to Claude, you need to configure a
@@ -94,7 +101,7 @@ const DevelopersPage = () => {
                     >
                       Connectors
                     </Link>
-                    <ArrowUpRight className="inline-block w-4 h-4 mb-0.5 ml-1" />{" "}
+                    <ArrowUpRight className="inline w-4 h-4" />{" "}
                     in Settings
                   </li>
                   <li>Tap "Add custom connector"</li>
@@ -124,8 +131,13 @@ const DevelopersPage = () => {
                 </div>
               </div>
             </div>
-          </div>
-          <div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+          >
             <h2 className="text-2xl font-semibold">Other Clients</h2>
             <p className="mt-4 text-lg">
               Other MCP-compatible clients may have variations in their spec
@@ -140,8 +152,13 @@ const DevelopersPage = () => {
               as the server URL. The implementation differences across clients
               can affect which endpoint responds correctly.
             </p>
-          </div>
-          <div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+          >
             <h2 className="text-2xl font-semibold">Available Capabilities</h2>
             <p className="mt-4 text-lg">
               Once connected, the MCP server provides access to these
@@ -187,9 +204,13 @@ const DevelopersPage = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+          >
             <h2 className="text-2xl font-semibold">Developer Interest</h2>
             <p className="mt-4 text-lg">
               If you're interested in using Zekher's MCP server for your
@@ -201,9 +222,9 @@ const DevelopersPage = () => {
               . We're gauging developer interest and would love to hear about
               your use case.
             </p>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 };

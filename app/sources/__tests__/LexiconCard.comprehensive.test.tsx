@@ -21,7 +21,7 @@ import { sourcesPageConstants } from "@/app/sources/constants";
 import type { LexiconSource } from "@/app/sources/types";
 
 // Mock URL generation
-mock.module("@/lib/utils/url-generation", () => ({
+mock.module("@/lib", () => ({
   generateSourceUrl: ({ pageType, filename }: any) =>
     `http://localhost:3000/sources/${pageType}/${filename}`
 }));
@@ -271,7 +271,7 @@ describe("LexiconCard - Essential Tests", () => {
         citation: "Yad Vashem's Holocaust Lexicon"
       }));
 
-      sources.forEach(source => {
+      sources.forEach((source) => {
         const { container } = render(<LexiconCard source={source} />);
         expect(container.firstChild).toBeTruthy();
       });

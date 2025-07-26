@@ -15,9 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TestimonyCardProps } from "@/app/sources/types";
-import { cn } from "@/lib/utils";
-import { generateSourceUrl } from "@/lib/utils/url-generation";
+import { cn } from "@/lib";
+import { generateSourceUrl } from "@/lib";
 import { sourcesPageConstants } from "@/app/sources/constants";
+import Link from "next/link";
 
 export function TestimonyCard({ source, className }: TestimonyCardProps) {
   const name =
@@ -53,12 +54,12 @@ export function TestimonyCard({ source, className }: TestimonyCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <a href={fullPageUrl} className="w-full">
+        <Link href={fullPageUrl} className="w-full">
           <Button variant="outline" className="w-full">
             <ExternalLink className="mr-2 h-4 w-4" />
             {sourcesPageConstants.cardText.testimony.readFull}
           </Button>
-        </a>
+        </Link>
       </CardFooter>
     </Card>
   );

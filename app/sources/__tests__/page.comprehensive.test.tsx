@@ -17,20 +17,22 @@ Object.defineProperty(process.env, "NEXT_PUBLIC_BASE_URL", {
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import SourcesPage from "@/app/sources/page";
-import { getAllLexiconEntries } from "@/lib/utils/lexicon";
-import { getAllTestimonies } from "@/lib/utils/testimony";
 import { sourcesPageConstants } from "@/app/sources/constants";
 
 // Create mock functions
-const mockGetAllLexiconEntries = mock<() => Promise<any[]>>(() => Promise.resolve([]));
-const mockGetAllTestimonies = mock<() => Promise<any[]>>(() => Promise.resolve([]));
+const mockGetAllLexiconEntries = mock<() => Promise<any[]>>(() =>
+  Promise.resolve([])
+);
+const mockGetAllTestimonies = mock<() => Promise<any[]>>(() =>
+  Promise.resolve([])
+);
 
 // Mock the data fetching utilities
-mock.module("@/lib/utils/lexicon", () => ({
+mock.module("@/lib/lexicon", () => ({
   getAllLexiconEntries: mockGetAllLexiconEntries
 }));
 
-mock.module("@/lib/utils/testimony", () => ({
+mock.module("@/lib/testimony", () => ({
   getAllTestimonies: mockGetAllTestimonies
 }));
 
@@ -86,7 +88,7 @@ describe("SourcesPage - Essential Tests", () => {
         },
         {
           id: "lexicon-2",
-          filename: "test2.pdf", 
+          filename: "test2.pdf",
           title: "Test Lexicon Entry 2",
           content: "Test content 2",
           pdfFile: "test2.pdf",
@@ -105,8 +107,10 @@ describe("SourcesPage - Essential Tests", () => {
           survivor_name: "Test Survivor",
           survivorName: "Test Survivor",
           filename: "survivor1.txt",
-          content: "This is a long testimony content that should be processed correctly.",
-          excerpt: "This is a long testimony content that should be processed correctly.",
+          content:
+            "This is a long testimony content that should be processed correctly.",
+          excerpt:
+            "This is a long testimony content that should be processed correctly.",
           citation: "USC Shoah Foundation",
           testimony_language: undefined,
           interviewer: undefined,
@@ -124,8 +128,12 @@ describe("SourcesPage - Essential Tests", () => {
         }
       ];
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(mockLexiconEntries));
-      mockGetAllTestimonies.mockImplementation(() => Promise.resolve(mockTestimonyEntries));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(mockLexiconEntries)
+      );
+      mockGetAllTestimonies.mockImplementation(() =>
+        Promise.resolve(mockTestimonyEntries)
+      );
 
       const { container } = render(await SourcesPage());
       expect(container.firstChild).toBeTruthy();
@@ -146,8 +154,10 @@ describe("SourcesPage - Essential Tests", () => {
           survivor_name: "Test Survivor",
           survivorName: "Test Survivor",
           filename: "survivor.txt",
-          content: "[00:01] David Boder: Question here\n[00:05] This is the survivor's response that is long enough to be included in the content preview and should be visible in the description.",
-          excerpt: "This is the survivor's response that is long enough to be included in the content preview and should be visible in the description.",
+          content:
+            "[00:01] David Boder: Question here\n[00:05] This is the survivor's response that is long enough to be included in the content preview and should be visible in the description.",
+          excerpt:
+            "This is the survivor's response that is long enough to be included in the content preview and should be visible in the description.",
           citation: "USC Shoah Foundation",
           testimony_language: undefined,
           interviewer: undefined,
@@ -166,7 +176,9 @@ describe("SourcesPage - Essential Tests", () => {
       ];
 
       mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve([]));
-      mockGetAllTestimonies.mockImplementation(() => Promise.resolve(mockTestimonyEntries));
+      mockGetAllTestimonies.mockImplementation(() =>
+        Promise.resolve(mockTestimonyEntries)
+      );
 
       const { container } = render(await SourcesPage());
       expect(container.firstChild).toBeTruthy();
@@ -176,7 +188,9 @@ describe("SourcesPage - Essential Tests", () => {
   describe("Error Handling", () => {
     test("handles database connection errors gracefully", async () => {
       const dbError = new Error("Database connection failed");
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.reject(dbError));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.reject(dbError)
+      );
       mockGetAllTestimonies.mockImplementation(() => Promise.reject(dbError));
 
       // Should not throw an error, but render error state instead
@@ -201,8 +215,12 @@ describe("SourcesPage - Essential Tests", () => {
         }
       ];
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(mockLexiconEntries));
-      mockGetAllTestimonies.mockImplementation(() => Promise.reject(new Error("Testimony fetch failed")));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(mockLexiconEntries)
+      );
+      mockGetAllTestimonies.mockImplementation(() =>
+        Promise.reject(new Error("Testimony fetch failed"))
+      );
 
       const { container } = render(await SourcesPage());
       expect(container.firstChild).toBeTruthy();
@@ -263,8 +281,12 @@ describe("SourcesPage - Essential Tests", () => {
         }
       ];
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(mockLexiconEntries));
-      mockGetAllTestimonies.mockImplementation(() => Promise.resolve(mockTestimonyEntries));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(mockLexiconEntries)
+      );
+      mockGetAllTestimonies.mockImplementation(() =>
+        Promise.resolve(mockTestimonyEntries)
+      );
 
       const { container } = render(await SourcesPage());
       expect(container.firstChild).toBeTruthy();
@@ -288,7 +310,9 @@ describe("SourcesPage - Essential Tests", () => {
         }
       ];
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(malformedEntries));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(malformedEntries)
+      );
       mockGetAllTestimonies.mockImplementation(() => Promise.resolve([]));
 
       const { container } = render(await SourcesPage());
@@ -310,7 +334,9 @@ describe("SourcesPage - Essential Tests", () => {
         updatedAt: new Date()
       }));
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(largeLexiconSet));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(largeLexiconSet)
+      );
       mockGetAllTestimonies.mockImplementation(() => Promise.resolve([]));
 
       const { container } = render(await SourcesPage());
@@ -324,7 +350,7 @@ describe("SourcesPage - Essential Tests", () => {
         {
           id: "constants-test",
           filename: "constants.pdf",
-          title: "Constants Test Entry", 
+          title: "Constants Test Entry",
           content: "Content",
           pdfFile: null,
           pdfUrl: null,
@@ -336,13 +362,17 @@ describe("SourcesPage - Essential Tests", () => {
         }
       ];
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(mockLexiconEntries));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(mockLexiconEntries)
+      );
       mockGetAllTestimonies.mockImplementation(() => Promise.resolve([]));
 
       const { container } = render(await SourcesPage());
-      
+
       // Verify constants are properly imported and used
-      expect(sourcesPageConstants.lexiconOverlay.title).toBe("Holocaust Lexicon");
+      expect(sourcesPageConstants.lexiconOverlay.title).toBe(
+        "Holocaust Lexicon"
+      );
       expect(container.firstChild).toBeTruthy();
     });
   });
@@ -365,7 +395,9 @@ describe("SourcesPage - Essential Tests", () => {
         updatedAt: new Date()
       }));
 
-      mockGetAllLexiconEntries.mockImplementation(() => Promise.resolve(mockData));
+      mockGetAllLexiconEntries.mockImplementation(() =>
+        Promise.resolve(mockData)
+      );
       mockGetAllTestimonies.mockImplementation(() => Promise.resolve(mockData));
 
       render(await SourcesPage());

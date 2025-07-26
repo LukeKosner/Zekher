@@ -1,6 +1,9 @@
 import {sql, SQL, eq} from 'drizzle-orm';
 import {PgTable} from 'drizzle-orm/pg-core';
-import {db} from '../db';
+import {db} from '../database';
+import * as Sentry from "@sentry/nextjs";
+
+const { logger } = Sentry;
 
 export interface HybridSearchOptions<T> {
   query: string;
@@ -67,53 +70,75 @@ export async function hybridSearch<T extends {id: string}>(
     ...additionalColumns,
   };
 
-  // Execute all three search types in parallel
-  const [exactResults, semanticResults, fulltextResults] = await Promise.all([
-    // Exact match search (if columns specified)
-    exactMatchColumns.length > 0
-      ? executeExactSearch(
-          query,
-          baseColumns,
-          table,
-          joinTable,
-          joinCondition,
-          exactMatchColumns,
-        )
-      : Promise.resolve([]),
+  // Execute all three search types in parallel with error handling
+  try {
+    const [exactResults, semanticResults, fulltextResults] = await Promise.all([
+      // Exact match search (if columns specified)
+      exactMatchColumns.length > 0
+        ? executeExactSearch(
+            query,
+            baseColumns,
+            table,
+            joinTable,
+            joinCondition,
+            exactMatchColumns,
+          )
+        : Promise.resolve([]),
 
-    // Semantic vector search
-    executeSemanticSearch(
-      embeddingVector,
-      baseColumns,
-      table,
-      embeddingColumn,
-      semanticThreshold,
-      semanticSearchLimit,
-      joinTable,
-      joinCondition,
-    ),
+      // Semantic vector search
+      executeSemanticSearch(
+        embeddingVector,
+        baseColumns,
+        table,
+        embeddingColumn,
+        semanticThreshold,
+        semanticSearchLimit,
+        joinTable,
+        joinCondition,
+      ),
 
-    // Full-text search with multiple strategies
-    executeFullTextSearch(
+      // Full-text search with multiple strategies
+      executeFullTextSearch(
+        query,
+        baseColumns,
+        table,
+        contentColumn,
+        textSearchLimit,
+        joinTable,
+        joinCondition,
+      ),
+    ]);
+
+    // Apply RRF scoring and combine results
+    const combinedResults = applyRRFScoring<T>(
+      exactResults,
+      semanticResults,
+      fulltextResults,
+      exactMatchBoost,
+    );
+
+    return combinedResults;
+  } catch (error) {
+    logger.error("Hybrid search error", {
+      error: error instanceof Error ? error.message : String(error),
       query,
-      baseColumns,
-      table,
-      contentColumn,
-      textSearchLimit,
-      joinTable,
-      joinCondition,
-    ),
-  ]);
-
-  // Apply RRF scoring and combine results
-  const combinedResults = applyRRFScoring<T>(
-    exactResults,
-    semanticResults,
-    fulltextResults,
-    exactMatchBoost,
-  );
-
-  return combinedResults;
+      table: table._.name
+    });
+    
+    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), {
+      tags: { 
+        component: "hybrid-search", 
+        operation: "executeSearch" 
+      },
+      extra: { 
+        query,
+        tableName: table._.name 
+      }
+    });
+    
+    // Return empty array on database error
+    return [];
+  }
 }
 
 async function executeExactSearch(

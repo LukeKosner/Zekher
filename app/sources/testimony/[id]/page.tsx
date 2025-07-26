@@ -1,4 +1,3 @@
-
 /**
  * @file This file defines the page for displaying a single testimony.
  * It fetches the testimony data based on the filename and displays it in a readable format.
@@ -7,10 +6,9 @@
 
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getTestimonyBySlug } from "@/lib/utils/testimony";
+import { getTestimonyBySlug } from "@/lib/database";
 import { TestimonyPageClient } from "./TestimonyPageClient";
 import { TestimonyPageFallback } from "@/app/sources/components/skeletons";
-
 
 /**
  * Server component for data fetching
@@ -18,7 +16,7 @@ import { TestimonyPageFallback } from "@/app/sources/components/skeletons";
 async function TestimonyPageContent(props: any) {
   const params = await props.params;
   const testimony = await getTestimonyBySlug(params.id); // Now expects ID
-  
+
   if (!testimony) {
     notFound();
   }
@@ -58,7 +56,7 @@ export async function generateMetadata(props: any) {
   try {
     const params = await props.params;
     const testimony = await getTestimonyBySlug(params.id);
-    
+
     if (!testimony) {
       return {
         title: "Testimony Not Found",
@@ -67,8 +65,25 @@ export async function generateMetadata(props: any) {
     }
 
     return {
-      title: `${testimony.survivor_name} - Survivor Testimony`,
-      description: testimony.description || `Holocaust survivor testimony by ${testimony.survivor_name}`,
+      title: `${testimony.survivor_name} - Survivor Testimony - Zekher`,
+      description:
+        testimony.description ||
+        `Holocaust survivor testimony by ${testimony.survivor_name}. From Dr. David P. Boder's interview collection.`,
+      keywords: [
+        "Holocaust survivor",
+        "testimony",
+        "David Boder",
+        testimony.survivor_name,
+        "Holocaust history",
+        "survivor stories"
+      ],
+      openGraph: {
+        title: `${testimony.survivor_name} - Survivor Testimony`,
+        description:
+          testimony.description ||
+          `Holocaust survivor testimony by ${testimony.survivor_name}. From Dr. David P. Boder's interview collection.`,
+        type: "article"
+      }
     };
   } catch (error) {
     return {
