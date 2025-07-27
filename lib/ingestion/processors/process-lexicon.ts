@@ -162,9 +162,7 @@ async function extractPdfText(
           if (titleText && titleText.length > 2) {
             largeFontTexts.push(titleText);
           }
-          console.log(
-            `Large font (${item.fontSize}): "${item.text}" in ${path.basename(filePath)}`
-          );
+
           return false;
         }
         return true;
@@ -237,10 +235,10 @@ async function extractPdfText(
   const allCapsPattern = /\b[A-Z]{2,}(?:\s+[A-Z]{2,})+\b/g;
   const allCapsMatches = text.match(allCapsPattern);
   if (allCapsMatches && allCapsMatches.length > 0) {
-    console.log(
-      `All-caps sequences in ${path.basename(filePath)}:`,
-      [...new Set(allCapsMatches)].join(", ")
-    );
+    // console.log(
+    //   `All-caps sequences in ${path.basename(filePath)}:`,
+    //   [...new Set(allCapsMatches)].join(", ")
+    // );
   }
 
   return { content: text, extractedTitle };
@@ -258,7 +256,7 @@ async function processLexiconFile(filePath: string): Promise<void> {
       const ratio = uppercaseCount / letters.length;
       if (ratio >= 0.8) {
         // 80% uppercase
-        console.log(`Capital filename found: ${filename}`);
+        // console.log(`Capital filename found: ${filename}`);
       }
     }
   }
@@ -276,11 +274,11 @@ async function processLexiconFile(filePath: string): Promise<void> {
     if (
       normalizedExtractedTitle.toLowerCase() !== normalizedTitle.toLowerCase()
     ) {
-      console.log(`TITLE MISMATCH in ${filename}:`);
-      console.log(
-        `   Extracted from PDF: "${result.extractedTitle}" → "${normalizedExtractedTitle}"`
-      );
-      console.log(`   From filename: "${baseFilename}" → "${normalizedTitle}"`);
+      // console.log(`TITLE MISMATCH in ${filename}:`);
+      // console.log(
+      //   `   Extracted from PDF: "${result.extractedTitle}" → "${normalizedExtractedTitle}"`
+      // );
+      // console.log(`   From filename: "${baseFilename}" → "${normalizedTitle}"`);
     }
   }
 
@@ -355,10 +353,10 @@ async function processTxtFile(filePath: string): Promise<void> {
   const allCapsPattern = /\b[A-Z]{2,}(?:\s+[A-Z]{2,})+\b/g;
   const allCapsMatches = cleanedContent.match(allCapsPattern);
   if (allCapsMatches && allCapsMatches.length > 0) {
-    console.log(
-      `All-caps sequences in ${filename}:`,
-      [...new Set(allCapsMatches)].join(", ")
-    );
+    // console.log(
+    //   `All-caps sequences in ${filename}:`,
+    //   [...new Set(allCapsMatches)].join(", ")
+    // );
   }
 
   // Normalize the filename and write to sources/processed/txt directory
@@ -395,7 +393,7 @@ async function main() {
         console.error(`Error processing ${file}:`, err);
       });
     } else {
-      console.log(`Skipping non-pdf/txt file: ${file}`);
+      // console.log(`Skipping non-pdf/txt file: ${file}`);
     }
   }
 
@@ -454,8 +452,8 @@ async function generateLexiconJson(): Promise<void> {
   };
 
   await fs.writeFile(lexiconPath, JSON.stringify(lexiconData, null, 2));
-  logger.info("Generated lexicon.json", { 
-    entryCount: lexiconEntries.length 
+  logger.info("Generated lexicon.json", {
+    entryCount: lexiconEntries.length
   });
 }
 
@@ -516,14 +514,14 @@ async function fixExistingProcessedFiles(): Promise<void> {
         // Only write if content actually changed
         if (cleanedContent !== content) {
           await fs.writeFile(filePath, cleanedContent);
-          console.log(`Fixed file: ${file}`);
+          // console.log(`Fixed file: ${file}`);
         }
       }
     }
 
     logger.info("Finished fixing existing processed files");
   } catch (error) {
-    logger.error("Error fixing existing processed files", { 
+    logger.error("Error fixing existing processed files", {
       error: error instanceof Error ? error.message : String(error)
     });
   }
@@ -539,10 +537,10 @@ async function deleteProcessedFiles(): Promise<void> {
     for (const file of txtFiles) {
       const filePath = path.join(txtDir, file);
       await fs.unlink(filePath);
-      console.log(`Deleted txt file: ${file}`);
+      // console.log(`Deleted txt file: ${file}`);
     }
   } catch (error) {
-    console.log("No txt files to delete or directory does not exist");
+    // console.log("No txt files to delete or directory does not exist");
   }
 
   // Delete pdf files
@@ -551,10 +549,10 @@ async function deleteProcessedFiles(): Promise<void> {
     for (const file of pdfFiles) {
       const filePath = path.join(pdfDir, file);
       await fs.unlink(filePath);
-      console.log(`Deleted pdf file: ${file}`);
+      // console.log(`Deleted pdf file: ${file}`);
     }
   } catch (error) {
-    console.log("No pdf files to delete or directory does not exist");
+    // console.log("No pdf files to delete or directory does not exist");
   }
 
   // Delete old lexicon directory if it exists
@@ -564,10 +562,10 @@ async function deleteProcessedFiles(): Promise<void> {
     for (const file of oldFiles) {
       const filePath = path.join(oldLexiconDir, file);
       await fs.unlink(filePath);
-      console.log(`Deleted old lexicon file: ${file}`);
+      // console.log(`Deleted old lexicon file: ${file}`);
     }
   } catch (error) {
-    console.log("No old lexicon files to delete");
+    // console.log("No old lexicon files to delete");
   }
 }
 

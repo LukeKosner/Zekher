@@ -40,11 +40,8 @@ async function LexiconPageContent(props: any) {
     const displayTitle = lexiconEntry.title;
     const pdfUrl = lexiconEntry.pdfUrl || undefined;
 
-    // Debug: Log the PDF URL from database
-    console.log(`PDF URL from database for ${id} (${displayTitle}):`, pdfUrl);
-
     return (
-      <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="w-full max-w-4xl mx-auto p-6 pb-20">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6">{displayTitle}</h1>
@@ -77,13 +74,14 @@ async function LexiconPageContent(props: any) {
 
         {/* PDF Viewer Card */}
         <div className="mb-8">
-          <div className="w-full h-[800px] rounded-lg border bg-card">
+          <div className="w-full h-[800px] rounded-lg border bg-card overflow-hidden">
             <object
               data={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
               type="application/pdf"
               width="100%"
               height="100%"
-              className="w-full h-full rounded-lg"
+              className="w-full h-full rounded-lg block"
+              style={{ maxHeight: '100%', containIntrinsicSize: '100% 100%' }}
             >
               <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-muted/10 rounded-lg">
                 <div className="max-w-md space-y-4">
@@ -133,11 +131,17 @@ async function LexiconPageContent(props: any) {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-sm text-muted-foreground text-center">
+        <div className="mt-8 mb-4 text-sm text-muted-foreground text-center">
           <p>
             This entry comes from Yad Vashem's{" "}
-            <Link href="https://www.yadvashem.org/holocaust/resource-center/lexicon.html">
+            <Link 
+              href="https://www.yadvashem.org/holocaust/resource-center/lexicon.html"
+              className="text-foreground underline hover:no-underline inline-flex items-center gap-1"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Holocaust Lexicon
+              <ExternalLink className="w-3 h-3" />
             </Link>
             . Zekher hosts these documents to avoid putting pressure on Yad
             Vashem's servers. Zekher claims no ownership over the content.

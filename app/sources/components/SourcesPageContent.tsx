@@ -16,7 +16,68 @@ import {
 } from "@/components/ui/pagination";
 import { LexiconCard } from "@/app/sources/components/LexiconCard";
 import { TestimonyCard } from "@/app/sources/components/TestimonyCard";
-import { sourcesPageConstants } from "@/app/sources/constants";
+// =============================================================================
+// SOURCES PAGE CONTENT CONSTANTS
+// =============================================================================
+
+const sourcesPageConstants = {
+  // Card overlay text
+  lexiconOverlay: {
+    title: "Holocaust Lexicon",
+    actionText: "View Full PDF",
+    actionIcon: "FileText"
+  },
+
+  testimonyOverlay: {
+    title: "Interview with David Boder",
+    actionText: "Read Full Testimony",
+    actionIcon: "BookOpen"
+  },
+
+  // Loading states
+  loadingStates: {
+    sources: "Loading Sources",
+    sourceLibrary: "Loading Source Library",
+    loadingMore: "Loading...",
+    searching: "Searching historical records...",
+    findingTestimonies: "Finding survivor testimonies..."
+  },
+
+  // Page content
+  pageContent: {
+    title: "Source Library",
+    description:
+      "Zekher hosts the entirety of Yad Vashem's Holocaust Lexicon and a selection of survivor interviews with David P. Boder.",
+    searchPlaceholder: "Search sources...",
+    noFeaturedSources: "No featured sources available.",
+    noLexiconEntries: "No Lexicon entries available.",
+    noTestimonies: "No testimonies available.",
+    noSearchResults: {
+      lexicon: "No Lexicon entries match your search.",
+      testimony: "No testimonies match your search."
+    }
+  },
+
+  // Tab labels
+  tabs: {
+    featured: "Featured",
+    lexicon: "Lexicon",
+    testimony: "Testimony"
+  },
+
+  // Section titles
+  sections: {
+    featuredLexicon: "Featured Lexicon Entries",
+    featuredTestimonies: "Featured Testimonies"
+  },
+
+  // Pagination
+  pagination: {
+    loadMore: "Load More",
+    defaultLimit: 10,
+    maxLimit: 50
+  }
+} as const;
 import { LexiconSource, TestimonySource } from "@/app/sources/types";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -26,10 +87,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
  * It is wrapped in an ErrorBoundary to catch and handle any client-side errors.
  */
 
-interface SourceLibraryProps {
-  lexiconSources: LexiconSource[];
-  testimonySources: TestimonySource[];
-}
+import type { SourceLibraryProps } from "./types";
 
 function SourceLibrary({
   lexiconSources,

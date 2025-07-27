@@ -17,7 +17,18 @@ import { ExternalLink } from "lucide-react";
 import { TestimonyCardProps } from "@/app/sources/types";
 import { cn } from "@/lib";
 import { generateSourceUrl } from "@/lib";
-import { sourcesPageConstants } from "@/app/sources/constants";
+// =============================================================================
+// TESTIMONY CARD CONSTANTS
+// =============================================================================
+
+const sourcesPageConstants = {
+  cardText: {
+    testimony: {
+      source: "from the David P. Boder interviews",
+      readFull: "Read Full Testimony"
+    }
+  }
+} as const;
 import Link from "next/link";
 
 export function TestimonyCard({ source, className }: TestimonyCardProps) {

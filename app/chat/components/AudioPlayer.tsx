@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib";
 import Link from "next/link";
 import * as Sentry from "@sentry/nextjs";
+import type { AudioSegment, AudioPlayerProps } from "../types";
 
 const { logger } = Sentry;
 
@@ -61,23 +62,6 @@ function getLanguageName(languageCode: string): string {
 
   const normalizedCode = languageCode?.toLowerCase().trim();
   return languageMap[normalizedCode] || languageCode || "Unknown";
-}
-
-interface AudioSegment {
-  testimonyId: string;
-  speakerName: string;
-  startTime: number;
-  endTime: number;
-  transcriptExcerpt: string;
-  language?: string;
-  significance: string;
-  audioFile: string;
-  url?: string;
-}
-
-interface AudioPlayerProps {
-  segment: AudioSegment;
-  className?: string;
 }
 
 export function AudioPlayer({ segment, className }: AudioPlayerProps) {

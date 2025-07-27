@@ -11,14 +11,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientSidebarLayout } from "@/components/layout/ClientSidebarLayout";
 import { Analytics } from "@vercel/analytics/next";
-import { 
-  SITE_METADATA, 
-  FONT_CONFIG, 
-  ICON_CONFIG, 
-  LAYOUT_CONFIG, 
-  PAGE_STYLING, 
-  ERROR_MESSAGES 
-} from "./constants";
+
 import type { LayoutProps } from "./types";
 import * as Sentry from "@sentry/nextjs";
 
@@ -36,22 +29,54 @@ const inter = Inter({
  * Application metadata configuration for SEO and social media optimization
  */
 export const metadata: Metadata = {
-  title: SITE_METADATA.title,
-  description: SITE_METADATA.description,
-  keywords: SITE_METADATA.keywords,
+  metadataBase: new URL("https://zekher.com"),
+  title: "Zekher",
+  description:
+    "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.",
+  keywords: [
+    "Holocaust education",
+    "Yad Vashem",
+    "survivor testimonies",
+    "David Boder",
+    "Holocaust history",
+    "AI education"
+  ],
   openGraph: {
-    title: SITE_METADATA.title,
-    description: SITE_METADATA.description,
-    url: SITE_METADATA.siteUrl,
-    siteName: SITE_METADATA.siteName,
+    title: "Zekher",
+    description:
+      "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.",
+    url: "https://zekher.com",
+    siteName: "Zekher זכר",
     type: "website",
-    images: [ICON_CONFIG.openGraphImage]
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 512,
+        height: 512,
+        alt: "Zekher - Holocaust Education"
+      }
+    ]
   },
   icons: {
-    icon: [ICON_CONFIG.favicon32, ICON_CONFIG.favicon16],
-    apple: ICON_CONFIG.appleTouchIcon
+    icon: [
+      {
+        url: "/favicon-32x32.png",
+        sizes: "32x32",
+        type: "image/png"
+      },
+      {
+        url: "/favicon-16x16.png",
+        sizes: "16x16",
+        type: "image/png"
+      }
+    ],
+    apple: {
+      url: "/apple-touch-icon.png",
+      sizes: "192x192",
+      type: "image/png"
+    }
   },
-  manifest: LAYOUT_CONFIG.manifest
+  manifest: "/site.webmanifest"
 };
 
 /**
@@ -70,16 +95,19 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<LayoutProps>) {
   // Input validation
   if (!children) {
-    logger.warn(ERROR_MESSAGES.noChildren);
+    logger.warn("RootLayout: No children provided");
   }
 
   // Validate layout constants are properly loaded
-  if (!SITE_METADATA.siteName || !SITE_METADATA.description) {
-    logger.error(ERROR_MESSAGES.layoutConstantsNotConfigured, {
-      siteName: SITE_METADATA.siteName,
-      description: SITE_METADATA.description
+  const siteName = "Zekher זכר";
+  const description = "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.";
+  
+  if (!siteName || !description) {
+    logger.error("RootLayout: Layout constants not properly configured", {
+      siteName,
+      description
     });
-    Sentry.captureMessage(ERROR_MESSAGES.layoutConstantsMissing, {
+    Sentry.captureMessage("Layout constants not properly configured", {
       level: "error",
       tags: { component: "layout" }
     });
@@ -90,22 +118,16 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
       <Analytics />
       <head>
         {/* Static performance optimizations */}
-        <link
-          rel="dns-prefetch"
-          href={LAYOUT_CONFIG.dnsPreFetch.googleFonts}
-        />
-        <link
-          rel="dns-prefetch"
-          href={LAYOUT_CONFIG.dnsPreFetch.googleFontsStatic}
-        />
-        <meta name="theme-color" content={SITE_METADATA.themeColor} />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        <meta name="theme-color" content="#1f2937" />
       </head>
       <body className={`${inter.variable} antialiased`}>
         {/* Client Component boundary - only interactive parts */}
         <ClientSidebarLayout>
           {children || (
-            <div className={PAGE_STYLING.loadingFallback.container}>
-              <p>{PAGE_STYLING.loadingFallback.text}</p>
+            <div className="flex items-center justify-center min-h-screen">
+              <p>Loading...</p>
             </div>
           )}
         </ClientSidebarLayout>

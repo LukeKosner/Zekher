@@ -19,79 +19,81 @@ import {
   AnnouncementTag,
   AnnouncementTitle
 } from "@/components/ui/kibo-ui/announcement";
-import {
-  HOMEPAGE_CONTENT,
-  EXTERNAL_LINKS,
-  ANIMATION_CONFIG,
-  IMAGE_CONFIG,
-  PAGE_STYLING
-} from "./constants";
 
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <div className={`${PAGE_STYLING.maxWidth} mx-auto ${PAGE_STYLING.padding}`}>
-        <div className={`flex flex-col ${PAGE_STYLING.gap} text-center`}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="flex flex-col gap-20 text-center">
           <div className="flex flex-col items-center justify-center gap-8">
             <motion.div
-              {...ANIMATION_CONFIG.hero.announcement}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <Link href={HOMEPAGE_CONTENT.announcement.link} className="no-underline">
+              <Link href="/developers/mcp" className="no-underline">
                 <Announcement>
                   <AnnouncementTag className="bg-green-200">
-                    {HOMEPAGE_CONTENT.announcement.tag}
+                    v3 Beta
                   </AnnouncementTag>
                   <AnnouncementTitle>
-                    {HOMEPAGE_CONTENT.announcement.title}
+                    Support for MCP
                     <ArrowUpRight className="inline w-4 h-4" />
                   </AnnouncementTitle>
                 </Announcement>
               </Link>
             </motion.div>
             <motion.h1
-              className={`mb-0 text-balance font-medium ${PAGE_STYLING.heroFontSizes}`}
-              {...ANIMATION_CONFIG.hero.heading}
+              className="mb-0 text-balance font-medium text-6xl md:text-7xl xl:text-[5.25rem]"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
-              {HOMEPAGE_CONTENT.hero.mainHeading}
+              Preserving Holocaust memory with AI
             </motion.h1>
             <motion.p
               className="mt-0 mb-0 text-balance text-lg text-muted-foreground"
-              {...ANIMATION_CONFIG.hero.subheading}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             >
-              {HOMEPAGE_CONTENT.hero.subheading}{" "}
+              Access authoritative Holocaust education materials through
+              AI-powered search of{" "}
               <Link
-                href={EXTERNAL_LINKS.yadVashem.url}
+                href="https://www.yadvashem.org/holocaust/resource-center/lexicon.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline"
               >
-                {EXTERNAL_LINKS.yadVashem.text}
+                Yad Vashem resources
               </Link>
               <ArrowUpRight className="inline w-4 h-4" /> and{" "}
               <Link
-                href={EXTERNAL_LINKS.survivorTestimonies.url}
+                href="https://voices.library.iit.edu/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline"
               >
-                {EXTERNAL_LINKS.survivorTestimonies.text}
+                survivor testimonies
               </Link>
               <ArrowUpRight className="inline w-4 h-4" />.
             </motion.p>
 
             <motion.div
               className="flex items-center gap-2"
-              {...ANIMATION_CONFIG.hero.buttons}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
             >
               <Button asChild>
-                <Link href={HOMEPAGE_CONTENT.hero.ctaButtons.primary.href}>
-                  {HOMEPAGE_CONTENT.hero.ctaButtons.primary.text}
+                <Link href="/chat">
+                  Start Chat
                   <MessagesSquare className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link className="no-underline" href={HOMEPAGE_CONTENT.hero.ctaButtons.secondary.href}>
-                  {HOMEPAGE_CONTENT.hero.ctaButtons.secondary.text}
+                <Link className="no-underline" href="/sources">
+                  Browse Sources
                   <Library className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -101,12 +103,14 @@ export default function Home() {
           {/* Memorial Image */}
           <motion.div
             className="w-full max-w-lg md:max-w-2xl mx-auto"
-            {...ANIMATION_CONFIG.memorialImage}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
           >
-            <AspectRatio ratio={IMAGE_CONFIG.memorial.aspectRatio} className="relative">
+            <AspectRatio ratio={2217 / 1478} className="relative">
               <Image
-                src={IMAGE_CONFIG.memorial.src}
-                alt={IMAGE_CONFIG.memorial.alt}
+                src="/giulia-gasperini-8S-D-UodlHU-unsplash.jpg"
+                alt="Memorial to the Murdered Jews of Europe"
                 className="rounded-lg object-cover"
                 fill
               />
@@ -115,21 +119,21 @@ export default function Home() {
                   Photo by{" "}
                   <Link
                     className="underline inline-flex items-center gap-0.5 whitespace-nowrap"
-                    href={EXTERNAL_LINKS.unsplashCredit.photographer.url}
+                    href="https://unsplash.com/@giuliagasp?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {EXTERNAL_LINKS.unsplashCredit.photographer.name}
+                    Giulia Gasperini
                     <ArrowUpRight className="w-2.5 h-2.5 flex-shrink-0" />
                   </Link>{" "}
                   on{" "}
                   <Link
                     className="underline inline-flex items-center gap-0.5 whitespace-nowrap"
-                    href={EXTERNAL_LINKS.unsplashCredit.platform.url}
+                    href="https://unsplash.com/photos/cemetery-vault-8S-D-UodlHU?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {EXTERNAL_LINKS.unsplashCredit.platform.name}
+                    Unsplash
                     <ArrowUpRight className="w-2.5 h-2.5 flex-shrink-0" />
                   </Link>
                 </span>
@@ -139,56 +143,65 @@ export default function Home() {
 
           {/* Solution Overview */}
           <motion.div
-            className={`text-center ${PAGE_STYLING.sectionSpacing}`}
-            {...ANIMATION_CONFIG.solutionOverview}
+            className="text-center space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
           >
             <div className="space-y-4">
               <h2 className="text-3xl font-semibold text-foreground">
-                {HOMEPAGE_CONTENT.solutionOverview.heading}
+                Tools for Responsible Agents
               </h2>
               <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-                {HOMEPAGE_CONTENT.solutionOverview.subheading}
+                By integrating authoritative sources directly into AI systems,
+                we ensure accurate, verified information reaches users when they
+                need it most.
               </p>
             </div>
 
             <motion.div
-              className={`grid ${PAGE_STYLING.gridCols} gap-6 mt-8`}
-              {...ANIMATION_CONFIG.featureCards}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.4, ease: "easeOut" }}
             >
               <div className="border rounded-lg p-6 bg-card text-card-foreground text-center flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4">{HOMEPAGE_CONTENT.solutionOverview.features[0].title}</h3>
+                <h3 className="text-lg font-semibold mb-4">Chat Experience</h3>
                 <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                  {HOMEPAGE_CONTENT.solutionOverview.features[0].description}
+                  Familiar AI chat powered by Lexicon content with real
+                  interview audio snippets as supplements.
                 </p>
                 <Button asChild size="sm" className="mt-auto">
-                  <Link href={HOMEPAGE_CONTENT.solutionOverview.features[0].cta.href}>
-                    {HOMEPAGE_CONTENT.solutionOverview.features[0].cta.text}
+                  <Link href="/chat">
+                    Try Chat
                     <MessagesSquare className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
               </div>
 
               <div className="border rounded-lg p-6 bg-card text-card-foreground text-center flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4">{HOMEPAGE_CONTENT.solutionOverview.features[1].title}</h3>
+                <h3 className="text-lg font-semibold mb-4">MCP Server</h3>
                 <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                  {HOMEPAGE_CONTENT.solutionOverview.features[1].description}
+                  Model Context Protocol server for adding Lexicon functionality
+                  to Claude, ChatGPT, and other AI clients.
                 </p>
                 <Button asChild size="sm" variant="outline" className="mt-auto">
-                  <Link href={HOMEPAGE_CONTENT.solutionOverview.features[1].cta.href}>
-                    {HOMEPAGE_CONTENT.solutionOverview.features[1].cta.text}
+                  <Link href="/developers/mcp">
+                    Learn More
                     <Server className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
               </div>
 
               <div className="border rounded-lg p-6 bg-card text-card-foreground text-center flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4">{HOMEPAGE_CONTENT.solutionOverview.features[2].title}</h3>
+                <h3 className="text-lg font-semibold mb-4">Source Library</h3>
                 <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                  {HOMEPAGE_CONTENT.solutionOverview.features[2].description}
+                  Unified library serving as the landing page for citations from
+                  both Chat and MCP integrations.
                 </p>
                 <Button asChild size="sm" variant="outline" className="mt-auto">
-                  <Link href={HOMEPAGE_CONTENT.solutionOverview.features[2].cta.href}>
-                    {HOMEPAGE_CONTENT.solutionOverview.features[2].cta.text}
+                  <Link href="/sources">
+                    Browse Sources
                     <Library className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
@@ -198,28 +211,31 @@ export default function Home() {
 
           {/* Final CTA Section */}
           <motion.div
-            className={`text-center ${PAGE_STYLING.sectionSpacing}`}
-            {...ANIMATION_CONFIG.finalCta}
+            className="text-center space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.6, ease: "easeOut" }}
           >
             <div className="space-y-4">
               <h2 className="text-3xl font-semibold text-foreground">
-                {HOMEPAGE_CONTENT.getInvolved.heading}
+                Get Involved
               </h2>
               <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-                {HOMEPAGE_CONTENT.getInvolved.subheading}
+                Zekher is an open-source project in beta. If you have any
+                questions, feedback, or want to contribute, please reach out.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild variant="outline" size="lg">
-                <Link href={HOMEPAGE_CONTENT.getInvolved.ctaButtons.email.href}>
-                  {HOMEPAGE_CONTENT.getInvolved.ctaButtons.email.text}
+                <Link href="mailto:hey@lukekosner.com">
+                  Email Us
                   <Mail className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href={HOMEPAGE_CONTENT.getInvolved.ctaButtons.about.href}>
-                  {HOMEPAGE_CONTENT.getInvolved.ctaButtons.about.text} <Info className="w-4 h-4 ml-2" />
+                <Link href="/about">
+                  About <Info className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
             </div>

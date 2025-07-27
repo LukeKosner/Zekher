@@ -1,9 +1,9 @@
 /**
- * Monitoring, telemetry and error handling type definitions
+ * Monitoring and telemetry type definitions
  */
 
 /**
- * Error types for categorizing monitoring events
+ * Error types for monitoring and tracking
  */
 export enum ErrorType {
   AUDIO_LOADING = "AUDIO_LOADING",
@@ -52,7 +52,7 @@ export interface CitationUrlMetrics {
 }
 
 /**
- * Monitoring configuration interface
+ * Monitoring configuration
  */
 export interface MonitoringConfig {
   enableMetrics: boolean;
@@ -60,4 +60,13 @@ export interface MonitoringConfig {
   enableAlerts: boolean;
   logLevel: "debug" | "info" | "warn" | "error";
   sensitiveDataPatterns: RegExp[];
+}
+
+/**
+ * Monitoring context for tracking operations
+ */
+export interface MonitoringContext {
+  operationName: string;
+  startTime: number;
+  metadata: Record<string, any>;
 }

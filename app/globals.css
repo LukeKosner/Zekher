@@ -129,6 +129,13 @@
   #__next {
     height: 100%;
   }
+  
+  /* Prevent PDF content from bleeding outside containers */
+  object[type="application/pdf"] {
+    contain: layout style;
+    overflow: hidden;
+    display: block;
+  }
 }
 
 /* Smooth animations for thinking/reasoning collapsible */

@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { MCP_METADATA } from './constants';
+
+// =============================================================================
+// DEVELOPERS PAGE METADATA
+// =============================================================================
+
+const MCP_METADATA: Metadata = {
+  title: "Developers - Zekher",
+  description:
+    "Developer resources for integrating Zekher's Holocaust education tools into your applications."
+} as const;
 
 export const metadata: Metadata = MCP_METADATA;
 

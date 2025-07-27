@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-interface LazyLoadWrapperProps {
-  children: React.ReactNode;
-  placeholder: React.ReactNode;
-}
+import type { LazyLoadWrapperProps } from "./types";
 
 export function LazyLoadWrapper({ children, placeholder }: LazyLoadWrapperProps) {
   const [isVisible, setIsVisible] = useState(false);

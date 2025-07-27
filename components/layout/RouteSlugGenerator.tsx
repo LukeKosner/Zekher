@@ -5,10 +5,7 @@
 
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-
-interface RouteSlugGeneratorProps {
-  children: (slug: string) => React.ReactNode;
-}
+import type { RouteSlugGeneratorProps } from "./types";
 
 export function RouteSlugGenerator({ children }: RouteSlugGeneratorProps) {
   const pathname = usePathname();

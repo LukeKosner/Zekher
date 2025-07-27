@@ -3,15 +3,73 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight, Code, Terminal } from "lucide-react";
 import Link from "next/link";
-import {
-  ANIMATION_CONFIG,
-  EXTERNAL_LINKS,
-  MCP_SERVER_CONFIG,
-  CONTACT,
-  MCP_CAPABILITIES,
-  PAGE_STYLING,
-} from '../constants';
-import type { SectionVariants } from '../types';
+// =============================================================================
+// DEVELOPERS MCP PAGE CONSTANTS
+// =============================================================================
+
+const ANIMATION_CONFIG = {
+  duration: 0.8,
+  ease: "easeOut" as const,
+  delays: {
+    section1: 0.2,
+    section2: 0.4,
+    section3: 0.6,
+    section4: 0.8,
+    section5: 1.0
+  },
+  transition: {
+    opacity: { from: 0, to: 1 },
+    y: { from: 30, to: 0 }
+  }
+} as const;
+
+const EXTERNAL_LINKS = {
+  claude: "https://claude.ai/",
+  chatgpt: "https://chatgpt.com",
+  claudeConnectors: "https://claude.ai/settings/connectors"
+} as const;
+
+const MCP_SERVER_CONFIG = {
+  protocol: "SSE (Server-Sent Events)",
+  endpoints: {
+    primary: "/sse",
+    fallback: "/mcp"
+  }
+} as const;
+
+const CONTACT = {
+  email: "hey@lukekosner.com"
+} as const;
+
+const MCP_CAPABILITIES = {
+  tools: {
+    name: "yad_vashem_holocaust_lexicon",
+    description:
+      "Search Yad Vashem's Holocaust Lexicon for historical information and terminology. Returns up to 6 sources with proper citations and usage guidelines.",
+    maxResults: 6,
+    maxTerms: 6
+  },
+  prompts: {
+    name: "holocaust_education_context",
+    description:
+      "Provides context and guidelines for using the Yad Vashem Holocaust Lexicon responsibly and effectively in AI applications.",
+    type: "Prompt template for proper Holocaust education context"
+  }
+} as const;
+
+const PAGE_STYLING = {
+  container: "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16",
+  spacing: "space-y-12",
+  sectionSpacing: "space-y-8",
+  headingClasses: "text-2xl font-semibold",
+  paragraphClasses: "mt-4 text-lg",
+  linkClasses: "underline",
+  codeBlockClasses: "bg-muted rounded-lg p-4 font-mono text-sm",
+  inlineCodeClasses: "bg-muted px-1 py-0.5 rounded text-sm font-mono",
+  listClasses: "list-decimal list-inside space-y-2 text-lg",
+  borderClasses: "border rounded-lg p-4"
+} as const;
+import type { SectionVariants } from "../types";
 
 const sectionVariants: SectionVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -31,7 +89,7 @@ const DevelopersPage = () => {
   return (
     <div className={PAGE_STYLING.container}>
       <div className={PAGE_STYLING.spacing}>
-        <motion.div 
+        <motion.div
           className={PAGE_STYLING.sectionSpacing}
           initial="hidden"
           animate="visible"
@@ -55,8 +113,7 @@ const DevelopersPage = () => {
               >
                 Claude
               </Link>
-              <ArrowUpRight className="inline w-4 h-4" />,
-              OpenAI's{" "}
+              <ArrowUpRight className="inline w-4 h-4" />, OpenAI's{" "}
               <Link
                 className="underline"
                 href="https://chatgpt.com"
@@ -65,9 +122,9 @@ const DevelopersPage = () => {
               >
                 ChatGPT
               </Link>
-              <ArrowUpRight className="inline w-4 h-4" />, and
-              custom applications. The server provides structured access to
-              historical information with proper citations and usage guidelines.
+              <ArrowUpRight className="inline w-4 h-4" />, and custom
+              applications. The server provides structured access to historical
+              information with proper citations and usage guidelines.
               Unfortunately, no major AI apps support MCP free of charge. Once
               there is an option, this will cease being simply a developer
               feature.
@@ -101,8 +158,7 @@ const DevelopersPage = () => {
                     >
                       Connectors
                     </Link>
-                    <ArrowUpRight className="inline w-4 h-4" />{" "}
-                    in Settings
+                    <ArrowUpRight className="inline w-4 h-4" /> in Settings
                   </li>
                   <li>Tap "Add custom connector"</li>
                   <li>Enter the server URL and name the connector</li>
@@ -132,7 +188,7 @@ const DevelopersPage = () => {
               </div>
             </div>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -153,7 +209,7 @@ const DevelopersPage = () => {
               can affect which endpoint responds correctly.
             </p>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

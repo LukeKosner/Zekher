@@ -1,10 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib";
-
-export type AIMessageProps = HTMLAttributes<HTMLDivElement> & {
-  from: "user" | "assistant";
-};
+import type {
+  AIMessageProps,
+  AIMessageContentProps,
+  AIMessageAvatarProps
+} from "./types";
 
 export const AIMessage = ({ className, from, ...props }: AIMessageProps) => (
   <div
@@ -17,8 +18,6 @@ export const AIMessage = ({ className, from, ...props }: AIMessageProps) => (
     {...props}
   />
 );
-
-export type AIMessageContentProps = HTMLAttributes<HTMLDivElement>;
 
 export const AIMessageContent = ({
   children,
@@ -37,12 +36,6 @@ export const AIMessageContent = ({
     <div className="is-user:dark">{children}</div>
   </div>
 );
-
-export type AIMessageAvatarProps = ComponentProps<typeof Avatar> & {
-  src?: string;
-  icon?: ReactNode;
-  name?: string;
-};
 
 export const AIMessageAvatar = ({
   src,

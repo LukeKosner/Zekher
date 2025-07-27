@@ -1,7 +1,12 @@
 // app/sources/components/skeletons.tsx
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter
+} from "@/components/ui/card";
 
 export function LexiconCardSkeleton() {
   return (
@@ -57,7 +62,7 @@ export function TestimonyCardSkeleton() {
 
 export function SourcesPageFallback() {
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
+    <div className="w-full max-w-6xl mx-auto p-6 pb-20">
       <div className="text-center mb-8">
         <Skeleton className="h-9 w-80 mx-auto mb-4" />
         <Skeleton className="h-5 w-96 mx-auto" />
@@ -90,11 +95,11 @@ export function SourcesPageFallback() {
 
 export function LexiconPageFallback() {
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
+    <div className="w-full max-w-4xl mx-auto p-6 pb-20">
       {/* Header Skeleton */}
       <div className="mb-8">
         <Skeleton className="h-8 w-64 mb-6" />
-        
+
         {/* Action buttons skeleton */}
         <div className="flex flex-wrap gap-3">
           <Skeleton className="h-8 w-32 rounded" />
@@ -115,7 +120,7 @@ export function LexiconPageFallback() {
           </div>
         </div>
       </div>
-      
+
       {/* Footer Skeleton */}
       <div className="mt-8 text-center">
         <Skeleton className="h-4 w-80 mx-auto" />
@@ -126,12 +131,12 @@ export function LexiconPageFallback() {
 
 export function TestimonyPageFallback() {
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
+    <div className="w-full max-w-4xl mx-auto p-6 pb-20">
       {/* Header Skeleton */}
       <div className="mb-8">
         <Skeleton className="h-8 w-64 mb-4" />
         <Skeleton className="h-5 w-96 mb-6" />
-        
+
         {/* Metadata Skeleton */}
         <div className="flex flex-wrap gap-4 mb-6">
           <Skeleton className="h-6 w-24 rounded-full" />

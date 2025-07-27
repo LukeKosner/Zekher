@@ -6,22 +6,7 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AudioPlayer } from "@/app/chat/components/AudioPlayer";
-
-interface AudioSegment {
-  testimonyId: string;
-  speakerName: string;
-  startTime: number;
-  endTime: number;
-  transcriptExcerpt: string;
-  language?: string;
-  significance: string;
-  audioFile: string;
-}
-
-interface AudioPlayerSuspenseProps {
-  segment: AudioSegment;
-  className?: string;
-}
+import type { AudioSegment, AudioPlayerSuspenseProps } from "../types";
 
 function AudioPlayerFallback() {
   return (

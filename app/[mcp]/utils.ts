@@ -13,8 +13,26 @@ import { lexiconEmbeddings, lexiconSources } from "@/lib/database/schema";
 import { generateSourceUrl } from "@/lib";
 import type { ToolLexiconEntry } from "@/lib/shared";
 
-// Import local constants
-import { mcpConstants } from "./constants";
+// =============================================================================
+// MCP UTILS CONSTANTS
+// =============================================================================
+
+// MCP constants
+const mcpConstants = {
+  maxTerms: 6,
+  toolName: "yad_vashem_holocaust_lexicon",
+  toolDescription:
+    "Search Yad Vashem's Holocaust Lexicon for historical information and terminology. Returns up to 6 sources with proper citations.",
+  parameterDescription:
+    "Search terms to query the Holocaust Lexicon (maximum 6 terms)",
+  promptName: "holocaust_education_context",
+  promptDescription:
+    "Provides context and guidelines for using the Yad Vashem Holocaust Lexicon responsibly and effectively.",
+  promptText:
+    "You have access to the Yad Vashem Holocaust Lexicon tool. Always use exact citations provided. Only source citations are guaranteed accurate - inform users you cannot guarantee AI-generated text accuracy. Handle Holocaust content with appropriate sensitivity and direct users to https://zekher.com for survivor testimony.",
+  errorSearchFailed: "Failed to search Holocaust Lexicon",
+  errorUnknown: "Unknown error occurred"
+} as const;
 
 /**
  * Error messages for lexicon search operations

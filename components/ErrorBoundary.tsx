@@ -5,19 +5,9 @@
 
 import React from 'react';
 import * as Sentry from '@sentry/nextjs';
+import type { ErrorBoundaryProps, ErrorBoundaryState } from './types';
 
 const { logger } = Sentry;
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  componentName?: string;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error?: Error;
-}
 
 export class ErrorBoundary extends React.Component<
   ErrorBoundaryProps,

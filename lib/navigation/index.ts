@@ -4,7 +4,7 @@
  */
 
 // Constants
-export * from './constants';
+// Constants moved inline to respective files
 
 // Types  
 export * from './types';

@@ -119,8 +119,6 @@ export const showUsersAudio = tool({
     const errors: string[] = [];
     const monitoringContext = createMonitoringContext("audio_tool_execution");
 
-    console.log("Audio tool executing with segments:", segments.length);
-
     const processedSegments = await Promise.all(
       segments.map(async (segment, index) => {
         const startTime = Date.now();
@@ -277,14 +275,14 @@ export const showUsersAudio = tool({
     };
 
     if (errors.length > 0) {
-      console.warn(
-        `Audio tool completed with ${errors.length} errors:`,
-        errors
-      );
+      // console.warn(
+      //   `Audio tool completed with ${errors.length} errors:`,
+      //   errors
+      // );
     } else {
-      console.log(
-        `Audio tool completed successfully. Generated ${processedSegments.length} audio URLs with ${summaryMetrics.successRate.toFixed(2)}% success rate.`
-      );
+      // console.log(
+      //   `Audio tool completed successfully. Generated ${processedSegments.length} audio URLs with ${summaryMetrics.successRate.toFixed(2)}% success rate.`
+      // );
     }
 
     return result;

@@ -1,23 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import * as Sentry from '@sentry/node';
+import type { TestimonyEntry } from './types';
 
 const logger = Sentry;
-
-interface TestimonyEntry {
-  title: string;
-  interviewee: string;
-  interviewer: string;
-  date: string;
-  location: string;
-  url?: string;
-  mediaFile?: string;
-  transcriptionFile?: string;
-  description?: string;
-  exportDate?: string;
-  content: string;
-  txtFile: string;
-}
 
 export function extractMetadata(content: string) {
   const lines = content.split('\n');

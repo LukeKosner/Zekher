@@ -9,11 +9,32 @@ import {
   Server,
   type LucideIcon
 } from "lucide-react";
-import { NAVIGATION_SECTIONS, ROUTES } from "./constants";
+// =============================================================================
+// NAVIGATION CONSTANTS
+// =============================================================================
+
+/** Navigation sections */
+const NAVIGATION_SECTIONS = {
+  PROJECT: "Project",
+  EVERYONE: "Everyone", 
+  DEVELOPERS: "Developers",
+  UNKNOWN: "Unknown",
+} as const;
+
+/** Route paths and redirects */
+const ROUTES = {
+  HOME: "/",
+  ABOUT: "/about",
+  CHAT: "/chat", 
+  SOURCES: "/sources",
+  DEVELOPERS_MCP: "/developers/mcp",
+  DEVELOPERS: "/developers", // Redirects to MCP
+} as const;
+
 import type { NavigationItem } from "./types";
 
 // Re-export constants and types for backward compatibility
-export { NAVIGATION_SECTIONS, ROUTES } from "./constants";
+export { NAVIGATION_SECTIONS, ROUTES };
 export type { NavigationItem } from "./types";
 
 export const NAVIGATION_CONFIG: NavigationItem[] = [

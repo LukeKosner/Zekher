@@ -28,22 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 import Link from "next/link";
-
-interface TestimonyEntry {
-  id?: string;
-  survivorName: string;
-  excerpt: string;
-  fullTranscript?: string;
-  location?: string;
-  timeReference?: string;
-  filename: string;
-  url?: string;
-}
-interface TestimonyCarouselProps {
-  status: "result" | "loading";
-  name: string;
-  sources: TestimonyEntry[];
-}
+import type { TestimonyCarouselEntry, TestimonyCarouselProps } from "../types";
 
 /* ───── Helpers ───── */
 const TIMESTAMP_RE = /\[(\d{2}:\d{2}:\d{2})]/g;

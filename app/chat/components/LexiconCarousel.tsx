@@ -28,22 +28,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { generateSourceUrl } from "@/lib";
 import Link from "next/link";
-
-interface LexiconEntry {
-  id?: string;
-  title: string;
-  filename: string;
-  pdfUrl?: string | null;
-}
-
-interface LexiconCarouselProps {
-  status: "result" | "loading";
-  name: string;
-  sources: LexiconEntry[];
-}
+import type { LexiconCarouselEntry, LexiconCarouselProps } from "../types";
 
 export const LexiconCarousel = ({
   status,
@@ -51,6 +39,47 @@ export const LexiconCarousel = ({
   sources
 }: LexiconCarouselProps) => {
   const [isOpen, setIsOpen] = useState(true);
+  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
+
+  // Function to refresh iframes
+  const refreshIframes = () => {
+    iframeRefs.current.forEach((iframe) => {
+      if (iframe && iframe.src) {
+        const currentSrc = iframe.src;
+        iframe.src = '';
+        iframe.src = currentSrc;
+      }
+    });
+  };
+
+  // Force iframe refresh when collapsible opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(refreshIframes, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Listen for window resize events
+  useEffect(() => {
+    let resizeTimer: NodeJS.Timeout;
+    
+    const handleResize = () => {
+      // Debounce resize events
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (isOpen) {
+          refreshIframes();
+        }
+      }, 300);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
+  }, [isOpen]);
 
   return (
     <Collapsible
@@ -105,10 +134,19 @@ export const LexiconCarousel = ({
                     >
                       {src.pdfUrl ? (
                         <iframe
+                          ref={(el) => (iframeRefs.current[i] = el)}
                           src={`${src.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                           className="h-full w-full border-0 pointer-events-none"
                           title="PDF preview"
                           aria-label="PDF preview"
+                          onLoad={(e) => {
+                            // Force redraw after load
+                            const iframe = e.currentTarget;
+                            const style = iframe.style.display;
+                            iframe.style.display = 'none';
+                            iframe.offsetHeight; // trigger reflow
+                            iframe.style.display = style;
+                          }}
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-muted/30 text-xs text-muted-foreground px-4 text-center">

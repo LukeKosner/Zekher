@@ -337,7 +337,7 @@ export function generateSourceUrl(params: SourceUrlParams): string {
       })
       .catch(() => {
         // Fallback logging if monitoring import fails
-        console.log("Citation URL generated successfully:", generatedUrl);
+        // console.log("Citation URL generated successfully:", generatedUrl);
       });
 
     return generatedUrl;

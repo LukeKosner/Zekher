@@ -19,7 +19,25 @@ import { Download, ExternalLink, ArrowUpRight } from "lucide-react";
 import { LexiconCardProps } from "@/app/sources/types";
 import { cn } from "@/lib";
 import { generateSourceUrl } from "@/lib";
-import { sourcesPageConstants } from "@/app/sources/constants";
+// =============================================================================
+// LEXICON CARD CONSTANTS
+// =============================================================================
+
+const sourcesPageConstants = {
+  cardText: {
+    lexicon: {
+      source: "from Yad Vashem's Holocaust Lexicon",
+      externalSource: "from Yad Vashem's website",
+      pdfPreviewFallback: "PDF preview not available.",
+      openInNewTab: "Open PDF in a new tab",
+      textPreview: "Text Preview",
+      viewFullText: "View Full Text",
+      viewFullPdf: "View Full PDF",
+      downloadPdf: "Download PDF",
+      visitExternal: "Visit External Resource"
+    }
+  }
+} as const;
 import Link from "next/link";
 
 export function LexiconCard({ source, className }: LexiconCardProps) {
@@ -39,13 +57,6 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
     pageType: "lexicon",
     filename: source.id
   });
-
-  if (
-    displayTitle.toLowerCase().includes("ab-aktion") ||
-    source.title?.toLowerCase().includes("ab-aktion")
-  ) {
-    console.log("🎯 AB-Aktion routeUrl generated:", routeUrl);
-  }
 
   // State for txt preview
   const [txtPreview, setTxtPreview] = React.useState<string>("");
@@ -108,7 +119,8 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
                   type="application/pdf"
                   width="100%"
                   height="100%"
-                  className="absolute top-0 left-0"
+                  className="absolute top-0 left-0 block"
+                  style={{ maxHeight: '100%', containIntrinsicSize: '100% 100%', overflow: 'hidden' }}
                 >
                   <div className="p-4 text-sm text-muted-foreground">
                     <p>

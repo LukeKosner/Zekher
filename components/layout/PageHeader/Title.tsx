@@ -4,12 +4,7 @@
 "use client";
 
 import Link from "next/link";
-
-export interface ConditionalTitleProps {
-  sidebarOpen?: boolean;
-  isMobile?: boolean;
-  title: string;
-}
+import type { ConditionalTitleProps } from "../types";
 
 export function ConditionalTitle({
   sidebarOpen,

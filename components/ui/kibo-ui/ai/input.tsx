@@ -18,10 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib";
 
-type UseAutoResizeTextareaProps = {
-  minHeight: number;
-  maxHeight?: number;
-};
+import type { UseAutoResizeTextareaProps } from "../../types";
 
 const useAutoResizeTextarea = ({
   minHeight,

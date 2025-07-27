@@ -15,15 +15,7 @@ import {
   type CarouselApi
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-
-interface SlideImage {
-  src: string;
-  alt: string;
-  question: string;
-  photographerName: string;
-  photographerUrl: string;
-  unsplashUrl: string;
-}
+import type { SlideImage } from "../types";
 
 const images: SlideImage[] = [
   {

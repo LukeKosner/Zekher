@@ -1,10 +1,11 @@
 import type { ComponentProps, HTMLAttributes } from "react";
 import { Badge } from "../../badge";
 import { cn } from "@/lib";
-
-export type AnnouncementProps = ComponentProps<typeof Badge> & {
-  themed?: boolean;
-};
+import type {
+  AnnouncementProps,
+  AnnouncementTagProps,
+  AnnouncementTitleProps
+} from "./types";
 
 export const Announcement = ({
   variant = "outline",
@@ -24,8 +25,6 @@ export const Announcement = ({
   />
 );
 
-export type AnnouncementTagProps = HTMLAttributes<HTMLDivElement>;
-
 export const AnnouncementTag = ({
   className,
   ...props
@@ -39,8 +38,6 @@ export const AnnouncementTag = ({
     {...props}
   />
 );
-
-export type AnnouncementTitleProps = HTMLAttributes<HTMLDivElement>;
 
 export const AnnouncementTitle = ({
   className,

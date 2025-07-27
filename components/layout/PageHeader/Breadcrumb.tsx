@@ -6,30 +6,26 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { getNavigationItemByPath } from '@/lib/navigation';
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
+import { getNavigationItemByPath } from "@/lib/navigation";
+import type { BreadcrumbNavigationProps } from "../types";
 
-interface BreadcrumbNavigationProps {
-  slug: string;
-}
-
-export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
+export function BreadcrumbNavigation({ slug }: BreadcrumbNavigationProps) {
   if (!slug) {
     return null;
   }
 
-  const parts = slug.split('/').filter(part => part);
+  const parts = slug.split("/").filter((part) => part);
   let navigationItem = getNavigationItemByPath(slug);
-  
-  
+
   // Special case: if we're on /developers, show the MCP breadcrumb since it redirects there
-  if (slug === '/developers') {
-    navigationItem = getNavigationItemByPath('/developers/mcp');
+  if (slug === "/developers") {
+    navigationItem = getNavigationItemByPath("/developers/mcp");
   }
 
   // For root path
-  if (slug === '/') {
+  if (slug === "/") {
     return (
       <Breadcrumb className="hidden md:block">
         <BreadcrumbList>
@@ -46,8 +42,11 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
   }
 
   // For known navigation items - skip this for dynamic routes
-  const isDynamicDetailPage = parts.length >= 3 && parts[0] === 'sources' && (parts[1] === 'lexicon' || parts[1] === 'testimony');
-  
+  const isDynamicDetailPage =
+    parts.length >= 3 &&
+    parts[0] === "sources" &&
+    (parts[1] === "lexicon" || parts[1] === "testimony");
+
   if (navigationItem && !isDynamicDetailPage) {
     return (
       <Breadcrumb className="hidden md:block">
@@ -57,7 +56,9 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{navigationItem.breadcrumbLabel || navigationItem.label}</BreadcrumbPage>
+            <BreadcrumbPage>
+              {navigationItem.breadcrumbLabel || navigationItem.label}
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -67,13 +68,15 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
   // For sub-pages (like /sources/lexicon/123 or /developers/mcp)
   if (parts.length > 1) {
     // Try to find exact match for the full path first
-    const fullPath = `/${parts.join('/')}`;
+    const fullPath = `/${parts.join("/")}`;
     const exactNavigationItem = getNavigationItemByPath(fullPath);
-    
+
     // Skip exact match for dynamic routes like lexicon and testimony detail pages
-    const isDynamicRoute = (parts.length >= 3 && parts[0] === 'sources' && (parts[1] === 'lexicon' || parts[1] === 'testimony'));
-    
-    
+    const isDynamicRoute =
+      parts.length >= 3 &&
+      parts[0] === "sources" &&
+      (parts[1] === "lexicon" || parts[1] === "testimony");
+
     if (exactNavigationItem && !isDynamicRoute) {
       return (
         <Breadcrumb className="hidden md:block">
@@ -83,34 +86,37 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{exactNavigationItem.breadcrumbLabel || exactNavigationItem.label}</BreadcrumbPage>
+              <BreadcrumbPage>
+                {exactNavigationItem.breadcrumbLabel ||
+                  exactNavigationItem.label}
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       );
     }
-    
+
     // Fallback to base path logic for deeper nested routes
     const basePath = `/${parts[0]}`;
     const baseNavigationItem = getNavigationItemByPath(basePath);
-    
+
     if (baseNavigationItem) {
       // Special handling for lexicon and testimony pages
       let pageTitle = parts[parts.length - 1]
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 
       // Check if this is a lexicon or testimony detail page
-      const isSourcesRoute = parts.length >= 3 && parts[0] === 'sources';
-      const isLexicon = parts[1] === 'lexicon';
-      const isTestimony = parts[1] === 'testimony';
-      
+      const isSourcesRoute = parts.length >= 3 && parts[0] === "sources";
+      const isLexicon = parts[1] === "lexicon";
+      const isTestimony = parts[1] === "testimony";
+
       if (isSourcesRoute) {
         if (isLexicon) {
-          pageTitle = 'Lexicon Entry';
+          pageTitle = "Lexicon Entry";
         } else if (isTestimony) {
-          pageTitle = 'Survivor Testimony';
+          pageTitle = "Survivor Testimony";
         }
       }
 
@@ -122,7 +128,9 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href={basePath}>{baseNavigationItem.label}</BreadcrumbLink>
+              <BreadcrumbLink href={basePath}>
+                {baseNavigationItem.label}
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -135,10 +143,11 @@ export function BreadcrumbNavigation({slug}: BreadcrumbNavigationProps) {
   }
 
   // Fallback for unknown paths
-  const pageTitle = parts[0]
-    ?.split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ') || '';
+  const pageTitle =
+    parts[0]
+      ?.split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ") || "";
 
   return (
     <Breadcrumb className="hidden md:block">

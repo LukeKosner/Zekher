@@ -9,7 +9,8 @@ import {
   UserIcon,
   LanguagesIcon,
   PlayIcon,
-  PauseIcon
+  PauseIcon,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateAudioUrl } from "@/lib";
@@ -20,24 +21,11 @@ import Link from "next/link";
  * It includes the audio player, timestamp navigation, and formatted testimony content.
  */
 
-interface TimestampSegment {
-  timestamp: string;
-  text: string;
-  startTimeSeconds: number;
-}
-
-interface TestimonyData {
-  id: string;
-  survivor_name: string;
-  filename: string;
-  content: string;
-  testimony_language?: string;
-  interviewer?: string;
-  date?: string;
-  location?: string;
-  description?: string;
-  createdAt?: string;
-}
+import type {
+  TimestampSegment,
+  TestimonyData,
+  TestimonyPageClientProps
+} from "../types";
 
 /**
  * Formats testimony content for display
@@ -55,11 +43,7 @@ function formatTestimonyContent(content: string): string[] {
   return paragraphs;
 }
 
-export function TestimonyPageClient({
-  testimony
-}: {
-  testimony: TestimonyData;
-}) {
+export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
   const [playingSegment, setPlayingSegment] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentPlayPromise = useRef<Promise<void> | null>(null);
@@ -180,7 +164,7 @@ export function TestimonyPageClient({
     : null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
+    <div className="w-full max-w-4xl mx-auto p-6 pb-20">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-6">{testimony.survivor_name}</h1>
@@ -271,11 +255,17 @@ export function TestimonyPageClient({
       <audio ref={audioRef} style={{ display: "none" }} />
 
       {/* Footer */}
-      <div className="mt-8 text-sm text-muted-foreground text-center">
+      <div className="mt-8 mb-4 text-sm text-muted-foreground text-center">
         <p>
           This testimony comes from the{" "}
-          <Link href="https://voices.library.iit.edu/">
+          <Link 
+            href="https://voices.library.iit.edu/"
+            className="text-foreground underline hover:no-underline inline-flex items-center gap-1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             David P. Boder collection
+            <ExternalLink className="w-3 h-3" />
           </Link>
           . Zekher hosts these documents to avoid putting pressure on Aviary
           servers. Zekher claims no ownership over this content.
