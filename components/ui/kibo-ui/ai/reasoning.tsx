@@ -5,12 +5,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import { ChevronDownIcon, BrainIcon } from "lucide-react";
+import { ChevronDownIcon, BrainIcon, CircleAlert } from "lucide-react";
 import type { ComponentProps } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib";
 import { AIResponse } from "./response";
+import { Banner, BannerIcon, BannerTitle } from "@/components/ui/banner";
 type AIReasoningContextValue = {
   isStreaming: boolean;
   isOpen: boolean;
@@ -86,7 +87,7 @@ export const AIReasoning = memo(
         value={{ isStreaming, isOpen, setIsOpen, duration }}
       >
         <Collapsible
-          className={cn("not-prose mb-4", className)}
+          className={cn("not-prose my-4", className)}
           onOpenChange={handleOpenChange}
           open={isOpen}
           {...props}
@@ -121,10 +122,12 @@ export const AIReasoningTrigger = memo(
         {children ?? (
           <>
             <div className="flex items-center gap-1">
-              <BrainIcon className={cn(
-                "size-4 text-muted-foreground transition-all duration-200 ease-out",
-                isStreaming && "animate-pulse"
-              )} />
+              <BrainIcon
+                className={cn(
+                  "size-4 text-muted-foreground transition-all duration-200 ease-out",
+                  isStreaming && "animate-pulse"
+                )}
+              />
               <div className="transition-all duration-200 ease-out">
                 {isStreaming && duration === 0 ? (
                   <p>Thinking...</p>
@@ -159,6 +162,13 @@ export const AIReasoningContent = memo(
       className={cn("mt-4 text-muted-foreground text-sm", className)}
       {...props}
     >
+      <Banner className="flex items-center gap-1.5">
+        <BannerIcon icon={CircleAlert} />
+        <BannerTitle>
+          Reasoning content may contain inaccuracies or hallucinations. Use for
+          context only.
+        </BannerTitle>
+      </Banner>
       <AIResponse className="grid gap-2">{children}</AIResponse>
     </CollapsibleContent>
   )

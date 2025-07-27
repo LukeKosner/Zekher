@@ -32,6 +32,9 @@ export default withSentryConfig(nextConfig, {
   org: "zekher",
   project: "javascript-nextjs",
 
+  // Pass the auth token for source map uploads
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
@@ -54,5 +57,5 @@ export default withSentryConfig(nextConfig, {
   // See the following for more information:
   // https://docs.sentry.io/product/crons/
   // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true
+  automaticVercelMonitors: false
 });

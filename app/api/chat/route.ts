@@ -1,39 +1,63 @@
-// Simplified chat route
 import { lexiconTool, testimonyTool, showUsersAudio } from "@/lib/tools";
 import { google } from "@ai-sdk/google";
-import { streamText, convertToModelMessages, UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  type UIMessage,
+  hasToolCall
+} from "ai";
+import { holocaustEducatorPrompt } from "./prompts";
+// =============================================================================
+// CHAT API CONSTANTS
+// =============================================================================
 
-import { holocaustEducatorPrompt } from "@/lib/prompts";
-import { logger, logApiRequest, logApiResponse } from "@/lib/utils/logger";
+// Chat API configuration and constants
+const chatApiConstants = {
+  maxDuration: 60,
+  modelName: "gemini-2.5-pro",
+  component: "chat",
+  endpoint: "/api/chat"
+} as const;
+
+// Chat API error messages
+const chatApiErrors = {
+  invalidMessages: "Messages array is missing or invalid",
+  internalServerError: "Internal server error",
+  processingError:
+    "An error occurred while processing your request. Please try again.",
+  invalidRequest: "Invalid request format",
+  missingMessages: "No messages provided in request"
+} as const;
+import { logger, logApiRequest, logApiResponse } from "@/lib/monitoring";
+import type { ChatErrorResponse, ChatApiContext } from "./types";
+import * as Sentry from "@sentry/nextjs";
 
 export const maxDuration = 60;
 
-export async function POST(req: Request) {
-  const startTime = Date.now();
-  const requestData = await req.json();
-
-  logApiRequest("POST", "/api/chat");
-  logger.info("Chat route called", {
-    messagesCount: requestData.messages?.length || 0,
-    component: "chat-api"
-  });
-
-  const { messages }: { messages: UIMessage[] } = requestData;
+/**
+ * Chat API endpoint for Holocaust education conversations.
+ * Provides access to lexicon search, testimony search, and audio playback tools.
+ * Uses streaming responses for real-time conversation experience.
+ */
+export async function POST(req: Request): Promise<Response> {
+  const context: ChatApiContext = {
+    startTime: Date.now()
+  };
 
   try {
-    logger.debug("Messages received", {
-      messagesCount: messages?.length || 0,
-      component: "chat-api"
-    });
+    const requestData = await req.json();
 
-    if (!messages || !Array.isArray(messages)) {
-      throw new Error("Messages array is missing or invalid");
-    }
+    logApiRequest("POST", chatApiConstants.endpoint);
+    logger.info("Chat started", { msgs: requestData.messages?.length || 0 });
+
+    const { messages }: { messages: UIMessage[] } = requestData;
 
     const streamResult = streamText({
-      model: google("gemini-2.5-pro"),
+      model: google(chatApiConstants.modelName),
       messages: convertToModelMessages(messages),
       system: holocaustEducatorPrompt,
+      stopWhen: hasToolCall("showUsersAudio"),
+      temperature: 0,
       providerOptions: {
         google: {
           thinkingConfig: {
@@ -50,33 +74,48 @@ export async function POST(req: Request) {
 
     const response = streamResult.toUIMessageStreamResponse();
 
-    logApiResponse("POST", "/api/chat", 200, Date.now() - startTime);
-    logger.info("Chat route completed successfully", {
-      duration: Date.now() - startTime,
-      component: "chat-api"
-    });
+    const duration = Date.now() - context.startTime;
+    logApiResponse("POST", chatApiConstants.endpoint, 200, { duration });
+    logger.info("Chat completed", { ms: duration });
 
     return response;
   } catch (error) {
-    const duration = Date.now() - startTime;
-    logger.error("Chat route error", {
-      error: error instanceof Error ? error : new Error(String(error)),
-      duration,
-      component: "chat-api"
-    });
-
-    logApiResponse("POST", "/api/chat", 500, duration);
-
-    return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        message:
-          "An error occurred while processing your request. Please try again."
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      }
-    );
+    return handleChatError(error, context);
   }
+}
+
+/**
+ * Handles errors that occur during chat processing.
+ */
+function handleChatError(error: unknown, context: ChatApiContext): Response {
+  const duration = Date.now() - context.startTime;
+  const errorObj = error instanceof Error ? error : new Error(String(error));
+
+  logger.error("Chat error", { error: errorObj, ms: duration });
+
+  // Capture error in Sentry with context
+  Sentry.captureException(errorObj, {
+    tags: {
+      component: "api",
+      endpoint: "chat",
+      operation: "POST"
+    },
+    extra: {
+      duration,
+      timestamp: new Date().toISOString()
+    }
+  });
+
+  logApiResponse("POST", chatApiConstants.endpoint, 500, { duration });
+
+  const errorResponse: ChatErrorResponse = {
+    error: chatApiErrors.internalServerError,
+    message: chatApiErrors.processingError,
+    timestamp: new Date().toISOString()
+  };
+
+  return new Response(JSON.stringify(errorResponse), {
+    status: 500,
+    headers: { "Content-Type": "application/json" }
+  });
 }

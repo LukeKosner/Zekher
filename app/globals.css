@@ -1,6 +1,29 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Lock mobile devices to portrait mode */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  html {
+    transform: rotate(90deg);
+    transform-origin: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vh;
+    height: 100vw;
+    overflow: hidden;
+  }
+  
+  body {
+    width: 100vh;
+    height: 100vw;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    position: fixed;
+    overflow: hidden;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -71,7 +94,7 @@
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-accent-foreground: oklch(0.05 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
@@ -105,7 +128,7 @@
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
@@ -116,18 +139,25 @@
   }
   html {
     height: 100%;
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
   }
   body {
     @apply bg-background text-foreground;
     height: 100%;
     margin: 0;
     padding: 0;
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
     -webkit-overflow-scrolling: touch;
   }
   #__next {
     height: 100%;
+  }
+  
+  /* Prevent PDF content from bleeding outside containers */
+  object[type="application/pdf"] {
+    contain: layout style;
+    overflow: hidden;
+    display: block;
   }
 }
 

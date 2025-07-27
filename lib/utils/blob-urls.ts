@@ -74,7 +74,7 @@ function loadBlobUrlConfig(): BlobUrls {
       console.warn(errorMessage);
 
       // Track configuration error
-      import("./monitoring")
+      import("@/lib/monitoring")
         .then(({ trackBlobUrlConfigError }) => {
           trackBlobUrlConfigError(errorMessage, "validation");
         })
@@ -95,7 +95,7 @@ function loadBlobUrlConfig(): BlobUrls {
     console.warn(errorMessage);
 
     // Track loading error
-    import("./monitoring")
+    import("@/lib/monitoring")
       .then(({ trackBlobUrlConfigError }) => {
         trackBlobUrlConfigError(errorMessage, "loading");
       })
@@ -142,7 +142,7 @@ export function getLexiconUrl(filename: string): string {
   return (
     typedBlobUrls.lexicon[pdfFilename] ||
     typedBlobUrls.lexicon[filename] ||
-    `https://storage.googleapis.com/zekher-storage/lexicon/pdf/${pdfFilename.replace(/-/g, " ")}`
+    `https://storage.googleapis.com/zekher-storage/lexicon/pdf/${encodeURIComponent(pdfFilename)}`
   );
 }
 

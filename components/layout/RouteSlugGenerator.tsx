@@ -5,32 +5,31 @@
 
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-
-interface RouteSlugGeneratorProps {
-  children: (slug: string) => React.ReactNode;
-}
+import type { RouteSlugGeneratorProps } from "./types";
 
 export function RouteSlugGenerator({ children }: RouteSlugGeneratorProps) {
   const pathname = usePathname();
 
   const slug = useMemo(() => {
+    if (pathname == "/sources") {
+      return "sources/library";
+    } else if (pathname.startsWith("/sources")) {
+      return pathname;
+    } else if (pathname.startsWith("/developers")) {
+      return pathname;
+    }
+
     switch (pathname) {
       case "/":
-        return "project/home";
+        return "/";
+      case "/about":
+        return "/about";
       case "/technology":
-        return "project/technology";
+        return "/technology";
       case "/chat":
-        return "everyone/chat";
-      case "/documentation":
-        return "developers/documentation";
-      case "/developers":
-        return "developers/get started";
-      case "/sources":
-        return "everyone/sources";
-      case "/auth":
-        return "everyone/accounts";
+        return "/chat";
       default:
-        return "project/home";
+        return pathname;
     }
   }, [pathname]);
 

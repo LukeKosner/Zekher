@@ -1,24 +1,23 @@
-import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
-import type {ComponentProps, HTMLAttributes, ReactNode} from 'react';
-import {cn} from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
+import { cn } from "@/lib";
+import type {
+  AIMessageProps,
+  AIMessageContentProps,
+  AIMessageAvatarProps
+} from "./types";
 
-export type AIMessageProps = HTMLAttributes<HTMLDivElement> & {
-  from: 'user' | 'assistant';
-};
-
-export const AIMessage = ({className, from, ...props}: AIMessageProps) => (
+export const AIMessage = ({ className, from, ...props }: AIMessageProps) => (
   <div
     className={cn(
-      'group flex w-full gap-3 py-4',
-      from === 'user' ? 'is-user flex-row-reverse' : 'is-assistant flex-row',
-      '[&>div]:max-w-[80%]',
-      className,
+      "group flex w-full gap-3 py-4",
+      from === "user" ? "is-user flex-row-reverse" : "is-assistant flex-row",
+      "[&>div]:max-w-full sm:[&>div]:max-w-[80%]",
+      className
     )}
     {...props}
   />
 );
-
-export type AIMessageContentProps = HTMLAttributes<HTMLDivElement>;
 
 export const AIMessageContent = ({
   children,
@@ -27,22 +26,16 @@ export const AIMessageContent = ({
 }: AIMessageContentProps) => (
   <div
     className={cn(
-      'flex flex-col gap-2 rounded-lg px-4 py-3 text-base',
-      'bg-muted text-foreground',
-      'group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground',
-      className,
+      "flex flex-col gap-2 rounded-lg px-4 py-3 text-base",
+      "bg-muted text-foreground",
+      "group-[.is-user]:bg-primary group-[.is-user]:text-primary-foreground",
+      className
     )}
     {...props}
   >
     <div className="is-user:dark">{children}</div>
   </div>
 );
-
-export type AIMessageAvatarProps = ComponentProps<typeof Avatar> & {
-  src?: string;
-  icon?: ReactNode;
-  name?: string;
-};
 
 export const AIMessageAvatar = ({
   src,
@@ -51,7 +44,7 @@ export const AIMessageAvatar = ({
   className,
   ...props
 }: AIMessageAvatarProps) => (
-  <Avatar className={cn('size-8 flex-shrink-0', className)} {...props}>
+  <Avatar className={cn("size-8 flex-shrink-0", className)} {...props}>
     {src && <AvatarImage alt="" className="mt-0 mb-0" src={src} />}
     <AvatarFallback>
       {icon ? (
@@ -59,7 +52,7 @@ export const AIMessageAvatar = ({
           {icon}
         </div>
       ) : (
-        name?.slice(0, 2) || 'ME'
+        name?.slice(0, 2) || "ME"
       )}
     </AvatarFallback>
   </Avatar>

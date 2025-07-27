@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   CheckCircleIcon,
@@ -6,18 +6,18 @@ import {
   CircleIcon,
   ClockIcon,
   WrenchIcon,
-  XCircleIcon,
-} from 'lucide-react';
-import type {ComponentProps, ReactNode} from 'react';
-import {Badge} from '@/components/ui/badge';
+  XCircleIcon
+} from "lucide-react";
+import type { ComponentProps, ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {cn} from '@/lib/utils';
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib";
 
-export type AIToolStatus = 'pending' | 'running' | 'completed' | 'error';
+export type AIToolStatus = "pending" | "running" | "completed" | "error";
 
 export type AIToolProps = ComponentProps<typeof Collapsible> & {
   status?: AIToolStatus;
@@ -25,11 +25,11 @@ export type AIToolProps = ComponentProps<typeof Collapsible> & {
 
 export const AITool = ({
   className,
-  status = 'pending',
+  status = "pending",
   ...props
 }: AIToolProps) => (
   <Collapsible
-    className={cn('not-prose mb-4 w-full rounded-md border', className)}
+    className={cn("not-prose mb-4 w-full rounded-md border", className)}
     {...props}
   />
 );
@@ -38,21 +38,22 @@ export type AIToolHeaderProps = ComponentProps<typeof CollapsibleTrigger> & {
   status?: AIToolStatus;
   name: string;
   description?: string;
+  icon?: ReactNode;
 };
 
 const getStatusBadge = (status: AIToolStatus) => {
   const labels = {
-    pending: 'Pending',
-    running: 'Running',
-    completed: 'Completed',
-    error: 'Error',
+    pending: "Pending",
+    running: "Running",
+    completed: "Completed",
+    error: "Error"
   } as const;
 
   const icons = {
     pending: <CircleIcon className="size-4" />,
     running: <ClockIcon className="size-4 animate-pulse" />,
     completed: <CheckCircleIcon className="size-4 text-green-600" />,
-    error: <XCircleIcon className="size-4 text-red-600" />,
+    error: <XCircleIcon className="size-4 text-red-600" />
   } as const;
 
   return (
@@ -65,20 +66,21 @@ const getStatusBadge = (status: AIToolStatus) => {
 
 export const AIToolHeader = ({
   className,
-  status = 'pending',
+  status = "pending",
   name,
   description,
+  icon,
   ...props
 }: AIToolHeaderProps) => (
   <CollapsibleTrigger
     className={cn(
-      'flex w-full items-center justify-between gap-4 p-3',
-      className,
+      "flex w-full items-center justify-between gap-4 p-3",
+      className
     )}
     {...props}
   >
     <div className="flex items-center gap-2">
-      <WrenchIcon className="size-4 text-muted-foreground" />
+      {icon || <WrenchIcon className="size-4 text-muted-foreground" />}
       <span className="font-medium text-sm">{name}</span>
       {getStatusBadge(status)}
     </div>
@@ -88,14 +90,14 @@ export const AIToolHeader = ({
 
 export type AIToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
-export const AIToolContent = ({className, ...props}: AIToolContentProps) => (
+export const AIToolContent = ({ className, ...props }: AIToolContentProps) => (
   <CollapsibleContent
-    className={cn('grid gap-4 overflow-hidden border-t p-4 text-sm', className)}
+    className={cn("grid gap-4 overflow-hidden border-t p-4 text-sm", className)}
     {...props}
   />
 );
 
-export type AIToolParametersProps = ComponentProps<'div'> & {
+export type AIToolParametersProps = ComponentProps<"div"> & {
   parameters: Record<string, unknown>;
 };
 
@@ -104,7 +106,7 @@ export const AIToolParameters = ({
   parameters,
   ...props
 }: AIToolParametersProps) => (
-  <div className={cn('space-y-2', className)} {...props}>
+  <div className={cn("space-y-2", className)} {...props}>
     <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
       Parameters
     </h4>
@@ -116,7 +118,7 @@ export const AIToolParameters = ({
   </div>
 );
 
-export type AIToolResultProps = ComponentProps<'div'> & {
+export type AIToolResultProps = ComponentProps<"div"> & {
   result?: ReactNode;
   error?: string;
 };
@@ -132,16 +134,16 @@ export const AIToolResult = ({
   }
 
   return (
-    <div className={cn('space-y-2', className)} {...props}>
+    <div className={cn("space-y-2", className)} {...props}>
       <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {error ? 'Error' : 'Result'}
+        {error ? "Error" : "Result"}
       </h4>
       <div
         className={cn(
-          'overflow-x-auto rounded-md p-3 text-xs',
+          "overflow-x-auto rounded-md p-3 text-xs",
           error
-            ? 'bg-destructive/10 text-destructive'
-            : 'bg-muted/50 text-foreground',
+            ? "bg-destructive/10 text-destructive"
+            : "bg-muted/50 text-foreground"
         )}
       >
         {error ? <div>{error}</div> : <div>{result}</div>}

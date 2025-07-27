@@ -31,19 +31,26 @@ import {
   AIToolParameters
 } from "@/components/ui/kibo-ui/ai/tool";
 import React, { Suspense, useState } from "react";
-import { MicIcon, BookOpenCheck, Users, History } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LexiconCarousel } from "@/components/lexiconCarousel";
-import { TestimonyCarousel } from "@/components/testimonyCarousel";
-import { generateSourceUrl } from "@/lib/utils/url-generation";
+import { LexiconCarousel } from "@/app/chat/components/LexiconCarousel";
+import { TestimonyCarousel } from "@/app/chat/components/TestimonyCarousel";
+import { HolocaustImageSlideshow } from "@/app/chat/components/HolocaustImageSlideshow";
+import { generateSourceUrl } from "@/lib";
+import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import * as Sentry from "@sentry/nextjs";
 
-// Lazy load audio player to reduce initial bundle size
+const { logger } = Sentry;
+
+// Lazy load audio player
 const AudioPlayer = dynamic(
   () =>
-    import("@/components/audio/AudioPlayer").then((mod) => ({
+    import("@/app/chat/components/AudioPlayer").then((mod) => ({
       default: mod.AudioPlayer
     })),
   {
@@ -69,38 +76,72 @@ function ChatContent() {
   const { messages, sendMessage, status, stop } = useChat({
     maxSteps: 5,
     onError: (err) => {
-      console.error("Chat error:", err);
+      logger.error("Chat error occurred", {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      Sentry.captureException(err, {
+        tags: { component: "chat", operation: "useChat" }
+      });
     }
   });
 
   const [input, setInput] = useState("");
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
-
+  // Handlers
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = input.trim();
 
-    // Prevent duplicate messages by checking against recent user messages
-    const recentUserMessages = messages
-      .filter((msg) => msg.role === "user")
-      .slice(-3)
-      .map(
-        (msg) => (msg as any).parts?.[0]?.text || (msg as any).content || ""
-      );
+    if (trimmedInput) {
+      // Prevent duplicate messages
+      const recentUserMessages = messages
+        .filter((msg) => msg.role === "user")
+        .slice(-3)
+        .map(
+          (msg) => (msg as any).parts?.[0]?.text || (msg as any).content || ""
+        );
 
-    if (trimmedInput && !recentUserMessages.includes(trimmedInput)) {
-      sendMessage({ text: trimmedInput });
-      setInput("");
+      if (!recentUserMessages.includes(trimmedInput)) {
+        sendMessage({ text: trimmedInput });
+        setInput("");
+      }
     }
   };
+
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion);
   };
 
-  // Helper function to get icon and name for different tools
+  const handleQuestionClick = (question: string) => {
+    setInput(question);
+  };
+
+  // Helper functions
+  const isErrorContent = (text: string) => {
+    return (
+      text.includes("<ctrl46>") ||
+      text.toLowerCase().includes("error:") ||
+      text.toLowerCase().includes("failed:") ||
+      text.toLowerCase().includes("exception:")
+    );
+  };
+
+  const renderErrorContent = (text: string) => {
+    return (
+      <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md p-3">
+        <div className="flex items-start gap-2">
+          <div className="text-red-600 dark:text-red-400 text-xs font-medium">
+            Error
+          </div>
+        </div>
+        <div className="text-red-700 dark:text-red-300 text-sm mt-1 font-mono whitespace-pre-wrap">
+          {text}
+        </div>
+      </div>
+    );
+  };
+
   const getToolDisplay = (toolName: string) => {
     switch (toolName) {
       case "lexiconTool":
@@ -115,18 +156,14 @@ function ChatContent() {
         };
       case "showUsersAudio":
         return {
-          icon: <MicIcon size={18} />,
+          icon: <AudioWaveform size={18} />,
           displayName: "Audio Selections"
         };
       default:
-        return {
-          icon: <BookOpenCheck size={18} />,
-          displayName: toolName
-        };
+        return { icon: <BookOpenCheck size={18} />, displayName: toolName };
     }
   };
 
-  // Helper function to check if a tool result contains audio segments
   const hasAudioSegments = (result: any) => {
     return (
       result &&
@@ -135,25 +172,20 @@ function ChatContent() {
     );
   };
 
-  // Helper function to render structured tool results
   const renderToolResult = (toolInvocation: any): React.ReactNode => {
     if (toolInvocation.state !== "result") return null;
 
     const resultData = toolInvocation.result;
-
-    const isLexiconResult =
-      resultData?.entries &&
-      Array.isArray(resultData.entries) &&
-      resultData.entries.some((e: any) => e.title && !e.survivorName);
-    const isTestimonyResult =
-      resultData?.entries &&
-      Array.isArray(resultData.entries) &&
-      resultData.entries.some((e: any) => e.survivorName);
+    const isLexiconResult = resultData?.entries?.some(
+      (e: any) => e.title && !e.survivorName
+    );
+    const isTestimonyResult = resultData?.entries?.some(
+      (e: any) => e.survivorName
+    );
 
     return (
       <AIToolContent>
         <AIToolParameters parameters={toolInvocation.args || {}} />
-
         <div className="space-y-2">
           <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
             Results
@@ -177,7 +209,7 @@ function ChatContent() {
                         <a
                           href={generateSourceUrl({
                             pageType: "lexicon",
-                            filename: entry.filename
+                            filename: entry.id || entry.filename
                           })}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -206,7 +238,7 @@ function ChatContent() {
                       <a
                         href={generateSourceUrl({
                           pageType: "testimony",
-                          filename: testimony.filename
+                          filename: testimony.id || testimony.filename
                         })}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -234,34 +266,20 @@ function ChatContent() {
             )}
           </div>
         </div>
-
-        <details className="space-y-2 mt-4">
-          <summary className="font-medium text-muted-foreground text-xs uppercase tracking-wide cursor-pointer hover:text-foreground">
-            Raw Data
-          </summary>
-          <div className="rounded-md bg-muted/50 p-3">
-            <pre className="overflow-x-auto text-muted-foreground text-xs">
-              {JSON.stringify(resultData, null, 2)}
-            </pre>
-          </div>
-        </details>
       </AIToolContent>
     );
   };
 
-  // Helper function to render tool invocations
-  function renderToolInvocation(
+  const renderToolInvocation = (
     part: any,
     messageId: string,
     partIndex: number
-  ): React.ReactElement | null {
+  ): React.ReactElement | null => {
     const isToolPart =
       typeof part.type === "string" && part.type.startsWith("tool-");
-
     if (!isToolPart) return null;
 
     const toolName = part.type.replace("tool-", "");
-
     const toolInvocation = {
       toolCallId: part.toolCallId,
       state:
@@ -272,13 +290,15 @@ function ChatContent() {
 
     const toolDisplay = getToolDisplay(toolName);
 
-    // Handle audio segments tool specially
+    // Handle audio segments specially
     if (
       toolName === "showUsersAudio" &&
-      toolInvocation.state === "result" &&
-      hasAudioSegments(toolInvocation.result)
+      (toolInvocation.state === "result" ||
+        part.state === "output-available" ||
+        part.output) &&
+      hasAudioSegments(toolInvocation.result || part.output)
     ) {
-      const resultData = toolInvocation.result;
+      const resultData = toolInvocation.result || part.output;
       const audioData = {
         type: resultData.type || "audio_segments",
         segments: resultData.segments || resultData
@@ -286,8 +306,16 @@ function ChatContent() {
 
       return (
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <AITool status="completed">
-            <AIToolHeader name={toolDisplay.displayName} status="completed" />
+          <AITool status="completed" defaultOpen={true}>
+            <AIToolHeader
+              name={toolDisplay.displayName}
+              status="completed"
+              icon={
+                <span className="size-4 text-muted-foreground">
+                  {toolDisplay.icon}
+                </span>
+              }
+            />
             <AIToolContent>
               <div className="space-y-4">
                 {audioData.segments.map((segment: any, segIdx: number) => (
@@ -318,13 +346,13 @@ function ChatContent() {
       );
     }
 
-    // Handle all other tools
+    // Handle lexicon and testimony tools with carousels
     if (toolName === "lexiconTool") {
       return (
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
           <LexiconCarousel
             status={toolInvocation.state}
-            name={getToolDisplay(toolName).displayName}
+            name={toolDisplay.displayName}
             sources={toolInvocation.result?.entries || []}
           />
         </AIMessage>
@@ -336,250 +364,302 @@ function ChatContent() {
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
           <TestimonyCarousel
             status={toolInvocation.state}
-            name={getToolDisplay(toolName).displayName}
+            name={toolDisplay.displayName}
             sources={toolInvocation.result?.entries || []}
           />
         </AIMessage>
       );
     }
 
-    if (toolName === "showUsersAudio") {
-      if (toolInvocation.state === "result") {
-        return null; // Already rendered audio players above
-      }
+    // Handle other tools with standard UI
+    if (toolName === "showUsersAudio" && toolInvocation.state !== "result") {
+      const isRunning =
+        toolInvocation.state === "call" ||
+        toolInvocation.state === "partial-call" ||
+        (!toolInvocation.state && !toolInvocation.result);
 
       return (
         <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          {toolInvocation.state === "call" ||
-          toolInvocation.state === "partial-call" ||
-          (!toolInvocation.state && !toolInvocation.result) ? (
-            <AITool status="running">
-              <AIToolHeader name={toolDisplay.displayName} status="running" />
-              <AIToolContent>
-                {Object.keys(toolInvocation.args || {}).length > 0 ? (
+          <AITool
+            status={
+              isRunning
+                ? "running"
+                : toolInvocation.state === "result"
+                  ? "completed"
+                  : "pending"
+            }
+            defaultOpen={true}
+          >
+            <AIToolHeader
+              name={toolDisplay.displayName}
+              status={
+                isRunning
+                  ? "running"
+                  : toolInvocation.state === "result"
+                    ? "completed"
+                    : "pending"
+              }
+              icon={
+                <span className="size-4 text-muted-foreground">
+                  {toolDisplay.icon}
+                </span>
+              }
+            />
+            <AIToolContent>
+              {isRunning ? (
+                Object.keys(toolInvocation.args || {}).length > 0 ? (
                   <AIToolParameters parameters={toolInvocation.args || {}} />
                 ) : (
                   <div className="text-xs text-muted-foreground animate-pulse">
                     Selecting relevant audio segments...
                   </div>
-                )}
-              </AIToolContent>
-            </AITool>
-          ) : toolInvocation.state === "result" ? (
-            <AITool
-              status={
-                typeof toolInvocation.result === "string" &&
-                (toolInvocation.result.startsWith("Error processing") ||
-                  toolInvocation.result.startsWith("No relevant"))
-                  ? "error"
-                  : "completed"
-              }
-            >
-              <AIToolHeader
-                name={toolDisplay.displayName}
-                status={
-                  typeof toolInvocation.result === "string" &&
-                  (toolInvocation.result.startsWith("Error processing") ||
-                    toolInvocation.result.startsWith("No relevant"))
-                    ? "error"
-                    : "completed"
-                }
-              />
-              {renderToolResult(toolInvocation)}
-            </AITool>
-          ) : (
-            <AITool status="pending">
-              <AIToolHeader name={toolDisplay.displayName} status="pending" />
-              <AIToolContent>
+                )
+              ) : toolInvocation.state === "result" ? (
+                renderToolResult(toolInvocation)
+              ) : (
                 <div className="text-xs text-muted-foreground">
                   Tool in unknown state: {toolInvocation.state || "undefined"}
                 </div>
-              </AIToolContent>
-            </AITool>
-          )}
+              )}
+            </AIToolContent>
+          </AITool>
+        </AIMessage>
+      );
+    }
+
+    // Handle showUsersAudio tool that completed but doesn't have audio segments
+    if (toolName === "showUsersAudio" && toolInvocation.state === "result") {
+      return (
+        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+          <AITool status="completed" defaultOpen={true}>
+            <AIToolHeader
+              name={toolDisplay.displayName}
+              status="completed"
+              icon={
+                <span className="size-4 text-muted-foreground">
+                  {toolDisplay.icon}
+                </span>
+              }
+            />
+            <AIToolContent>{renderToolResult(toolInvocation)}</AIToolContent>
+          </AITool>
         </AIMessage>
       );
     }
 
     return null;
-  }
+  };
 
   return (
-    <>
-      {/* Main container - matches example UI structure exactly */}
-      <div className="relative flex h-full w-full flex-col divide-y min-h-0">
-        {/* Conversation area */}
+    <div className="relative flex h-full w-full flex-col min-h-0">
+      {messages.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center px-6">
+          <HolocaustImageSlideshow onQuestionClick={handleQuestionClick} />
+        </div>
+      ) : (
         <AIConversation className="flex-1 min-h-0">
           <AIConversationContent>
-            {messages.length !== 0 ? (
-              <AnimatePresence>
-                {messages.map((message, index) => {
-                  const isUser = message.role === "user";
+            <AnimatePresence>
+              {messages.map((message, index) => {
+                const isUser = message.role === "user";
 
-                  // Handle structured assistant messages with parts
-                  if (!isUser && Array.isArray(message.parts)) {
-                    const renderedParts: React.ReactElement[] = [];
+                // Handle structured assistant messages with parts
+                if (!isUser && Array.isArray(message.parts)) {
+                  const renderedParts: React.ReactElement[] = [];
 
-                    // Process parts in chronological order
-                    message.parts.forEach((part, partIndex) => {
-                      if (part.type === "text") {
-                        // Render text content
+                  message.parts.forEach((part, partIndex) => {
+                    if (part.type === "text") {
+                      // Split text on double newlines to create separate bubbles
+                      const textSegments = part.text
+                        .split("\n\n")
+                        .filter((segment) => segment.trim().length > 0);
+
+                      textSegments.forEach((segment, segmentIndex) => {
+                        const trimmedSegment = segment.trim();
+                        const isError = isErrorContent(trimmedSegment);
+
                         renderedParts.push(
                           <AIMessage
                             from="assistant"
-                            key={`${message.id}-text-${partIndex}`}
+                            key={`${message.id}-text-${partIndex}-${segmentIndex}`}
                           >
                             <AIMessageContent>
-                              <AIResponse>{part.text}</AIResponse>
+                              {isError ? (
+                                renderErrorContent(trimmedSegment)
+                              ) : (
+                                <AIResponse>{trimmedSegment}</AIResponse>
+                              )}
                             </AIMessageContent>
                           </AIMessage>
                         );
-                      } else if (part.type === "reasoning") {
-                        // Render reasoning content as dropdown sections
-                        // Check individual reasoning part state instead of global streaming status
-                        const isReasoningStreaming =
-                          (part as any).state !== "done" &&
-                          status === "streaming";
-                        renderedParts.push(
-                          <motion.div
-                            key={`${message.id}-reasoning-${partIndex}-${part.text?.slice(0, 20)}`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ 
-                              duration: 0.3, 
-                              ease: "easeOut",
-                              delay: 0.1 // Small delay to make the animation more noticeable
-                            }}
+                      });
+                    } else if (part.type === "reasoning") {
+                      const isReasoningStreaming =
+                        (part as any).state !== "done" &&
+                        status === "streaming";
+                      const reasoningCount = message.parts
+                        .slice(0, partIndex)
+                        .filter((p) => p.type === "reasoning").length;
+                      renderedParts.push(
+                        <motion.div
+                          key={`${message.id}-reasoning-${reasoningCount}-${part.text?.slice(0, 50)?.replace(/\s+/g, "") || partIndex}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: "easeOut",
+                            delay: reasoningCount * 0.15
+                          }}
+                        >
+                          <AIReasoning
+                            isStreaming={isReasoningStreaming}
+                            defaultOpen={false}
                           >
-                            <AIReasoning
-                              isStreaming={isReasoningStreaming}
-                              defaultOpen={false}
-                            >
-                              <AIReasoningTrigger />
-                              <AIReasoningContent>{part.text}</AIReasoningContent>
-                            </AIReasoning>
-                          </motion.div>
-                        );
-                      } else if (part.type === "step-start") {
-                        // Skip step-start parts - they're just markers
-                        return;
-                      } else if (
-                        typeof part.type === "string" &&
-                        part.type.startsWith("tool-")
-                      ) {
-                        // Render tool invocations
-                        const toolElement = renderToolInvocation(
-                          part,
-                          message.id,
-                          partIndex
-                        );
-                        if (toolElement) {
-                          renderedParts.push(toolElement);
-                        }
+                            <AIReasoningTrigger />
+                            <AIReasoningContent>{part.text}</AIReasoningContent>
+                          </AIReasoning>
+                        </motion.div>
+                      );
+                    } else if (
+                      part.type !== "step-start" &&
+                      typeof part.type === "string" &&
+                      part.type.startsWith("tool-")
+                    ) {
+                      const toolElement = renderToolInvocation(
+                        part,
+                        message.id,
+                        partIndex
+                      );
+                      if (toolElement) {
+                        renderedParts.push(toolElement);
                       }
-                    });
+                    }
+                  });
 
-                    return (
-                      <motion.div
-                        key={message.id || index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="flex flex-col gap-3"
-                      >
-                        {renderedParts}
-                      </motion.div>
-                    );
-                  }
-
-                  // Regular messages (user messages or simple assistant messages)
                   return (
                     <motion.div
                       key={message.id || index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="flex flex-col gap-3"
                     >
-                      <AIMessage
-                        from={isUser ? "user" : "assistant"}
-                      >
-                        <AIMessageContent>
-                          {isUser ? (
-                            (message as any).parts?.[0]?.text ||
-                            (message as any).content ||
-                            ""
-                          ) : (
-                            <AIResponse>
-                              {(message as any).parts?.[0]?.text ||
-                                (message as any).content ||
-                                ""}
-                            </AIResponse>
-                          )}
-                        </AIMessageContent>
-                      </AIMessage>
+                      {renderedParts}
                     </motion.div>
                   );
-                })}
-              </AnimatePresence>
-            ) : (
-              // Empty state - centered welcome message
-              <div className="flex items-center justify-center min-h-[60vh] px-6">
-                <div className="text-center space-y-6 max-w-3xl mx-auto">
-                  <h2 className="text-3xl md:text-5xl font-semibold leading-tight">
-                    Ask anything about the Holocaust
-                  </h2>
-                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                    Get answers from survivor testimony and leading data sources
-                  </p>
-                </div>
-              </div>
-            )}
+                }
+
+                // Regular messages
+                return (
+                  <motion.div
+                    key={message.id || index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <AIMessage from={isUser ? "user" : "assistant"}>
+                      <AIMessageContent>
+                        {isUser
+                          ? (message as any).parts?.[0]?.text ||
+                            (message as any).content ||
+                            ""
+                          : (() => {
+                              const content =
+                                (message as any).parts?.[0]?.text ||
+                                (message as any).content ||
+                                "";
+                              const isError = isErrorContent(content);
+
+                              return isError ? (
+                                renderErrorContent(content)
+                              ) : (
+                                <AIResponse>{content}</AIResponse>
+                              );
+                            })()}
+                      </AIMessageContent>
+                    </AIMessage>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </AIConversationContent>
           <AIConversationScrollButton />
         </AIConversation>
+      )}
 
-        {/* Bottom input section - matches example UI structure exactly */}
-        <div className="grid shrink-0 gap-4 pt-4">
-          <AISuggestions className="px-4">
-            {suggestions.map((suggestion) => (
-              <AISuggestion
-                key={suggestion}
-                onClick={() => handleSuggestionClick(suggestion)}
-                suggestion={suggestion}
-              />
-            ))}
-          </AISuggestions>
+      <motion.div 
+        className="grid shrink-0 gap-4 pt-4 border-t border-border"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+      >
+        <AISuggestions className="px-4">
+          {suggestions.map((suggestion) => (
+            <AISuggestion
+              key={suggestion}
+              onClick={() => handleSuggestionClick(suggestion)}
+              suggestion={suggestion}
+            />
+          ))}
+        </AISuggestions>
 
-          <div className="w-full px-4 pb-4">
-            <AIInput onSubmit={handleSubmit}>
-              <AIInputField
-                value={input}
-                onChange={handleInputChange}
-                aria-label="Ask a question about the Holocaust"
-              />
-
-              <AIInputSubmit
-                disabled={!input.trim() && status !== "streaming"}
-                status={status}
-                onClick={status === "streaming" ? stop : undefined}
-              />
-            </AIInput>
-          </div>
+        <div className="w-full px-4 pb-4">
+          <AIInput onSubmit={handleSubmit}>
+            <AIInputField
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              aria-label="Ask a question about the Holocaust"
+            />
+            <AIInputSubmit
+              disabled={!input.trim() && status !== "streaming"}
+              status={status}
+              onClick={status === "streaming" ? stop : undefined}
+            />
+          </AIInput>
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Zekher is in beta and can make mistakes.
+          </p>
         </div>
-      </div>
-    </>
+      </motion.div>
+    </div>
   );
 }
 
 // Loading component for Suspense fallback
 function ChatLoading() {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">
-          Loading chat...
+    <div className="relative flex h-full w-full flex-col min-h-0">
+      <motion.div 
+        className="flex-1 flex items-center justify-center px-6"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <div className="text-center space-y-6 max-w-3xl mx-auto">
+          <Skeleton className="h-12 w-96 mx-auto" />
+          <Skeleton className="h-6 w-80 mx-auto" />
         </div>
-      </div>
+      </motion.div>
+
+      <motion.div 
+        className="grid shrink-0 gap-4 pt-4"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+      >
+        <AISuggestions className="px-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-8 w-48" />
+          ))}
+        </AISuggestions>
+
+        <div className="w-full px-4 pb-4">
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Zekher is in beta and can make mistakes.
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }

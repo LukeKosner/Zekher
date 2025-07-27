@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1750971959442,
+      "tag": "0000_harsh_centennial",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750990230503,
+      "tag": "0001_condemned_lightspeed",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1751243607794,
+      "tag": "0002_past_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1751244054637,
+      "tag": "0003_overconfident_excalibur",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1752021256851,
+      "tag": "0004_superb_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1753108452392,
+      "tag": "0005_youthful_liz_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753153733314,
+      "tag": "0006_cynical_squirrel_girl",
+      "breakpoints": true
+    }
+  ]
+}

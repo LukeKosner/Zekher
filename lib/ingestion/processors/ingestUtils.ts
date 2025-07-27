@@ -3,7 +3,7 @@
 
 import fs from 'fs/promises';
 import {eq} from 'drizzle-orm';
-import {db} from '../../db';
+import {db} from '../../database';
 
 /**
  * Loads metadata from a JSON file, returning null if not found or invalid.

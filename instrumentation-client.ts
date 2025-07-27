@@ -8,7 +8,8 @@ Sentry.init({
   dsn: 'https://9d51e82e70a187500f1c0079b59adbe5@o4509628078882816.ingest.us.sentry.io/4509628080062464',
   integrations: [
     Sentry.replayIntegration(),
-    Sentry.consoleLoggingIntegration({levels: ['error', 'warn']}),
+    // Send console.log, console.error, and console.warn calls as logs to Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
     Sentry.browserTracingIntegration(),
   ],
   tracesSampleRate: 1,

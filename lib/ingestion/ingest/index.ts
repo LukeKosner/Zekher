@@ -6,13 +6,13 @@ import * as Sentry from '@sentry/nextjs';
 const {logger} = Sentry;
 import fs from 'fs/promises';
 import path from 'path';
-import {db} from '../../db';
+import {db} from '../../database';
 import {
   lexiconSources,
   lexiconEmbeddings,
   testimonySources,
   testimonyEmbeddings,
-} from '../../db/schema';
+} from '../../database/schema';
 import {
   generateLexiconEmbeddings,
   generateTestimonyEmbeddings,

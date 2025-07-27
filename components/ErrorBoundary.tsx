@@ -5,17 +5,9 @@
 
 import React from 'react';
 import * as Sentry from '@sentry/nextjs';
+import type { ErrorBoundaryProps, ErrorBoundaryState } from './types';
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  componentName?: string;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error?: Error;
-}
+const { logger } = Sentry;
 
 export class ErrorBoundary extends React.Component<
   ErrorBoundaryProps,
@@ -41,7 +33,11 @@ export class ErrorBoundary extends React.Component<
       Sentry.captureException(error);
     });
 
-    console.error(`Error in ${componentName}:`, error, errorInfo);
+    logger.error(`Error in ${componentName}`, {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
   }
 
   render() {
@@ -55,7 +51,7 @@ export class ErrorBoundary extends React.Component<
       return (
         <div className="border border-red-200 dark:border-red-800 rounded-md p-4 bg-red-50 dark:bg-red-900/20">
           <div className="flex items-center gap-2 text-red-800 dark:text-red-200 text-sm font-medium mb-2">
-            <span>⚠️</span>
+            <span>Warning:</span>
             <span>Error loading {componentName}</span>
           </div>
           <p className="text-red-600 dark:text-red-300 text-sm">

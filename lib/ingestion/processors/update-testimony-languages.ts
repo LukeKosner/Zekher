@@ -1,29 +1,29 @@
 #!/usr/bin/env bun
 // Script to update existing testimony records with language data
 
-import fs from 'fs/promises';
-import path from 'path';
-import {db} from '../../db';
-import {testimonySources} from '../../db/schema';
-import {eq} from 'drizzle-orm';
+import fs from "fs/promises";
+import path from "path";
+import { db } from "../../database";
+import { testimonySources } from "../../database/schema";
+import { eq } from "drizzle-orm";
 
 async function updateTestimonyLanguages(): Promise<void> {
-  console.log('Loading testimony language mappings...');
+  // console.log('Loading testimony language mappings...');
 
   // Load language mappings
   const languageData = await fs.readFile(
-    path.join(process.cwd(), 'lib/ingestion/testimony-languages.json'),
-    'utf-8',
+    path.join(process.cwd(), "lib/ingestion/testimony-languages.json"),
+    "utf-8"
   );
   const testimonyLanguages = JSON.parse(languageData);
 
-  console.log(
-    `Loaded ${Object.keys(testimonyLanguages).length} language mappings`,
-  );
+  // console.log(
+  //   `Loaded ${Object.keys(testimonyLanguages).length} language mappings`,
+  // );
 
   // Get all testimony records
   const testimonies = await db.select().from(testimonySources);
-  console.log(`Found ${testimonies.length} testimony records to update`);
+  // console.log(`Found ${testimonies.length} testimony records to update`);
 
   let updated = 0;
   let notFound = 0;
@@ -40,9 +40,9 @@ async function updateTestimonyLanguages(): Promise<void> {
         const lastName = nameMatch[1].toLowerCase();
         // Look for matching last name in language mappings
         const matchingKey = Object.keys(testimonyLanguages).find(
-          key =>
+          (key) =>
             key.toLowerCase().includes(lastName) ||
-            lastName.includes(key.toLowerCase().replace('.txt', '')),
+            lastName.includes(key.toLowerCase().replace(".txt", ""))
         );
         if (matchingKey) {
           language = testimonyLanguages[matchingKey];
@@ -53,30 +53,30 @@ async function updateTestimonyLanguages(): Promise<void> {
     if (language) {
       await db
         .update(testimonySources)
-        .set({testimony_language: language})
+        .set({ testimony_language: language })
         .where(eq(testimonySources.id, testimony.id));
 
-      console.log(`Updated ${testimony.filename} → ${language}`);
+      // console.log(`Updated ${testimony.filename} → ${language}`);
       updated++;
     } else {
-      console.log(`No language mapping found for: ${testimony.filename}`);
+      // console.log(`No language mapping found for: ${testimony.filename}`);
       notFound++;
     }
   }
 
-  console.log('\nUpdate Summary:');
-  console.log(`✅ Updated: ${updated} records`);
-  console.log(`❌ Not found: ${notFound} records`);
-  console.log(`📊 Total processed: ${testimonies.length} records`);
+  // console.log("\nUpdate Summary:");
+  // console.log(`Updated: ${updated} records`);
+  // console.log(`Not found: ${notFound} records`);
+  // console.log(`Total processed: ${testimonies.length} records`);
 }
 
 // Run the update
 updateTestimonyLanguages()
   .then(() => {
-    console.log('✨ Language update completed successfully!');
+    // console.log("Language update completed successfully!");
     process.exit(0);
   })
-  .catch(error => {
-    console.error('❌ Error updating languages:', error);
+  .catch((error) => {
+    console.error("Error updating languages:", error);
     process.exit(1);
   });

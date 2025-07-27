@@ -16,7 +16,8 @@ Sentry.init({
   sendDefaultPii: true,
   
   integrations: [
-    Sentry.consoleLoggingIntegration({levels: ['error', 'warn']}),
+    // Send console.log, console.error, and console.warn calls as logs to Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
     Sentry.httpIntegration({
       breadcrumbs: true
     }),
@@ -28,9 +29,23 @@ Sentry.init({
     }),
   ],
 
-  // Custom error filtering
-  beforeSend(event) {
-    // Filter out non-critical errors in production
+  
+  // Add additional context
+  initialScope: {
+    tags: {
+      component: 'server',
+      version: process.env.npm_package_version || 'unknown',
+    },
+  },
+
+  // Enable Sentry logging
+  _experiments: {
+    enableLogs: true,
+  },
+  
+  // Capture unhandled promise rejections
+  beforeSend(event, hint) {
+    // Keep existing filtering logic
     if (process.env.NODE_ENV === 'production') {
       // Skip cancelled requests
       if (event.exception?.values?.some(value => 
@@ -52,15 +67,4 @@ Sentry.init({
     
     return event;
   },
-  
-  // Add additional context
-  initialScope: {
-    tags: {
-      component: 'server',
-      version: process.env.npm_package_version || 'unknown',
-    },
-  },
-
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  _experiments: {enableLogs: process.env.NODE_ENV === 'development'},
 });

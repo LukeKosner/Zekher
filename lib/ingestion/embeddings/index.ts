@@ -2,8 +2,8 @@ import {embedMany} from 'ai';
 import {cohere} from '@ai-sdk/cohere';
 import {cosineDistance, desc, gt, sql} from 'drizzle-orm';
 
-import {db} from '../../db';
-import {lexiconEmbeddings, testimonyEmbeddings} from '../../db/schema';
+import {db} from '../../database';
+import {lexiconEmbeddings, testimonyEmbeddings} from '../../database/schema';
 
 // Models
 const lexiconModel = cohere.embedding('embed-v4.0');
