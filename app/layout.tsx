@@ -26,9 +26,21 @@ const inter = Inter({
 });
 
 /**
- * Application metadata configuration for SEO and social media optimization
+ * Generate metadata with Sentry trace data for distributed tracing
  */
-export const metadata: Metadata = {
+export function generateMetadata(): Metadata {
+  return {
+    ...staticMetadata,
+    other: {
+      ...Sentry.getTraceData(),
+    },
+  };
+}
+
+/**
+ * Static metadata configuration for SEO and social media optimization
+ */
+const staticMetadata: Metadata = {
   metadataBase: new URL("https://zekher.com"),
   title: "Zekher",
   description:

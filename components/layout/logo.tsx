@@ -25,6 +25,7 @@ export function Logo() {
               width={32}
               height={32}
               className="size-8 object-contain rounded-lg"
+              priority
             />
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">Zekher</span>

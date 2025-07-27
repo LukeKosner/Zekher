@@ -5,6 +5,12 @@
 
 import Link from "next/link";
 import type { ConditionalTitleProps } from "../types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ConditionalTitle({
   sidebarOpen,
@@ -21,7 +27,16 @@ export function ConditionalTitle({
   return (
     <Link href="/">
       <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-        <h1 className="text-lg md:text-xl">{title}</h1>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <h1 className="text-lg md:text-xl cursor-pointer">{title}</h1>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>זכר - Remembrance in Hebrew</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </Link>
   );

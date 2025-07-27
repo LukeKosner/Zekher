@@ -1,6 +1,29 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Lock mobile devices to portrait mode */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  html {
+    transform: rotate(90deg);
+    transform-origin: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vh;
+    height: 100vw;
+    overflow: hidden;
+  }
+  
+  body {
+    width: 100vh;
+    height: 100vw;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    position: fixed;
+    overflow: hidden;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
