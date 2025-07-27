@@ -40,6 +40,7 @@ import { TestimonyCarousel } from "@/app/chat/components/TestimonyCarousel";
 import { HolocaustImageSlideshow } from "@/app/chat/components/HolocaustImageSlideshow";
 import { generateSourceUrl } from "@/lib";
 import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import * as Sentry from "@sentry/nextjs";
@@ -451,13 +452,13 @@ function ChatContent() {
 
   return (
     <div className="relative flex h-full w-full flex-col divide-y min-h-0">
-      <AIConversation className="flex-1 min-h-0">
-        <AIConversationContent>
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center min-h-[70vh] px-6">
-              <HolocaustImageSlideshow onQuestionClick={handleQuestionClick} />
-            </div>
-          ) : (
+      {messages.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center px-6">
+          <HolocaustImageSlideshow onQuestionClick={handleQuestionClick} />
+        </div>
+      ) : (
+        <AIConversation className="flex-1 min-h-0">
+          <AIConversationContent>
             <AnimatePresence>
               {messages.map((message, index) => {
                 const isUser = message.role === "user";
@@ -581,10 +582,10 @@ function ChatContent() {
                 );
               })}
             </AnimatePresence>
-          )}
-        </AIConversationContent>
-        <AIConversationScrollButton />
-      </AIConversation>
+          </AIConversationContent>
+          <AIConversationScrollButton />
+        </AIConversation>
+      )}
 
       <div className="grid shrink-0 gap-4 pt-4">
         <AISuggestions className="px-4">
@@ -611,11 +612,7 @@ function ChatContent() {
             />
           </AIInput>
           <p className="mt-2 text-xs text-muted-foreground text-center">
-            Zekher is in beta and can make mistakes. Check{" "}
-            <Link href="/sources" className="underline">
-              sources
-            </Link>{" "}
-            for verification.
+            Zekher is in beta and can make mistakes.
           </p>
         </div>
       </div>
@@ -627,17 +624,12 @@ function ChatContent() {
 function ChatLoading() {
   return (
     <div className="relative flex h-full w-full flex-col divide-y min-h-0">
-      <AIConversation className="flex-1 min-h-0">
-        <AIConversationContent>
-          <div className="flex items-center justify-center min-h-[60vh] px-6">
-            <div className="text-center space-y-6 max-w-3xl mx-auto">
-              <Skeleton className="h-12 w-96 mx-auto" />
-              <Skeleton className="h-6 w-80 mx-auto" />
-            </div>
-          </div>
-        </AIConversationContent>
-        <AIConversationScrollButton />
-      </AIConversation>
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="text-center space-y-6 max-w-3xl mx-auto">
+          <Skeleton className="h-12 w-96 mx-auto" />
+          <Skeleton className="h-6 w-80 mx-auto" />
+        </div>
+      </div>
 
       <div className="grid shrink-0 gap-4 pt-4">
         <AISuggestions className="px-4">
@@ -649,11 +641,7 @@ function ChatLoading() {
         <div className="w-full px-4 pb-4">
           <Skeleton className="h-14 w-full rounded-lg" />
           <p className="mt-2 text-xs text-muted-foreground text-center">
-            Zekher is in beta and can make mistakes. Check{" "}
-            <Link href="/sources" className="underline">
-              sources
-            </Link>{" "}
-            for verification.
+            Zekher is in beta and can make mistakes.
           </p>
         </div>
       </div>

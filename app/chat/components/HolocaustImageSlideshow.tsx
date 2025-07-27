@@ -79,7 +79,7 @@ export function HolocaustImageSlideshow({
 }: HolocaustImageSlideshowProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [isMobile, setIsMobile] = React.useState(false);
-  const [autoplayReady, setAutoplayReady] = React.useState(false);
+  const [current, setCurrent] = React.useState(0);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -97,12 +97,12 @@ export function HolocaustImageSlideshow({
       return;
     }
 
-    // Delay autoplay start to prevent initial flash
-    const timer = setTimeout(() => {
-      setAutoplayReady(true);
-    }, 1000);
+    // Track current slide
+    setCurrent(api.selectedScrollSnap());
 
-    return () => clearTimeout(timer);
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
   }, [api]);
 
   const handleImageClick = (question: string) => {
@@ -124,20 +124,16 @@ export function HolocaustImageSlideshow({
           align: "start",
           loop: true
         }}
-        plugins={
-          autoplayReady
-            ? [
-                Autoplay({
-                  delay: 5000,
-                  stopOnInteraction: false,
-                  stopOnMouseEnter: true
-                })
-              ]
-            : []
-        }
+        plugins={[
+          Autoplay({
+            delay: 5000,
+            stopOnInteraction: false,
+            stopOnMouseEnter: true
+          })
+        ]}
         className="w-full"
       >
-        <CarouselContent className={isMobile ? "h-[70vh]" : ""}>
+        <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={index}>
               <div
@@ -157,7 +153,7 @@ export function HolocaustImageSlideshow({
 
                 {/* Centered question */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <h2 className="text-white text-lg md:text-2xl lg:text-3xl font-semibold text-center px-4 md:px-8">
+                  <h2 className="text-white text-2xl md:text-3xl lg:text-4xl font-semibold text-center px-4 md:px-8">
                     {image.question}
                   </h2>
                 </div>
@@ -196,6 +192,22 @@ export function HolocaustImageSlideshow({
         <CarouselPrevious className="hidden md:flex" />
         <CarouselNext className="hidden md:flex" />
       </Carousel>
+
+      {/* Carousel tracker dots */}
+      <div className="flex justify-center mt-4 gap-2">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all duration-200",
+              current === index
+                ? "bg-foreground"
+                : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+            )}
+            onClick={() => api?.scrollTo(index)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

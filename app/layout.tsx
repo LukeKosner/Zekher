@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     description:
       "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.",
     url: "https://zekher.com",
-    siteName: "Zekher זכר",
+    siteName: "Zekher",
     type: "website",
     images: [
       {
@@ -99,9 +99,10 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
   }
 
   // Validate layout constants are properly loaded
-  const siteName = "Zekher זכר";
-  const description = "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.";
-  
+  const siteName = "Zekher";
+  const description =
+    "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.";
+
   if (!siteName || !description) {
     logger.error("RootLayout: Layout constants not properly configured", {
       siteName,
@@ -121,6 +122,7 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
         <meta name="theme-color" content="#1f2937" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className={`${inter.variable} antialiased`}>
         {/* Client Component boundary - only interactive parts */}

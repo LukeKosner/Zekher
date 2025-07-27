@@ -11,16 +11,21 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { SidebarFooterContent } from "./Sidebar/Footer";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isMobile } = useSidebar();
+
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <Logo />
-      </SidebarHeader>
+      {!isMobile && (
+        <SidebarHeader>
+          <Logo />
+        </SidebarHeader>
+      )}
       <SidebarContent>
         <SidebarNavigation />
       </SidebarContent>

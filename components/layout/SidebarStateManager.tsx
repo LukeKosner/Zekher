@@ -14,7 +14,7 @@ import { RouteSlugGenerator } from "./RouteSlugGenerator";
 // =============================================================================
 
 const layoutConstants = {
-  siteName: "Zekher זכר",
+  siteName: "Zekher",
   description:
     "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.",
   siteUrl: "https://zekher.com",
@@ -60,7 +60,7 @@ export function SidebarStateManager({ children }: SidebarStateManagerProps) {
   return (
     <>
       <AppSidebar />
-      <SidebarInset className={`flex flex-col ${isChatRoute ? 'h-screen max-h-screen' : 'min-h-screen'}`}>
+      <SidebarInset className={`flex flex-col ${isChatRoute ? 'h-[100dvh] max-h-[100dvh]' : 'min-h-screen'}`}>
         <RouteSlugGenerator>
           {(slug) => (
             <PageHeader

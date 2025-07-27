@@ -23,7 +23,7 @@ import {
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-24">
         <div className="flex flex-col gap-20 text-center">
           <div className="flex flex-col items-center justify-center gap-8">
             <motion.div
@@ -226,7 +226,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-row items-center justify-center gap-4">
               <Button asChild variant="outline" size="lg">
                 <Link href="mailto:hey@lukekosner.com">
                   Email Us

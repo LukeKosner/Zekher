@@ -1,5 +1,7 @@
 // components/sidebar/SidebarSection.tsx
-// Server Component for static sidebar sections
+// Client Component for mobile sidebar close functionality
+
+"use client";
 
 import Link from "next/link";
 import {
@@ -7,8 +9,10 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  useSidebar
 } from "@/components/ui/sidebar";
+import { SheetClose } from "@/components/ui/sheet";
 import { LucideIcon } from "lucide-react";
 import type { SidebarItem, SidebarSectionProps } from "../types";
 
@@ -17,22 +21,34 @@ export function SidebarSection({
   items,
   activePathChecker
 }: SidebarSectionProps) {
+  const { isMobile } = useSidebar();
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const IconComponent = item.icon;
+          const linkContent = (
+            <Link href={item.href}>
+              <IconComponent />
+              <span>{item.label}</span>
+            </Link>
+          );
+
           return (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
                 isActive={activePathChecker(item.href)}
               >
-                <Link href={item.href}>
-                  <IconComponent />
-                  <span>{item.label}</span>
-                </Link>
+                {isMobile ? (
+                  <SheetClose asChild>
+                    {linkContent}
+                  </SheetClose>
+                ) : (
+                  linkContent
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           );
