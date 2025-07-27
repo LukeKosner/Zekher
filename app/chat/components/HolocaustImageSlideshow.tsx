@@ -14,6 +14,7 @@ import {
   CarouselPrevious,
   type CarouselApi
 } from "@/components/ui/carousel";
+import { motion } from "motion/react";
 import Autoplay from "embla-carousel-autoplay";
 import type { SlideImage } from "../types";
 
@@ -117,22 +118,28 @@ export function HolocaustImageSlideshow({
         "w-full sm:max-w-md md:max-w-4xl mx-auto flex flex-col items-center justify-center"
       )}
     >
-      <Carousel
-        setApi={setApi}
-        orientation="horizontal"
-        opts={{
-          align: "start",
-          loop: true
-        }}
-        plugins={[
-          Autoplay({
-            delay: 5000,
-            stopOnInteraction: false,
-            stopOnMouseEnter: true
-          })
-        ]}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
         className="w-full"
       >
+        <Carousel
+          setApi={setApi}
+          orientation="horizontal"
+          opts={{
+            align: "start",
+            loop: true
+          }}
+          plugins={[
+            Autoplay({
+              delay: 5000,
+              stopOnInteraction: false,
+              stopOnMouseEnter: true
+            })
+          ]}
+          className="w-full"
+        >
         <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={index}>
@@ -189,12 +196,18 @@ export function HolocaustImageSlideshow({
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex" />
-        <CarouselNext className="hidden md:flex" />
-      </Carousel>
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </Carousel>
+      </motion.div>
 
       {/* Carousel tracker dots */}
-      <div className="flex justify-center mt-4 gap-2">
+      <motion.div 
+        className="flex justify-center mt-4 gap-2"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+      >
         {images.map((_, index) => (
           <button
             key={index}
@@ -207,7 +220,7 @@ export function HolocaustImageSlideshow({
             onClick={() => api?.scrollTo(index)}
           />
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

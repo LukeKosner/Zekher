@@ -74,14 +74,14 @@ async function LexiconPageContent(props: any) {
 
         {/* PDF Viewer Card */}
         <div className="mb-8">
-          <div className="w-full h-[800px] rounded-lg border bg-card overflow-hidden">
+          <div className="w-full h-[800px] md:h-[800px] rounded-lg border bg-card overflow-hidden">
             <object
               data={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
               type="application/pdf"
               width="100%"
               height="100%"
-              className="w-full h-full rounded-lg block"
-              style={{ maxHeight: '100%', containIntrinsicSize: '100% 100%' }}
+              className="w-full h-full rounded-lg block max-w-full"
+              style={{ maxHeight: '100%', maxWidth: '100%', containIntrinsicSize: '100% 100%' }}
             >
               <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-muted/10 rounded-lg">
                 <div className="max-w-md space-y-4">

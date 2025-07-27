@@ -25,7 +25,8 @@ export const toolDescriptions = {
 - Select only 2-3 of the MOST powerful and relevant segments
 - Focus on segments that directly answer the user's question
 - Prioritize emotional impact and historical significance
-- Keep transcriptExcerpt concise (2-3 sentences max) and EXACTLY as spoken
+- Keep transcriptExcerpt concise (2-3 sentences max) and EXACTLY as spoken.
+- DON'T ADD ELLIPSIS. If there's more to the audio, use another segment.
 - Only include essential significance description
 
 Return confirmation that audio has been queued for playback.`,

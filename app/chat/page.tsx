@@ -451,7 +451,7 @@ function ChatContent() {
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col divide-y min-h-0">
+    <div className="relative flex h-full w-full flex-col min-h-0">
       {messages.length === 0 ? (
         <div className="flex-1 flex items-center justify-center px-6">
           <HolocaustImageSlideshow onQuestionClick={handleQuestionClick} />
@@ -587,7 +587,12 @@ function ChatContent() {
         </AIConversation>
       )}
 
-      <div className="grid shrink-0 gap-4 pt-4">
+      <motion.div 
+        className="grid shrink-0 gap-4 pt-4 border-t border-border"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+      >
         <AISuggestions className="px-4">
           {suggestions.map((suggestion) => (
             <AISuggestion
@@ -615,7 +620,7 @@ function ChatContent() {
             Zekher is in beta and can make mistakes.
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -623,15 +628,25 @@ function ChatContent() {
 // Loading component for Suspense fallback
 function ChatLoading() {
   return (
-    <div className="relative flex h-full w-full flex-col divide-y min-h-0">
-      <div className="flex-1 flex items-center justify-center px-6">
+    <div className="relative flex h-full w-full flex-col min-h-0">
+      <motion.div 
+        className="flex-1 flex items-center justify-center px-6"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <Skeleton className="h-12 w-96 mx-auto" />
           <Skeleton className="h-6 w-80 mx-auto" />
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid shrink-0 gap-4 pt-4">
+      <motion.div 
+        className="grid shrink-0 gap-4 pt-4"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+      >
         <AISuggestions className="px-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-8 w-48" />
@@ -644,7 +659,7 @@ function ChatLoading() {
             Zekher is in beta and can make mistakes.
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

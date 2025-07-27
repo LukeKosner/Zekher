@@ -87,7 +87,7 @@ export const AIReasoning = memo(
         value={{ isStreaming, isOpen, setIsOpen, duration }}
       >
         <Collapsible
-          className={cn("not-prose mb-4", className)}
+          className={cn("not-prose my-4", className)}
           onOpenChange={handleOpenChange}
           open={isOpen}
           {...props}
@@ -165,7 +165,8 @@ export const AIReasoningContent = memo(
       <Banner className="flex items-center gap-1.5">
         <BannerIcon icon={CircleAlert} />
         <BannerTitle>
-          Warning: Reasoning content may contain inaccuracies or hallucinations. Use for context only.
+          Reasoning content may contain inaccuracies or hallucinations. Use for
+          context only.
         </BannerTitle>
       </Banner>
       <AIResponse className="grid gap-2">{children}</AIResponse>

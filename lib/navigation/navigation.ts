@@ -3,7 +3,7 @@
 
 import {
   MessagesSquare,
-  Library,
+  LibraryBig,
   Info,
   Home,
   Server,
@@ -16,19 +16,19 @@ import {
 /** Navigation sections */
 const NAVIGATION_SECTIONS = {
   PROJECT: "Project",
-  EVERYONE: "Everyone", 
+  EVERYONE: "Everyone",
   DEVELOPERS: "Developers",
-  UNKNOWN: "Unknown",
+  UNKNOWN: "Unknown"
 } as const;
 
 /** Route paths and redirects */
 const ROUTES = {
   HOME: "/",
   ABOUT: "/about",
-  CHAT: "/chat", 
+  CHAT: "/chat",
   SOURCES: "/sources",
   DEVELOPERS_MCP: "/developers/mcp",
-  DEVELOPERS: "/developers", // Redirects to MCP
+  DEVELOPERS: "/developers" // Redirects to MCP
 } as const;
 
 import type { NavigationItem } from "./types";
@@ -64,7 +64,7 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
   },
   {
     href: ROUTES.SOURCES,
-    icon: Library,
+    icon: LibraryBig,
     label: "Sources",
     breadcrumbLabel: "Sources",
     section: NAVIGATION_SECTIONS.EVERYONE
@@ -84,7 +84,9 @@ export function getNavigationItemByPath(
 ): NavigationItem | undefined {
   // Handle special redirects
   if (path === ROUTES.DEVELOPERS) {
-    return NAVIGATION_CONFIG.find((item) => item.href === ROUTES.DEVELOPERS_MCP);
+    return NAVIGATION_CONFIG.find(
+      (item) => item.href === ROUTES.DEVELOPERS_MCP
+    );
   }
 
   // Exact match first

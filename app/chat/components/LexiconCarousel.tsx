@@ -39,23 +39,38 @@ export const LexiconCarousel = ({
   sources
 }: LexiconCarouselProps) => {
   const [isOpen, setIsOpen] = useState(true);
-  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
+  const objectRefs = useRef<(HTMLObjectElement | null)[]>([]);
 
-  // Function to refresh iframes
-  const refreshIframes = () => {
-    iframeRefs.current.forEach((iframe) => {
-      if (iframe && iframe.src) {
-        const currentSrc = iframe.src;
-        iframe.src = '';
-        iframe.src = currentSrc;
+  // Function to refresh objects with better mobile support
+  const refreshObjects = () => {
+    objectRefs.current.forEach((obj) => {
+      if (obj && obj.data) {
+        try {
+          // For mobile browsers, force a complete reload
+          const currentData = obj.data;
+          if (currentData) {
+            // Add timestamp to force reload
+            const separator = currentData.includes("?") ? "&" : "?";
+            const newData = `${currentData}${separator}_t=${Date.now()}`;
+            obj.data = newData;
+          }
+        } catch (e) {
+          // Fallback: traditional refresh method
+          const currentData = obj.data;
+          obj.data = "";
+          requestAnimationFrame(() => {
+            obj.data = currentData;
+          });
+        }
       }
     });
   };
 
-  // Force iframe refresh when collapsible opens/closes
+  // Force object refresh when collapsible opens/closes
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(refreshIframes, 100);
+      // Longer delay for mobile to ensure DOM is stable
+      const timer = setTimeout(refreshObjects, 200);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -63,20 +78,20 @@ export const LexiconCarousel = ({
   // Listen for window resize events
   useEffect(() => {
     let resizeTimer: NodeJS.Timeout;
-    
+
     const handleResize = () => {
       // Debounce resize events
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
         if (isOpen) {
-          refreshIframes();
+          refreshObjects();
         }
-      }, 300);
+      }, 500); // Longer delay for mobile
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimer);
     };
   }, [isOpen]);
@@ -130,24 +145,26 @@ export const LexiconCarousel = ({
                       href={citationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-md border overflow-hidden h-56 cursor-pointer hover:opacity-90 transition-opacity"
+                      className="block rounded-md border overflow-hidden h-56 cursor-pointer hover:opacity-90 transition-opacity relative"
                     >
                       {src.pdfUrl ? (
-                        <iframe
-                          ref={(el) => (iframeRefs.current[i] = el)}
-                          src={`${src.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                          className="h-full w-full border-0 pointer-events-none"
+                        <object
+                          ref={(el) => { objectRefs.current[i] = el; }}
+                          data={`${src.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                          type="application/pdf"
+                          className="absolute inset-0 h-full w-full border-0 pointer-events-none"
                           title="PDF preview"
                           aria-label="PDF preview"
-                          onLoad={(e) => {
-                            // Force redraw after load
-                            const iframe = e.currentTarget;
-                            const style = iframe.style.display;
-                            iframe.style.display = 'none';
-                            iframe.offsetHeight; // trigger reflow
-                            iframe.style.display = style;
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            containIntrinsicSize: '100% 100%'
                           }}
-                        />
+                        >
+                          <div className="flex h-full w-full items-center justify-center bg-muted/30 text-xs text-muted-foreground px-4 text-center">
+                            PDF preview not available
+                          </div>
+                        </object>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-muted/30 text-xs text-muted-foreground px-4 text-center">
                           PDF not available
@@ -164,7 +181,7 @@ export const LexiconCarousel = ({
                           rel="noopener noreferrer"
                           className=" transition-colors"
                         >
-                          Yad Vashem's Holocaust Lexicon
+                          Yad Vashem
                         </Link>
                         {" • "}
                         <Link

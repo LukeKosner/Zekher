@@ -2,7 +2,7 @@
 
 import { LazyLoadWrapper } from "@/components/LazyLoadWrapper";
 import { LexiconCardSkeleton, TestimonyCardSkeleton } from "./skeletons";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -98,6 +98,7 @@ function SourceLibrary({
     "lexicon"
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   const itemsPerPage = 50;
 
   const filteredLexiconSources = useMemo(
@@ -185,7 +186,13 @@ function SourceLibrary({
             type="text"
             placeholder={sourcesPageConstants.pageContent.searchPlaceholder}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setIsSearching(true);
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+              // Reset searching state after a brief delay
+              setTimeout(() => setIsSearching(false), 300);
+            }}
             className="w-full pl-10 pr-12 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           />
           <svg
@@ -232,49 +239,47 @@ function SourceLibrary({
           <div className="space-y-6">
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              key={`lexicon-grid-${searchQuery}-${currentPage}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
             >
-              <AnimatePresence mode="wait">
-                {paginatedLexiconSources.length > 0 ? (
-                  paginatedLexiconSources.map((source, index) => (
-                    <motion.div
-                      key={source.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: index * 0.05,
-                        ease: "easeOut"
-                      }}
-                      whileHover={{
-                        y: -2,
-                        transition: { duration: 0.2 }
-                      }}
-                    >
-                      <LazyLoadWrapper placeholder={<LexiconCardSkeleton />}>
-                        <LexiconCard source={source} />
-                      </LazyLoadWrapper>
-                    </motion.div>
-                  ))
-                ) : (
+              {paginatedLexiconSources.length > 0 ? (
+                paginatedLexiconSources.map((source, index) => (
                   <motion.div
-                    className="col-span-full text-center py-12"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
+                    key={source.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.15,
+                      delay: Math.min(index * 0.02, 0.1),
+                      ease: "easeOut"
+                    }}
+                    whileHover={{
+                      y: -2,
+                      transition: { duration: 0.1 }
+                    }}
                   >
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {searchQuery
-                        ? sourcesPageConstants.pageContent.noSearchResults
-                            .lexicon
-                        : sourcesPageConstants.pageContent.noLexiconEntries}
-                    </p>
+                    <LazyLoadWrapper placeholder={<LexiconCardSkeleton />}>
+                      <LexiconCard source={source} />
+                    </LazyLoadWrapper>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                ))
+              ) : (
+                <motion.div
+                  className="col-span-full text-center py-12"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {searchQuery
+                      ? sourcesPageConstants.pageContent.noSearchResults
+                          .lexicon
+                      : sourcesPageConstants.pageContent.noLexiconEntries}
+                  </p>
+                </motion.div>
+              )}
             </motion.div>
             {totalLexiconPages > 1 && (
               <Pagination>
@@ -337,49 +342,47 @@ function SourceLibrary({
           <div className="space-y-6">
             <motion.div
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+              key={`testimony-grid-${searchQuery}-${currentPage}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
             >
-              <AnimatePresence mode="wait">
-                {paginatedTestimonySources.length > 0 ? (
-                  paginatedTestimonySources.map((source, index) => (
-                    <motion.div
-                      key={source.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: index * 0.05,
-                        ease: "easeOut"
-                      }}
-                      whileHover={{
-                        y: -2,
-                        transition: { duration: 0.2 }
-                      }}
-                    >
-                      <LazyLoadWrapper placeholder={<TestimonyCardSkeleton />}>
-                        <TestimonyCard source={source} />
-                      </LazyLoadWrapper>
-                    </motion.div>
-                  ))
-                ) : (
+              {paginatedTestimonySources.length > 0 ? (
+                paginatedTestimonySources.map((source, index) => (
                   <motion.div
-                    className="col-span-full text-center py-12"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
+                    key={source.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.15,
+                      delay: Math.min(index * 0.02, 0.1),
+                      ease: "easeOut"
+                    }}
+                    whileHover={{
+                      y: -2,
+                      transition: { duration: 0.1 }
+                    }}
                   >
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {searchQuery
-                        ? sourcesPageConstants.pageContent.noSearchResults
-                            .testimony
-                        : sourcesPageConstants.pageContent.noTestimonies}
-                    </p>
+                    <LazyLoadWrapper placeholder={<TestimonyCardSkeleton />}>
+                      <TestimonyCard source={source} />
+                    </LazyLoadWrapper>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                ))
+              ) : (
+                <motion.div
+                  className="col-span-full text-center py-12"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {searchQuery
+                      ? sourcesPageConstants.pageContent.noSearchResults
+                          .testimony
+                      : sourcesPageConstants.pageContent.noTestimonies}
+                  </p>
+                </motion.div>
+              )}
             </motion.div>
             {totalTestimonyPages > 1 && (
               <Pagination>

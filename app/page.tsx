@@ -3,12 +3,12 @@
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import Image from "next/image";
 import {
-  Library,
   MessagesSquare,
   ArrowUpRight,
   Server,
   Mail,
-  Info
+  Info,
+  LibraryBig
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +94,7 @@ export default function Home() {
               <Button asChild variant="outline">
                 <Link className="no-underline" href="/sources">
                   Browse Sources
-                  <Library className="w-4 h-4 ml-2" />
+                  <LibraryBig className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
             </motion.div>
@@ -202,7 +202,7 @@ export default function Home() {
                 <Button asChild size="sm" variant="outline" className="mt-auto">
                   <Link href="/sources">
                     Browse Sources
-                    <Library className="w-4 h-4 ml-2" />
+                    <LibraryBig className="w-4 h-4 ml-2" />
                   </Link>
                 </Button>
               </div>
