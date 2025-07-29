@@ -13,14 +13,26 @@ import type { LexiconEntry } from '@/lib/shared';
  */
 export async function getLexiconEntryBySlug(id: string): Promise<LexiconEntry | null> {
   try {
+    console.log('getLexiconEntryBySlug: Searching for ID:', id);
     const results = await db.select()
       .from(lexiconSources)
       .where(eq(lexiconSources.id, id));
     
+    console.log('getLexiconEntryBySlug: Query results:', results.length, 'entries found');
+    
     const entry = results[0];
     if (!entry) {
+      console.log('getLexiconEntryBySlug: No entry found for ID:', id);
       return null;
     }
+    
+    console.log('getLexiconEntryBySlug: Found entry:', {
+      id: entry.id,
+      title: entry.title,
+      hasRedirectUrl: !!entry.redirectUrl,
+      hasTxtUrl: !!entry.txtUrl,
+      hasPdfUrl: !!entry.pdfUrl
+    });
     
     return {
       ...entry,

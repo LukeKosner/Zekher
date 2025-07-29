@@ -10,7 +10,7 @@ import type {
 export const AIMessage = ({ className, from, ...props }: AIMessageProps) => (
   <div
     className={cn(
-      "group flex w-full gap-3 py-4",
+      "group flex w-full gap-3 py-2",
       from === "user" ? "is-user flex-row-reverse" : "is-assistant flex-row",
       "[&>div]:max-w-full sm:[&>div]:max-w-[80%]",
       className

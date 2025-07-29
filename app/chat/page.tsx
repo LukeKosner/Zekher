@@ -37,7 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToolInvocation } from "./components/ToolInvocation";
 import { HolocaustImageSlideshow } from "@/app/chat/components/HolocaustImageSlideshow";
-import { generateSourceUrl } from "@/lib";
+import { generateSourceUrl, cn } from "@/lib";
 import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -92,7 +92,7 @@ function ChatContent() {
     e.preventDefault();
     const trimmedInput = input.trim();
 
-    if (trimmedInput) {
+    if (trimmedInput && trimmedInput.length > 0) {
       // Prevent duplicate messages
       const recentUserMessages = messages
         .filter((msg) => msg.role === "user")
@@ -102,8 +102,18 @@ function ChatContent() {
         );
 
       if (!recentUserMessages.includes(trimmedInput)) {
-        sendMessage({ text: trimmedInput });
-        setInput("");
+        try {
+          sendMessage({ text: trimmedInput });
+          setInput("");
+        } catch (error) {
+          logger.error("Failed to send message", {
+            error: error instanceof Error ? error.message : String(error),
+            inputLength: trimmedInput.length
+          });
+          Sentry.captureException(error, {
+            tags: { component: "chat", operation: "sendMessage" }
+          });
+        }
       }
     }
   };
@@ -210,8 +220,6 @@ function ChatContent() {
                             pageType: "lexicon",
                             filename: entry.id || entry.filename
                           })}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="hover:underline"
                         >
                           {entry.title}
@@ -436,13 +444,19 @@ function ChatContent() {
             <AnimatePresence>
               {messages.map((message, index) => {
                 const isUser = message.role === "user";
+                const prevMessage = messages[index - 1];
+                const isNewConversationTurn = !prevMessage || prevMessage.role !== message.role;
+                const marginClass = isNewConversationTurn && index > 0 ? "mt-4" : "";
 
                 // Handle structured assistant messages with parts
-                if (!isUser && Array.isArray(message.parts)) {
+                if (!isUser && Array.isArray(message.parts) && message.parts.length > 0) {
                   const renderedParts: React.ReactElement[] = [];
 
                   message.parts.forEach((part, partIndex) => {
-                    if (part.type === "text") {
+                    // Skip empty or invalid parts
+                    if (!part || !part.type) return;
+                    
+                    if (part.type === "text" && part.text && part.text.trim().length > 0) {
                       // Split text on double newlines to create separate bubbles
                       const textSegments = part.text
                         .split("\n\n")
@@ -467,7 +481,7 @@ function ChatContent() {
                           </AIMessage>
                         );
                       });
-                    } else if (part.type === "reasoning") {
+                    } else if (part.type === "reasoning" && part.text && part.text.trim().length > 0) {
                       const isReasoningStreaming =
                         (part as any).state !== "done" &&
                         status === "streaming";
@@ -522,38 +536,45 @@ function ChatContent() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="flex flex-col gap-3"
+                      className={cn("flex flex-col", marginClass)}
                     >
                       {renderedParts}
                     </motion.div>
                   );
                 }
 
-                // Regular messages
+                // Regular messages - validate content exists
+                const userContent = isUser 
+                  ? ((message as any).parts?.[0]?.text || (message as any).content || "").trim()
+                  : "";
+                const assistantContent = !isUser
+                  ? ((message as any).parts?.[0]?.text || (message as any).content || "").trim()
+                  : "";
+                
+                // Skip messages with no content
+                if ((isUser && !userContent) || (!isUser && !assistantContent)) {
+                  return null;
+                }
+
                 return (
                   <motion.div
                     key={message.id || index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={marginClass}
                   >
                     <AIMessage from={isUser ? "user" : "assistant"}>
                       <AIMessageContent>
                         {isUser
-                          ? (message as any).parts?.[0]?.text ||
-                            (message as any).content ||
-                            ""
+                          ? userContent
                           : (() => {
-                              const content =
-                                (message as any).parts?.[0]?.text ||
-                                (message as any).content ||
-                                "";
-                              const isError = isErrorContent(content);
+                              const isError = isErrorContent(assistantContent);
 
                               return isError ? (
-                                renderErrorContent(content)
+                                renderErrorContent(assistantContent)
                               ) : (
-                                <AIResponse>{content}</AIResponse>
+                                <AIResponse>{assistantContent}</AIResponse>
                               );
                             })()}
                       </AIMessageContent>

@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getLexiconEntryBySlug } from "@/lib/database";
 import { LexiconPageFallback } from "@/app/sources/components/skeletons";
 import { LexiconPageClient } from "./client";
+import { ExternalRedirect } from "./ExternalRedirect";
 
 /**
  * Server component for lexicon content
@@ -12,22 +13,43 @@ async function LexiconPageContent(props: any) {
     const params = await props.params;
     const id = params.id;
 
+    console.log("LexiconPageContent: Looking for ID:", id);
+
     if (!id) {
+      console.log("LexiconPageContent: No ID provided");
       notFound();
     }
 
     // Get the lexicon entry from database using ID
     const lexiconEntry = await getLexiconEntryBySlug(id);
+    console.log("LexiconPageContent: Found entry:", !!lexiconEntry, lexiconEntry?.title);
 
     if (!lexiconEntry) {
+      console.log("LexiconPageContent: Entry not found for ID:", id);
       notFound();
     }
 
+    console.log("LexiconPageContent: Entry details:", {
+      id: lexiconEntry.id,
+      title: lexiconEntry.title,
+      hasRedirectUrl: !!lexiconEntry.redirectUrl,
+      hasTxtUrl: !!lexiconEntry.txtUrl,
+      hasPdfUrl: !!lexiconEntry.pdfUrl,
+      redirectUrl: lexiconEntry.redirectUrl,
+      txtUrl: lexiconEntry.txtUrl
+    });
+
     // Check if this entry should redirect to an external URL
-    if (lexiconEntry.redirectUrl) {
-      redirect(lexiconEntry.redirectUrl);
+    // Priority: redirectUrl (explicit redirect) > txtUrl for txt-only sources
+    const externalRedirectUrl = lexiconEntry.redirectUrl || 
+      (lexiconEntry.txtUrl && !lexiconEntry.pdfUrl ? lexiconEntry.txtUrl : null);
+    
+    if (externalRedirectUrl) {
+      console.log("LexiconPageContent: External redirect to:", externalRedirectUrl);
+      return <ExternalRedirect url={externalRedirectUrl} title={lexiconEntry.title} />;
     }
 
+    console.log("LexiconPageContent: No redirect needed, showing page");
     return <LexiconPageClient lexiconEntry={lexiconEntry} />;
   } catch (error) {
     console.error("Error loading Lexicon entry:", error);

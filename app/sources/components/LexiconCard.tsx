@@ -49,6 +49,10 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
         .then((text) => {
           // Show only first 500 chars for preview
           setTxtPreview(text.slice(0, 500));
+        })
+        .catch((error) => {
+          console.warn("Failed to fetch text preview:", error);
+          setTxtPreview(""); // Silently fail for preview
         });
     }
   }, [txtUrl]);

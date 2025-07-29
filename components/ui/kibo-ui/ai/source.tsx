@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib";
 import { generateSourceUrl } from "@/lib";
+import { getLexiconEntryById } from "@/lib/database/lexicon";
 
 export type AISourcesProps = ComponentProps<"div">;
 

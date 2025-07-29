@@ -17,6 +17,7 @@ export interface ToolLexiconEntry {
   filename: string;
   pdfUrl?: string | null;
   txtUrl?: string | null;
+  redirectUrl?: string | null;
 }
 
 export interface ToolTestimonyEntry {
