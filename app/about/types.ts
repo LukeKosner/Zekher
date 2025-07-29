@@ -4,24 +4,7 @@ export interface AboutLayoutProps {
   children: React.ReactNode;
 }
 
-export interface AnimationConfig {
-  duration: number;
-  ease: string;
-  delays: Record<string, number>;
-  transition: {
-    opacity: { from: number; to: number };
-    y: { from: number; to: number };
-  };
-}
-
-export interface ExternalLinks {
-  grokHolocaustDenial: string;
-  unescoReport: string;
-  yadVashemLexicon: string;
-  boderInterviews: string;
-  claude: string;
-  chatgpt: string;
-}
+import { AnimationConfig, ExternalLinks } from "../config";
 
 export interface InternalLinks {
   chat: string;

@@ -35,8 +35,7 @@ import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LexiconCarousel } from "@/app/chat/components/LexiconCarousel";
-import { TestimonyCarousel } from "@/app/chat/components/TestimonyCarousel";
+import { ToolInvocation } from "./components/ToolInvocation";
 import { HolocaustImageSlideshow } from "@/app/chat/components/HolocaustImageSlideshow";
 import { generateSourceUrl } from "@/lib";
 import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
@@ -525,11 +524,7 @@ function ChatContent() {
                       typeof part.type === "string" &&
                       part.type.startsWith("tool-")
                     ) {
-                      const toolElement = renderToolInvocation(
-                        part,
-                        message.id,
-                        partIndex
-                      );
+                      const toolElement = <ToolInvocation part={part} messageId={message.id} partIndex={partIndex} />;
                       if (toolElement) {
                         renderedParts.push(toolElement);
                       }

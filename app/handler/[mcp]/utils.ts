@@ -8,7 +8,7 @@ const { logger } = Sentry;
 
 // Import shared utilities and types
 import { generateLexiconEmbeddings } from "@/lib/ingestion/embeddings";
-import { hybridSearch } from "@/lib/search/hybrid-search";
+import { searchSources } from "@/lib/search/searchUtils";
 import { lexiconEmbeddings, lexiconSources } from "@/lib/database/schema";
 import { generateSourceUrl } from "@/lib";
 import type { ToolLexiconEntry } from "@/lib/shared";
@@ -34,78 +34,7 @@ export const searchLexicon = async (searchTerms: string[]) => {
       };
     }
 
-    const limitedTerms = searchTerms.slice(0, mcpConstants.maxTerms);
-    const searchResults = [];
-
-    for (const term of limitedTerms) {
-      const query = term.trim();
-      if (!query) continue;
-
-      try {
-        const hybridResults = await hybridSearch({
-          query,
-          embedFn: generateLexiconEmbeddings,
-          table: lexiconEmbeddings,
-          embeddingColumn: sql`${lexiconEmbeddings.embedding}`,
-          contentColumn: sql`${lexiconEmbeddings.content}`,
-          joinTable: lexiconSources,
-          joinCondition: eq(lexiconEmbeddings.resourceId, lexiconSources.id),
-          additionalColumns: {
-            title: sql`${lexiconSources.title}`,
-            filename: sql`${lexiconSources.filename}`
-          },
-          exactMatchColumns: [sql`${lexiconSources.title}`],
-          exactMatchBoost: 5.0,
-          semanticThreshold: 0.3,
-          textSearchLimit: 10,
-          semanticSearchLimit: 10
-        });
-
-        const formattedResults = hybridResults.slice(0, 6).map((result) => ({
-          id: result.id,
-          title: (result.metadata as any).title,
-          filename: (result.metadata as any).filename,
-          content: result.content,
-          relevanceScore: result.rrfScore
-        }));
-
-        searchResults.push(...formattedResults);
-      } catch (termError) {
-        logger.error("Error processing term", { error: termError });
-        // If this looks like a system failure (database connection, etc.),
-        // we should fail immediately rather than continuing
-        if (
-          termError instanceof Error &&
-          (termError.message.includes("Database connection failed") ||
-            termError.message.includes("Search service unavailable") ||
-            termError.message.includes("connection") ||
-            termError.message.includes("ECONNREFUSED") ||
-            termError.message.includes("timeout") ||
-            termError.message.includes("unavailable") ||
-            termError.message.includes("service"))
-        ) {
-          throw termError; // Re-throw system errors to be caught by outer try-catch
-        }
-        // For other errors (validation, etc.), continue processing other terms
-      }
-    }
-
-    if (!searchResults.length) {
-      return {
-        error: errorMessages.noResults,
-        entries: [],
-        formattedText: errorMessages.noResults,
-        nextSteps: nextStepsInstructions.noResultsLexicon
-      };
-    }
-
-    const deduplicatedResults = searchResults
-      .filter(
-        (result, index, arr) =>
-          arr.findIndex((r) => r.id === result.id) === index
-      )
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, 6);
+    const deduplicatedResults = await searchSources(searchTerms, "lexicon");
 
     // Simplified formatted text - just basic entries
     const generateFormattedText = (uniqueResults: any[]): string => {

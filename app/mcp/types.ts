@@ -25,21 +25,7 @@ export interface MCPPrompt extends MCPCapability {
   type: string;
 }
 
-export interface AnimationConfig {
-  duration: number;
-  ease: string;
-  delays: Record<string, number>;
-  transition: {
-    opacity: { from: number; to: number };
-    y: { from: number; to: number };
-  };
-}
-
-export interface ExternalLinks {
-  claude: string;
-  chatgpt: string;
-  claudeConnectors: string;
-}
+import { AnimationConfig, ExternalLinks } from "../config";
 
 export interface ContactInfo {
   email: string;

@@ -2,7 +2,7 @@
 // Database schema for Holocaust Lexicon and Testimony sources and embeddings.
 // Defines tables for source documents and their vector embeddings, with rich metadata for search and retrieval.
 
-import {sql} from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   text,
   varchar,
@@ -13,6 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import {createSelectSchema} from 'drizzle-zod';
 import {nanoid} from 'nanoid';
+import { embeddingsBase } from './embeddings-base';
 
 // Lexicon Sources Table
 // Stores processed entries from Yad Vashem's Holocaust Lexicon.
@@ -40,13 +41,9 @@ export const lexiconSources = pgTable('lexiconSources', {
 export const lexiconEmbeddings = pgTable(
   'lexiconEmbeddings',
   {
-    id: varchar('id', {length: 191}) // Unique ID (nanoid)
-      .primaryKey()
-      .$defaultFn(() => nanoid()),
+    ...embeddingsBase,
     resourceId: varchar('resource_id', {length: 191}) // FK to lexiconSources
       .references(() => lexiconSources.id, {onDelete: 'cascade'}),
-    content: text('content').notNull(), // Text content for embedding
-    embedding: vector('embedding', {dimensions: 1536}).notNull(), // Vector embedding (1536 dims)
   },
   table => ({
     embeddingIndex: index('embeddingIndex').using(
@@ -89,13 +86,9 @@ export const testimonySources = pgTable('testimonySources', {
 export const testimonyEmbeddings = pgTable(
   'testimonyEmbeddings',
   {
-    id: varchar('id', {length: 191}) // Unique ID (nanoid)
-      .primaryKey()
-      .$defaultFn(() => nanoid()),
+    ...embeddingsBase,
     testimonyId: varchar('testimony_id', {length: 191}) // FK to testimonySources
       .references(() => testimonySources.id, {onDelete: 'cascade'}),
-    content: text('content').notNull(), // Text content for embedding
-    embedding: vector('embedding', {dimensions: 1536}).notNull(), // Vector embedding (1536 dims)
   },
   table => ({
     embeddingIndex: index('testimonyEmbeddingIndex').using(

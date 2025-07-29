@@ -11,9 +11,10 @@ import {
   LibraryBig
 } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { FeatureCard } from "./components/FeatureCard";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
+import { Badge } from "@/components/ui/badge";
 import {
   Announcement,
   AnnouncementTag,
@@ -165,47 +166,30 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.4, ease: "easeOut" }}
             >
-              <div className="border rounded-lg p-6 bg-card text-card-foreground text-center flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4">Chat Experience</h3>
-                <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                  Familiar AI chat powered by Lexicon content with real
-                  interview audio snippets as supplements.
-                </p>
-                <Button asChild size="sm" className="mt-auto">
-                  <Link href="/chat">
-                    Try Chat
-                    <MessagesSquare className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="border rounded-lg p-6 bg-card text-card-foreground text-center flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4">MCP Server</h3>
-                <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                  Model Context Protocol server for adding Lexicon functionality
-                  to Claude, ChatGPT, and other AI clients.
-                </p>
-                <Button asChild size="sm" variant="outline" className="mt-auto">
-                  <Link href="/mcp">
-                    Learn More
-                    <Server className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="border rounded-lg p-6 bg-card text-card-foreground text-center flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4">Source Library</h3>
-                <p className="text-sm text-muted-foreground mb-6 flex-grow">
-                  Unified library serving as the landing page for citations from
-                  both Chat and MCP integrations.
-                </p>
-                <Button asChild size="sm" variant="outline" className="mt-auto">
-                  <Link href="/sources">
-                    Browse Sources
-                    <LibraryBig className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
+              <FeatureCard
+                title="Chat Experience"
+                description="Familiar AI chat powered by Lexicon content with real interview audio snippets as supplements."
+                buttonText="Try Chat"
+                buttonIcon={<MessagesSquare className="w-4 h-4 ml-2" />}
+                buttonLink="/chat"
+                buttonVariant="primary"
+              />
+              <FeatureCard
+                title="MCP Server"
+                description="Model Context Protocol server for adding Lexicon functionality to Claude, ChatGPT, and other AI clients."
+                buttonText="Learn More"
+                buttonIcon={<Server className="w-4 h-4 ml-2" />}
+                buttonLink="/mcp"
+                buttonVariant="outline"
+              />
+              <FeatureCard
+                title="Source Library"
+                description="Unified library serving as the landing page for citations from both Chat and MCP integrations."
+                buttonText="Browse Sources"
+                buttonIcon={<LibraryBig className="w-4 h-4 ml-2" />}
+                buttonLink="/sources"
+                buttonVariant="outline"
+              />
             </motion.div>
           </motion.div>
 

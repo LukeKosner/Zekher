@@ -5,17 +5,7 @@ import { LexiconCardSkeleton, TestimonyCardSkeleton } from "./skeletons";
 import { motion } from "motion/react";
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from "@/components/ui/pagination";
-import { LexiconCard } from "@/app/sources/components/LexiconCard";
-import { TestimonyCard } from "@/app/sources/components/TestimonyCard";
+import { PaginatedSourceGrid } from "./PaginatedSourceGrid";
 import { sourcesPageConstants } from "../config";
 import { LexiconSource, TestimonySource } from "@/app/sources/types";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -180,209 +170,28 @@ function SourceLibrary({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="lexicon" className="mt-6">
-          <div className="space-y-6">
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              key={`lexicon-grid-${searchQuery}-${currentPage}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              {paginatedLexiconSources.length > 0 ? (
-                paginatedLexiconSources.map((source, index) => (
-                  <motion.div
-                    key={source.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.15,
-                      delay: Math.min(index * 0.02, 0.1),
-                      ease: "easeOut"
-                    }}
-                    whileHover={{
-                      y: -2,
-                      transition: { duration: 0.1 }
-                    }}
-                  >
-                    <LazyLoadWrapper placeholder={<LexiconCardSkeleton />}>
-                      <LexiconCard source={source} />
-                    </LazyLoadWrapper>
-                  </motion.div>
-                ))
-              ) : (
-                <motion.div
-                  className="col-span-full text-center py-12"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {searchQuery
-                      ? sourcesPageConstants.pageContent.noSearchResults.lexicon
-                      : sourcesPageConstants.pageContent.noLexiconEntries}
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
-            {totalLexiconPages > 1 && (
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage > 1) setCurrentPage(currentPage - 1);
-                      }}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                  {generatePageNumbers(currentPage, totalLexiconPages).map(
-                    (page, index) => (
-                      <PaginationItem key={index}>
-                        {page === "..." ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(page as number);
-                            }}
-                            isActive={currentPage === page}
-                          >
-                            {page}
-                          </PaginationLink>
-                        )}
-                      </PaginationItem>
-                    )
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage < totalLexiconPages)
-                          setCurrentPage(currentPage + 1);
-                      }}
-                      className={
-                        currentPage === totalLexiconPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            )}
-          </div>
+          <PaginatedSourceGrid
+            sources={paginatedLexiconSources}
+            sourceType="lexicon"
+            searchQuery={searchQuery}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPaginatedPages={totalLexiconPages}
+            noResultsMessage={sourcesPageConstants.pageContent.noSearchResults.lexicon}
+            noEntriesMessage={sourcesPageConstants.pageContent.noLexiconEntries}
+          />
         </TabsContent>
         <TabsContent value="testimony" className="mt-6">
-          <div className="space-y-6">
-            <motion.div
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-              key={`testimony-grid-${searchQuery}-${currentPage}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              {paginatedTestimonySources.length > 0 ? (
-                paginatedTestimonySources.map((source, index) => (
-                  <motion.div
-                    key={source.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.15,
-                      delay: Math.min(index * 0.02, 0.1),
-                      ease: "easeOut"
-                    }}
-                    whileHover={{
-                      y: -2,
-                      transition: { duration: 0.1 }
-                    }}
-                  >
-                    <LazyLoadWrapper placeholder={<TestimonyCardSkeleton />}>
-                      <TestimonyCard source={source} />
-                    </LazyLoadWrapper>
-                  </motion.div>
-                ))
-              ) : (
-                <motion.div
-                  className="col-span-full text-center py-12"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {searchQuery
-                      ? sourcesPageConstants.pageContent.noSearchResults
-                          .testimony
-                      : sourcesPageConstants.pageContent.noTestimonies}
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
-            {totalTestimonyPages > 1 && (
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage > 1) setCurrentPage(currentPage - 1);
-                      }}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                  {generatePageNumbers(currentPage, totalTestimonyPages).map(
-                    (page, index) => (
-                      <PaginationItem key={index}>
-                        {page === "..." ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(page as number);
-                            }}
-                            isActive={currentPage === page}
-                          >
-                            {page}
-                          </PaginationLink>
-                        )}
-                      </PaginationItem>
-                    )
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage < totalTestimonyPages)
-                          setCurrentPage(currentPage + 1);
-                      }}
-                      className={
-                        currentPage === totalTestimonyPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            )}
-          </div>
+          <PaginatedSourceGrid
+            sources={paginatedTestimonySources}
+            sourceType="testimony"
+            searchQuery={searchQuery}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPaginatedPages={totalTestimonyPages}
+            noResultsMessage={sourcesPageConstants.pageContent.noSearchResults.testimony}
+            noEntriesMessage={sourcesPageConstants.pageContent.noTestimonies}
+          />
         </TabsContent>
       </Tabs>
     </motion.div>

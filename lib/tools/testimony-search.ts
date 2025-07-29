@@ -6,7 +6,7 @@ import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
 import { testimonyEmbeddings, testimonySources } from "../database/schema";
 import { generateTestimonyEmbeddings } from "../ingestion/embeddings";
-import { hybridSearch } from "../search/hybrid-search";
+import { searchSources } from "../search/searchUtils";
 import { db } from "../database";
 import * as Sentry from "@sentry/nextjs";
 import type { ToolTestimonyEntry } from "../shared";
@@ -34,85 +34,7 @@ export const searchTestimonies = async (searchTerms: string[]) => {
       };
     }
 
-    const limitedTerms = searchTerms.slice(0, 2);
-    const searchResults = [];
-
-    for (const term of limitedTerms) {
-      const query = term.trim();
-      if (!query) continue;
-
-      try {
-        const hybridResults = await hybridSearch({
-          query,
-          embedFn: generateTestimonyEmbeddings,
-          table: testimonyEmbeddings,
-          embeddingColumn: sql`${testimonyEmbeddings.embedding}`,
-          contentColumn: sql`${testimonyEmbeddings.content}`,
-          joinTable: testimonySources,
-          joinCondition: eq(
-            testimonyEmbeddings.testimonyId,
-            testimonySources.id
-          ),
-          additionalColumns: {
-            survivor_name: sql`${testimonySources.survivor_name}`,
-            interviewer: sql`${testimonySources.interviewer}`,
-            date: sql`${testimonySources.date}`,
-            location: sql`${testimonySources.location}`,
-            filename: sql`${testimonySources.filename}`,
-            testimonyId: sql`${testimonySources.id}`,
-            fullContent: sql`${testimonySources.content}`,
-            url: sql`${testimonySources.url}`
-          },
-          exactMatchColumns: [
-            sql`${testimonySources.survivor_name}`,
-            sql`${testimonySources.filename}`
-          ],
-          exactMatchBoost: 5.0,
-          semanticThreshold: 0.2,
-          textSearchLimit: 15,
-          semanticSearchLimit: 15
-        });
-
-        const formattedResults = hybridResults.slice(0, 3).map((result) => ({
-          id: (result.metadata as any).testimonyId, // Use testimonyId (testimonySources.id) not embedding id
-          survivorName: (result.metadata as any).survivor_name,
-          content: (result.metadata as any).fullContent,
-          relevanceScore: result.rrfScore,
-          interviewer: (result.metadata as any).interviewer,
-          date: (result.metadata as any).date,
-          location: (result.metadata as any).location,
-          filename: (result.metadata as any).filename,
-          url: (result.metadata as any).url
-        }));
-
-        searchResults.push(...formattedResults);
-      } catch (termError) {
-        logger.error("Error processing term", { error: termError });
-        // If this looks like a system failure (database connection, etc.),
-        // we should fail immediately rather than continuing
-        if (
-          termError instanceof Error &&
-          (termError.message.includes("Database connection failed") ||
-            termError.message.includes("Search service unavailable") ||
-            termError.message.includes("connection") ||
-            termError.message.includes("ECONNREFUSED") ||
-            termError.message.includes("timeout") ||
-            termError.message.includes("unavailable") ||
-            termError.message.includes("service"))
-        ) {
-          throw termError; // Re-throw system errors to be caught by outer try-catch
-        }
-        // For other errors (validation, etc.), continue processing other terms
-      }
-    }
-
-    const deduplicatedResults = searchResults
-      .filter(
-        (result, index, arr) =>
-          arr.findIndex((r) => r.id === result.id) === index
-      )
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, 3);
+    const deduplicatedResults = await searchSources(searchTerms, "testimony");
 
     if (!deduplicatedResults.length) {
       return {

@@ -5,7 +5,7 @@ const { logger } = Sentry;
 import { eq, sql } from "drizzle-orm";
 import { lexiconEmbeddings, lexiconSources } from "../database/schema";
 import { generateLexiconEmbeddings } from "../ingestion/embeddings";
-import { hybridSearch } from "../search/hybrid-search";
+import { searchSources } from "../search/searchUtils";
 import type { ToolLexiconEntry } from "../shared";
 import { generateSourceUrl } from "@/lib";
 import {
@@ -25,81 +25,7 @@ export const searchLexicon = async (searchTerms: string[]) => {
       };
     }
 
-    const limitedTerms = searchTerms.slice(0, 6);
-    const searchResults = [];
-
-    for (const term of limitedTerms) {
-      const query = term.trim();
-      if (!query) continue;
-
-      try {
-        const hybridResults = await hybridSearch({
-          query,
-          embedFn: generateLexiconEmbeddings,
-          table: lexiconEmbeddings,
-          embeddingColumn: sql`${lexiconEmbeddings.embedding}`,
-          contentColumn: sql`${lexiconEmbeddings.content}`,
-          joinTable: lexiconSources,
-          joinCondition: eq(lexiconEmbeddings.resourceId, lexiconSources.id),
-          additionalColumns: {
-            title: sql`${lexiconSources.title}`,
-            filename: sql`${lexiconSources.filename}`,
-            pdfUrl: sql`${lexiconSources.pdfUrl}`,
-            sourceId: sql`${lexiconSources.id}`
-          },
-          exactMatchColumns: [sql`${lexiconSources.title}`],
-          exactMatchBoost: 5.0,
-          semanticThreshold: 0.3,
-          textSearchLimit: 10,
-          semanticSearchLimit: 10
-        });
-
-        const formattedResults = hybridResults.slice(0, 6).map((result) => ({
-          id: (result.metadata as any).sourceId, // Use the actual lexiconSources.id
-          title: (result.metadata as any).title,
-          filename: (result.metadata as any).filename,
-          pdfUrl: (result.metadata as any).pdfUrl,
-          content: result.content,
-          relevanceScore: result.rrfScore
-        }));
-
-        searchResults.push(...formattedResults);
-      } catch (termError) {
-        logger.error("Error processing term", { error: termError });
-        // If this looks like a system failure (database connection, etc.),
-        // we should fail immediately rather than continuing
-        if (
-          termError instanceof Error &&
-          (termError.message.includes("Database connection failed") ||
-            termError.message.includes("Search service unavailable") ||
-            termError.message.includes("connection") ||
-            termError.message.includes("ECONNREFUSED") ||
-            termError.message.includes("timeout") ||
-            termError.message.includes("unavailable") ||
-            termError.message.includes("service"))
-        ) {
-          throw termError; // Re-throw system errors to be caught by outer try-catch
-        }
-        // For other errors (validation, etc.), continue processing other terms
-      }
-    }
-
-    if (!searchResults.length) {
-      return {
-        error: errorMessages.lexicon.noResults,
-        entries: [],
-        formattedText: errorMessages.lexicon.noResults,
-        nextSteps: nextStepsInstructions.noResultsLexicon
-      };
-    }
-
-    const deduplicatedResults = searchResults
-      .filter(
-        (result, index, arr) =>
-          arr.findIndex((r) => r.id === result.id) === index
-      )
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, 6);
+    const deduplicatedResults = await searchSources(searchTerms, "lexicon");
 
     // Simplified formatted text - just basic entries
     const generateFormattedText = (uniqueResults: any[]): string => {

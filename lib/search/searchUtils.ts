@@ -1,36 +1,96 @@
-// lib/tools/searchUtils.ts
-// Shared utilities for hybrid search, deduplication, RRF scoring, and result formatting.
+import { eq, sql } from "drizzle-orm";
+import { hybridSearch } from "./hybrid-search";
+import { generateLexiconEmbeddings, generateTestimonyEmbeddings } from "@/lib/ingestion/embeddings";
+import { lexiconEmbeddings, lexiconSources, testimonyEmbeddings, testimonySources } from "@/lib/database/schema";
+import { generateSourceUrl } from "@/lib";
+import * as Sentry from "@sentry/nextjs";
+const { logger } = Sentry;
 
-/**
- * Deduplicates an array of results by a key, sorts by a score, and limits the output.
- * @param arr Array of results
- * @param key Unique key to deduplicate by (e.g., 'id')
- * @param scoreKey Key to sort by (e.g., 'hybridScore')
- * @param max Maximum number of results
- */
-export function deduplicateResults<T>(
-  arr: T[],
-  key: keyof T,
-  scoreKey: keyof T,
-  max: number
-): T[] {
-  return arr
+export async function searchSources(searchTerms: string[], sourceType: "lexicon" | "testimony") {
+  const limitedTerms = searchTerms.slice(0, sourceType === "lexicon" ? 6 : 2);
+  const searchResults = [];
+
+  for (const term of limitedTerms) {
+    const query = term.trim();
+    if (!query) continue;
+
+    try {
+      const hybridResults = await hybridSearch({
+        query,
+        embedFn: sourceType === "lexicon" ? generateLexiconEmbeddings : generateTestimonyEmbeddings,
+        table: sourceType === "lexicon" ? lexiconEmbeddings : testimonyEmbeddings,
+        embeddingColumn: sql`${sourceType === "lexicon" ? lexiconEmbeddings.embedding : testimonyEmbeddings.embedding}`,
+        contentColumn: sql`${sourceType === "lexicon" ? lexiconEmbeddings.content : testimonyEmbeddings.content}`,
+        joinTable: sourceType === "lexicon" ? lexiconSources : testimonySources,
+        joinCondition: sourceType === "lexicon" ? eq(lexiconEmbeddings.resourceId, lexiconSources.id) : eq(testimonyEmbeddings.testimonyId, testimonySources.id),
+        additionalColumns: sourceType === "lexicon" ? {
+          title: sql`${lexiconSources.title}`,
+          filename: sql`${lexiconSources.filename}`
+        } : {
+          survivor_name: sql`${testimonySources.survivor_name}`,
+          interviewer: sql`${testimonySources.interviewer}`,
+          date: sql`${testimonySources.date}`,
+          location: sql`${testimonySources.location}`,
+          filename: sql`${testimonySources.filename}`,
+          testimonyId: sql`${testimonySources.id}`,
+          fullContent: sql`${testimonySources.content}`,
+          url: sql`${testimonySources.url}`
+        },
+        exactMatchColumns: sourceType === "lexicon" ? [sql`${lexiconSources.title}`] : [sql`${testimonySources.survivor_name}`, sql`${testimonySources.filename}`],
+        exactMatchBoost: 5.0,
+        semanticThreshold: sourceType === "lexicon" ? 0.3 : 0.2,
+        textSearchLimit: sourceType === "lexicon" ? 10 : 15,
+        semanticSearchLimit: sourceType === "lexicon" ? 10 : 15
+      });
+
+      const formattedResults = hybridResults.slice(0, sourceType === "lexicon" ? 6 : 3).map((result) => (
+        sourceType === "lexicon" ? {
+          id: result.id,
+          title: (result.metadata as any).title,
+          filename: (result.metadata as any).filename,
+          content: result.content,
+          relevanceScore: result.rrfScore
+        } : {
+          id: (result.metadata as any).testimonyId, // Use testimonyId (testimonySources.id) not embedding id
+          survivorName: (result.metadata as any).survivor_name,
+          content: (result.metadata as any).fullContent,
+          relevanceScore: result.rrfScore,
+          interviewer: (result.metadata as any).interviewer,
+          date: (result.metadata as any).date,
+          location: (result.metadata as any).location,
+          filename: (result.metadata as any).filename,
+          url: (result.metadata as any).url
+        }
+      ));
+
+      searchResults.push(...formattedResults);
+    } catch (termError) {
+      logger.error("Error processing term", { error: termError });
+      // If this looks like a system failure (database connection, etc.),
+      // we should fail immediately rather than continuing
+      if (
+        termError instanceof Error &&
+        (termError.message.includes("Database connection failed") ||
+          termError.message.includes("Search service unavailable") ||
+          termError.message.includes("connection") ||
+          termError.message.includes("ECONNREFUSED") ||
+          termError.message.includes("timeout") ||
+          termError.message.includes("unavailable") ||
+          termError.message.includes("service"))
+      ) {
+        throw termError; // Re-throw system errors to be caught by outer try-catch
+      }
+      // For other errors (validation, etc.), continue processing other terms
+    }
+  }
+
+  const deduplicatedResults = searchResults
     .filter(
-      (result, index, self) =>
-        self.findIndex((r) => r[key] === result[key]) === index
+      (result, index, arr) =>
+        arr.findIndex((r) => r.id === result.id) === index
     )
-    .sort((a, b) => (b[scoreKey] as any) - (a[scoreKey] as any))
-    .slice(0, max);
-}
+    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+    .slice(0, sourceType === "lexicon" ? 6 : 3);
 
-/**
- * Reciprocal Rank Fusion (RRF) scoring function.
- * @param rank Zero-based rank
- * @param k RRF constant (default 60)
- */
-export function rrfScore(rank: number, k: number = 60): number {
-  return 1.0 / (k + rank);
+  return deduplicatedResults;
 }
-
-// Removed formatLexiconResults function to prevent conflicts with updated lexicon tool formatting
-// Each tool now handles its own formatting to ensure consistency
