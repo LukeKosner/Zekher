@@ -53,6 +53,7 @@ export const searchTestimonies = async (searchTerms: string[]) => {
           filename: result.id
         });
         return {
+          id: result.id,
           survivorName: result.survivorName,
           excerpt: result.content,
           timeReference: result.date || undefined,

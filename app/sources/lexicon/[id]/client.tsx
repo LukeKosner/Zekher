@@ -4,10 +4,23 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export function LexiconPageClient({ lexiconEntry }: { lexiconEntry: any }) {
   const displayTitle = lexiconEntry.title;
   const pdfUrl = lexiconEntry.pdfUrl || undefined;
+  const txtUrl = lexiconEntry.txtUrl || undefined;
+  const [txtContent, setTxtContent] = useState("");
+
+  useEffect(() => {
+    if (txtUrl) {
+      fetch(txtUrl)
+        .then((res) => (res.ok ? res.text() : ""))
+        .then((text) => {
+          setTxtContent(text);
+        });
+    }
+  }, [txtUrl]);
 
   return (
     <motion.div
@@ -49,58 +62,64 @@ export function LexiconPageClient({ lexiconEntry }: { lexiconEntry: any }) {
       {/* PDF Viewer Card */}
       <div className="mb-8">
         <div className="w-full h-[800px] md:h-[800px] rounded-lg border bg-card overflow-hidden">
-          <object
-            data={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-            type="application/pdf"
-            width="100%"
-            height="100%"
-            className="w-full h-full rounded-lg block max-w-full"
-            style={{ maxHeight: '100%', maxWidth: '100%', containIntrinsicSize: '100% 100%' }}
-          >
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-muted/10 rounded-lg">
-              <div className="max-w-md space-y-4">
-                <h2 className="text-xl font-semibold">
-                  Lexicon Entry: {displayTitle}
-                </h2>
-                <p className="text-muted-foreground">
-                  This PDF document contains important Holocaust Lexicon
-                  information. Your browser may not support embedded PDF
-                  viewing, but you can access the content using the options
-                  below.
-                </p>
-                <div className="text-xs text-muted-foreground/70 font-mono bg-muted/20 p-2 rounded">
-                  URL: {pdfUrl}
-                </div>
-                <div className="flex gap-2 justify-center">
-                  {pdfUrl && (
-                    <>
-                      <a
-                        href={pdfUrl}
-                        download
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download PDF
-                        </Button>
-                      </a>
-                      <a
-                        href={pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="outline">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Open in New Tab
-                        </Button>
-                      </a>
-                    </>
-                  )}
+          {pdfUrl ? (
+            <object
+              data={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+              type="application/pdf"
+              width="100%"
+              height="100%"
+              className="w-full h-full rounded-lg block max-w-full"
+              style={{ maxHeight: '100%', maxWidth: '100%', containIntrinsicSize: '100% 100%' }}
+            >
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-muted/10 rounded-lg">
+                <div className="max-w-md space-y-4">
+                  <h2 className="text-xl font-semibold">
+                    Lexicon Entry: {displayTitle}
+                  </h2>
+                  <p className="text-muted-foreground">
+                    This PDF document contains important Holocaust Lexicon
+                    information. Your browser may not support embedded PDF
+                    viewing, but you can access the content using the options
+                    below.
+                  </p>
+                  <div className="text-xs text-muted-foreground/70 font-mono bg-muted/20 p-2 rounded">
+                    URL: {pdfUrl}
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    {pdfUrl && (
+                      <>
+                        <a
+                          href={pdfUrl}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download PDF
+                          </Button>
+                        </a>
+                        <a
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button variant="outline">
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Open in New Tab
+                          </Button>
+                        </a>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+            </object>
+          ) : (
+            <div className="prose prose-gray dark:prose-invert max-w-none p-6 h-full overflow-y-auto">
+              <pre className="whitespace-pre-wrap break-words">{txtContent}</pre>
             </div>
-          </object>
+          )}
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { TestimonyCarousel } from "./TestimonyCarousel";
 import { AudioPlayer } from "./AudioPlayer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
+import { generateSourceUrl } from "@/lib";
 
 export function ToolInvocation({ part, messageId, partIndex }: any) {
   const isToolPart =
@@ -170,7 +171,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
     };
 
     return (
-      <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+      <AIMessage from="assistant" >
         <AITool status="completed" defaultOpen={true}>
           <AIToolHeader
             name={toolDisplay.displayName}
@@ -214,7 +215,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
   // Handle lexicon and testimony tools with carousels
   if (toolName === "lexiconTool") {
     return (
-      <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+      <AIMessage from="assistant" >
         <LexiconCarousel
           status={toolInvocation.state}
           name={toolDisplay.displayName}
@@ -226,7 +227,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
 
   if (toolName === "testimonyTool") {
     return (
-      <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+      <AIMessage from="assistant" >
         <TestimonyCarousel
           status={toolInvocation.state}
           name={toolDisplay.displayName}
@@ -244,7 +245,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
       (!toolInvocation.state && !toolInvocation.result);
 
     return (
-      <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+      <AIMessage from="assistant" >
         <AITool
           status={
             isRunning
@@ -295,7 +296,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
   // Handle showUsersAudio tool that completed but doesn't have audio segments
   if (toolName === "showUsersAudio" && toolInvocation.state === "result") {
     return (
-      <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
+      <AIMessage from="assistant" >
         <AITool status="completed" defaultOpen={true}>
           <AIToolHeader
             name={toolDisplay.displayName}

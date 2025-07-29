@@ -50,11 +50,14 @@ export const searchLexicon = async (searchTerms: string[]) => {
         const fullTitle = result.title || `Entry ${result.id}`;
 
         return {
+          id: result.id,
           title: fullTitle,
           content: result.content,
           citation: `[${fullTitle}](${sourceUrl})`,
-          filename: result.id, // This is now the correct lexiconSources.id
-          pdfUrl: result.pdfUrl // Include PDF URL from database
+          filename: result.filename,
+          pdfUrl: result.pdfUrl,
+          txtUrl: result.txtUrl,
+          redirectUrl: result.redirectUrl
         };
       }
     );

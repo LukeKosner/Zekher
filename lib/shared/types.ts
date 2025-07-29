@@ -10,14 +10,17 @@ import type { SelectLexiconSource, SelectTestimonySource } from "@/lib/database/
 
 // Core data structure types for API tool responses
 export interface ToolLexiconEntry {
+  id: string;
   title: string;
   content: string;
   citation: string;
   filename: string;
   pdfUrl?: string | null;
+  txtUrl?: string | null;
 }
 
 export interface ToolTestimonyEntry {
+  id: string;
   survivorName: string;
   excerpt: string;
   timeReference?: string;

@@ -33,37 +33,15 @@ export interface AudioPlayerSuspenseProps {
   className?: string;
 }
 
-/**
- * Testimony entry for carousel display
- */
-export interface TestimonyCarouselEntry {
-  id?: string;
-  survivorName: string;
-  excerpt: string;
-  fullTranscript?: string;
-  location?: string;
-  timeReference?: string;
-  filename: string;
-  url?: string;
-}
+import type { SelectLexiconSource, SelectTestimonySource } from "@/lib/database/schema";
 
-/**
- * Props for the TestimonyCarousel component
- */
+export type LexiconCarouselEntry = SelectLexiconSource;
+export type TestimonyCarouselEntry = SelectTestimonySource;
+
 export interface TestimonyCarouselProps {
   status: "result" | "loading";
   name: string;
   sources: TestimonyCarouselEntry[];
-}
-
-/**
- * Lexicon entry for carousel display
- */
-export interface LexiconCarouselEntry {
-  id?: string;
-  title: string;
-  filename: string;
-  pdfUrl?: string | null;
 }
 
 /**

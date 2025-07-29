@@ -25,7 +25,11 @@ export async function searchSources(searchTerms: string[], sourceType: "lexicon"
         joinCondition: sourceType === "lexicon" ? eq(lexiconEmbeddings.resourceId, lexiconSources.id) : eq(testimonyEmbeddings.testimonyId, testimonySources.id),
         additionalColumns: sourceType === "lexicon" ? {
           title: sql`${lexiconSources.title}`,
-          filename: sql`${lexiconSources.filename}`
+          filename: sql`${lexiconSources.filename}`,
+          pdfUrl: sql`${lexiconSources.pdfUrl}`,
+          txtUrl: sql`${lexiconSources.txtUrl}`,
+          redirectUrl: sql`${lexiconSources.redirectUrl}`,
+          sourceId: sql`${lexiconSources.id}`
         } : {
           survivor_name: sql`${testimonySources.survivor_name}`,
           interviewer: sql`${testimonySources.interviewer}`,
@@ -45,9 +49,12 @@ export async function searchSources(searchTerms: string[], sourceType: "lexicon"
 
       const formattedResults = hybridResults.slice(0, sourceType === "lexicon" ? 6 : 3).map((result) => (
         sourceType === "lexicon" ? {
-          id: result.id,
+          id: (result.metadata as any).sourceId,
           title: (result.metadata as any).title,
           filename: (result.metadata as any).filename,
+          pdfUrl: (result.metadata as any).pdfUrl,
+          txtUrl: (result.metadata as any).txtUrl,
+          redirectUrl: (result.metadata as any).redirectUrl,
           content: result.content,
           relevanceScore: result.rrfScore
         } : {

@@ -5,7 +5,7 @@
 // Chat API configuration and constants
 export const chatApiConstants = {
   maxDuration: 300,
-  modelName: "gemini-1.5-pro",
+  modelName: "gemini-2.5-pro",
   component: "chat",
   endpoint: "/api/chat"
 } as const;

@@ -345,31 +345,6 @@ function ChatContent() {
       );
     }
 
-    // Handle lexicon and testimony tools with carousels
-    if (toolName === "lexiconTool") {
-      return (
-        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <LexiconCarousel
-            status={toolInvocation.state}
-            name={toolDisplay.displayName}
-            sources={toolInvocation.result?.entries || []}
-          />
-        </AIMessage>
-      );
-    }
-
-    if (toolName === "testimonyTool") {
-      return (
-        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <TestimonyCarousel
-            status={toolInvocation.state}
-            name={toolDisplay.displayName}
-            sources={toolInvocation.result?.entries || []}
-          />
-        </AIMessage>
-      );
-    }
-
     // Handle other tools with standard UI
     if (toolName === "showUsersAudio" && toolInvocation.state !== "result") {
       const isRunning =
@@ -384,8 +359,8 @@ function ChatContent() {
               isRunning
                 ? "running"
                 : toolInvocation.state === "result"
-                  ? "completed"
-                  : "pending"
+                ? "completed"
+                : "pending"
             }
             defaultOpen={true}
           >
@@ -395,8 +370,8 @@ function ChatContent() {
                 isRunning
                   ? "running"
                   : toolInvocation.state === "result"
-                    ? "completed"
-                    : "pending"
+                  ? "completed"
+                  : "pending"
               }
               icon={
                 <span className="size-4 text-muted-foreground">
@@ -500,38 +475,48 @@ function ChatContent() {
                         .slice(0, partIndex)
                         .filter((p) => p.type === "reasoning").length;
                       renderedParts.push(
-                        <motion.div
-                          key={`${message.id}-reasoning-${reasoningCount}-${part.text?.slice(0, 50)?.replace(/\s+/g, "") || partIndex}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{
-                            duration: 0.3,
-                            ease: "easeOut",
-                            delay: reasoningCount * 0.15
-                          }}
-                        >
-                          <AIReasoning
-                            isStreaming={isReasoningStreaming}
-                            defaultOpen={false}
-                          >
-                            <AIReasoningTrigger />
-                            <AIReasoningContent>{part.text}</AIReasoningContent>
-                          </AIReasoning>
-                        </motion.div>
+                        <AIMessage
+                          from="assistant"
+                          key={`${message.id}-reasoning-${partIndex}`}>
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{
+                                duration: 0.3,
+                                ease: "easeOut",
+                                delay: reasoningCount * 0.15
+                              }}
+                            >
+                              <AIReasoning
+                                isStreaming={isReasoningStreaming}
+                                defaultOpen={false}
+                              >
+                                <AIReasoningTrigger />
+                                <AIReasoningContent>{part.text}</AIReasoningContent>
+                              </AIReasoning>
+                            </motion.div>
+                        </AIMessage>
                       );
                     } else if (
                       part.type !== "step-start" &&
                       typeof part.type === "string" &&
                       part.type.startsWith("tool-")
                     ) {
-                      const toolElement = <ToolInvocation part={part} messageId={message.id} partIndex={partIndex} />;
-                      if (toolElement) {
+                      const toolElement = (
+                        <ToolInvocation
+                          key={`${message.id}-tool-${partIndex}`}
+                          part={part}
+                          messageId={message.id}
+                          partIndex={partIndex}
+                        />
+                      );
+                      if (toolElement && React.isValidElement(toolElement)) {
                         renderedParts.push(toolElement);
                       }
                     }
                   });
 
-                  return (
+                  return renderedParts.length > 0 ? (
                     <motion.div
                       key={message.id || index}
                       initial={{ opacity: 0, y: 20 }}
@@ -541,7 +526,7 @@ function ChatContent() {
                     >
                       {renderedParts}
                     </motion.div>
-                  );
+                  ) : null;
                 }
 
                 // Regular messages
@@ -582,7 +567,7 @@ function ChatContent() {
         </AIConversation>
       )}
 
-      <motion.div 
+      <motion.div
         className="grid shrink-0 gap-4 pt-4 border-t border-border"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -624,7 +609,7 @@ function ChatContent() {
 function ChatLoading() {
   return (
     <div className="relative flex h-full w-full flex-col min-h-0">
-      <motion.div 
+      <motion.div
         className="flex-1 flex items-center justify-center px-6"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -636,7 +621,7 @@ function ChatLoading() {
         </div>
       </motion.div>
 
-      <motion.div 
+      <motion.div
         className="grid shrink-0 gap-4 pt-4"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
