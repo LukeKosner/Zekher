@@ -3,9 +3,6 @@
  * Re-exports all monitoring-related constants, types, and utilities
  */
 
-// Constants
-// Constants moved inline to respective files
-
 // Types
 export * from "./types";
 

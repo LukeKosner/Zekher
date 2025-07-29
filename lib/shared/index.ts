@@ -3,9 +3,6 @@
  * Re-exports all shared constants, types, and utilities
  */
 
-// Constants
-// Constants moved inline to respective files
-
 // Types
 export * from "./types";
 

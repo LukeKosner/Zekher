@@ -3,9 +3,6 @@
  * Re-exports all tool-related constants, types, and utilities
  */
 
-// Constants
-// Constants moved inline to respective files
-
 // Prompts (moved from root) - specific exports to avoid conflicts
 export {
   toolDescriptions,

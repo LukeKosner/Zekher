@@ -6,6 +6,7 @@
  * authentication, and metadata configuration.
  */
 
+import { layoutConstants } from "@/components/layout/constants";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -32,8 +33,8 @@ export function generateMetadata(): Metadata {
   return {
     ...staticMetadata,
     other: {
-      ...Sentry.getTraceData(),
-    },
+      ...Sentry.getTraceData()
+    }
   };
 }
 
@@ -41,10 +42,9 @@ export function generateMetadata(): Metadata {
  * Static metadata configuration for SEO and social media optimization
  */
 const staticMetadata: Metadata = {
-  metadataBase: new URL("https://zekher.com"),
-  title: "Zekher",
-  description:
-    "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.",
+  metadataBase: new URL(layoutConstants.siteUrl),
+  title: layoutConstants.siteName,
+  description: layoutConstants.description,
   keywords: [
     "Holocaust education",
     "Yad Vashem",
@@ -54,41 +54,40 @@ const staticMetadata: Metadata = {
     "AI education"
   ],
   openGraph: {
-    title: "Zekher",
-    description:
-      "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.",
-    url: "https://zekher.com",
-    siteName: "Zekher",
+    title: layoutConstants.siteName,
+    description: layoutConstants.description,
+    url: layoutConstants.siteUrl,
+    siteName: layoutConstants.siteName,
     type: "website",
     images: [
       {
-        url: "/opengraph-image.png",
-        width: 512,
-        height: 512,
-        alt: "Zekher - Holocaust Education"
+        url: layoutConstants.icons.openGraphImage.url,
+        width: layoutConstants.icons.openGraphImage.width,
+        height: layoutConstants.icons.openGraphImage.height,
+        alt: layoutConstants.icons.openGraphImage.alt
       }
     ]
   },
   icons: {
     icon: [
       {
-        url: "/favicon-32x32.png",
-        sizes: "32x32",
-        type: "image/png"
+        url: layoutConstants.icons.favicon32.url,
+        sizes: layoutConstants.icons.favicon32.sizes,
+        type: layoutConstants.icons.favicon32.type
       },
       {
-        url: "/favicon-16x16.png",
-        sizes: "16x16",
-        type: "image/png"
+        url: layoutConstants.icons.favicon16.url,
+        sizes: layoutConstants.icons.favicon16.sizes,
+        type: layoutConstants.icons.favicon16.type
       }
     ],
     apple: {
-      url: "/apple-touch-icon.png",
-      sizes: "192x192",
-      type: "image/png"
+      url: layoutConstants.icons.appleTouchIcon.url,
+      sizes: layoutConstants.icons.appleTouchIcon.sizes,
+      type: layoutConstants.icons.appleTouchIcon.type
     }
   },
-  manifest: "/site.webmanifest"
+  manifest: layoutConstants.manifest
 };
 
 /**
@@ -111,9 +110,7 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
   }
 
   // Validate layout constants are properly loaded
-  const siteName = "Zekher";
-  const description =
-    "Access authoritative Holocaust education materials through AI-powered search of Yad Vashem resources and survivor testimonies. Built to preserve memory and combat denial.";
+  const { siteName, description } = layoutConstants;
 
   if (!siteName || !description) {
     logger.error("RootLayout: Layout constants not properly configured", {
@@ -131,10 +128,19 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
       <Analytics />
       <head>
         {/* Static performance optimizations */}
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-        <meta name="theme-color" content="#1f2937" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link
+          rel="dns-prefetch"
+          href={layoutConstants.dnsPreFetch.googleFonts}
+        />
+        <link
+          rel="dns-prefetch"
+          href={layoutConstants.dnsPreFetch.googleFontsStatic}
+        />
+        <meta name="theme-color" content={layoutConstants.themeColor} />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
       </head>
       <body className={`${inter.variable} antialiased`}>
         {/* Client Component boundary - only interactive parts */}

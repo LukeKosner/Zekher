@@ -7,32 +7,12 @@ import {
   hasToolCall
 } from "ai";
 import { holocaustEducatorPrompt } from "./prompts";
-// =============================================================================
-// CHAT API CONSTANTS
-// =============================================================================
-
-// Chat API configuration and constants
-const chatApiConstants = {
-  maxDuration: 60,
-  modelName: "gemini-2.5-pro",
-  component: "chat",
-  endpoint: "/api/chat"
-} as const;
-
-// Chat API error messages
-const chatApiErrors = {
-  invalidMessages: "Messages array is missing or invalid",
-  internalServerError: "Internal server error",
-  processingError:
-    "An error occurred while processing your request. Please try again.",
-  invalidRequest: "Invalid request format",
-  missingMessages: "No messages provided in request"
-} as const;
+import { chatApiConstants, chatApiErrors } from "./constants";
 import { logger, logApiRequest, logApiResponse } from "@/lib/monitoring";
 import type { ChatErrorResponse, ChatApiContext } from "./types";
 import * as Sentry from "@sentry/nextjs";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * Chat API endpoint for Holocaust education conversations.

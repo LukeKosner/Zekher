@@ -3,8 +3,6 @@
  * Re-exports all search-related constants, types, and utilities
  */
 
-// Constants moved inline to respective files
-
 // Types
 export * from "./types";
 

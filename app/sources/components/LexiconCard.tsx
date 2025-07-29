@@ -19,25 +19,7 @@ import { Download, ExternalLink, ArrowUpRight } from "lucide-react";
 import { LexiconCardProps } from "@/app/sources/types";
 import { cn } from "@/lib";
 import { generateSourceUrl } from "@/lib";
-// =============================================================================
-// LEXICON CARD CONSTANTS
-// =============================================================================
-
-const sourcesPageConstants = {
-  cardText: {
-    lexicon: {
-      source: "from Yad Vashem's Holocaust Lexicon",
-      externalSource: "from Yad Vashem's website",
-      pdfPreviewFallback: "PDF preview not available.",
-      openInNewTab: "Open PDF in a new tab",
-      textPreview: "Text Preview",
-      viewFullText: "View Full Text",
-      viewFullPdf: "View Full PDF",
-      downloadPdf: "Download PDF",
-      visitExternal: "Visit External Resource"
-    }
-  }
-} as const;
+import { sourcesPageConstants } from "../constants";
 import Link from "next/link";
 
 export function LexiconCard({ source, className }: LexiconCardProps) {
@@ -120,7 +102,11 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
                   width="100%"
                   height="100%"
                   className="absolute top-0 left-0 block"
-                  style={{ maxHeight: '100%', containIntrinsicSize: '100% 100%', overflow: 'hidden' }}
+                  style={{
+                    maxHeight: "100%",
+                    containIntrinsicSize: "100% 100%",
+                    overflow: "hidden"
+                  }}
                 >
                   <div className="p-4 text-sm text-muted-foreground">
                     <p>
