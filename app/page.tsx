@@ -31,7 +31,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <Link href="/developers/mcp" className="no-underline">
+              <Link href="/mcp" className="no-underline">
                 <Announcement>
                   <AnnouncementTag className="bg-green-200">
                     v3 Beta
@@ -186,7 +186,7 @@ export default function Home() {
                   to Claude, ChatGPT, and other AI clients.
                 </p>
                 <Button asChild size="sm" variant="outline" className="mt-auto">
-                  <Link href="/developers/mcp">
+                  <Link href="/mcp">
                     Learn More
                     <Server className="w-4 h-4 ml-2" />
                   </Link>

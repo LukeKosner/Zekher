@@ -122,7 +122,7 @@ const handler = createMcpHandler(
     }
   },
   {
-    basePath: "/",
+    basePath: "/handler/",
     verboseLogs: false,
     maxDuration: 60,
     redisUrl: process.env.REDIS_URL

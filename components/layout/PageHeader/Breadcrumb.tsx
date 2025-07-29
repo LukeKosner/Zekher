@@ -21,7 +21,7 @@ export function BreadcrumbNavigation({ slug }: BreadcrumbNavigationProps) {
 
   // Special case: if we're on /developers, show the MCP breadcrumb since it redirects there
   if (slug === "/developers") {
-    navigationItem = getNavigationItemByPath("/developers/mcp");
+    navigationItem = getNavigationItemByPath("/mcp");
   }
 
   // For root path
@@ -65,7 +65,7 @@ export function BreadcrumbNavigation({ slug }: BreadcrumbNavigationProps) {
     );
   }
 
-  // For sub-pages (like /sources/lexicon/123 or /developers/mcp)
+  // For sub-pages (like /sources/lexicon/123 or /mcp)
   if (parts.length > 1) {
     // Try to find exact match for the full path first
     const fullPath = `/${parts.join("/")}`;

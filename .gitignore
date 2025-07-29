@@ -66,3 +66,7 @@ next-env.d.ts
 # Logs
 /logs/
 *.log
+
+
+#Ignore insiders AI rules
+.github/copilot-instructions.md

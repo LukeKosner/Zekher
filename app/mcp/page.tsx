@@ -69,7 +69,7 @@ const PAGE_STYLING = {
   listClasses: "list-decimal list-inside space-y-2 text-lg",
   borderClasses: "border rounded-lg p-4"
 } as const;
-import type { SectionVariants } from "../types";
+import type { SectionVariants } from "./types";
 
 const sectionVariants: SectionVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -203,7 +203,7 @@ const DevelopersPage = () => {
               </code>{" "}
               doesn't work, try{" "}
               <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
-                {baseUrl}/mcp
+                {baseUrl}handler/mcp
               </code>{" "}
               as the server URL. The implementation differences across clients
               can affect which endpoint responds correctly.

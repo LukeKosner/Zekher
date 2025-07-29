@@ -13,40 +13,43 @@ const ANIMATION_CONFIG = {
   delays: {
     section1: 0.2,
     section2: 0.4,
-    section3: 0.6,
+    section3: 0.6
   },
   transition: {
     opacity: { from: 0, to: 1 },
-    y: { from: 30, to: 0 },
-  },
+    y: { from: 30, to: 0 }
+  }
 } as const;
 
 const EXTERNAL_LINKS = {
-  grokHolocaustDenial: "https://www.theguardian.com/technology/2025/may/18/musks-ai-bot-grok-blames-its-holocaust-scepticism-on-programming-error",
-  unescoReport: "https://www.unesco.org/en/articles/unesco-and-world-jewish-congress-report-shows-holocaust-denial-and-distortion-proliferating-social",
-  yadVashemLexicon: "https://www.yadvashem.org/holocaust/resource-center/lexicon.html",
+  grokHolocaustDenial:
+    "https://www.theguardian.com/technology/2025/may/18/musks-ai-bot-grok-blames-its-holocaust-scepticism-on-programming-error",
+  unescoReport:
+    "https://www.unesco.org/en/articles/unesco-and-world-jewish-congress-report-shows-holocaust-denial-and-distortion-proliferating-social",
+  yadVashemLexicon:
+    "https://www.yadvashem.org/holocaust/resource-center/lexicon.html",
   boderInterviews: "https://voices.library.iit.edu/",
   claude: "https://claude.ai",
-  chatgpt: "https://chatgpt.com",
+  chatgpt: "https://chatgpt.com"
 } as const;
 
 const INTERNAL_LINKS = {
   chat: "/chat",
-  mcpDocs: "/developers/mcp",
-  sources: "/sources",
+  mcpDocs: "/mcp",
+  sources: "/sources"
 } as const;
 
 const CONTENT_SECTIONS = {
   mission: {
     title: "Mission",
-    hebrewTranslation: "(זכר, remembrance in Hebrew)",
+    hebrewTranslation: "(זכר, remembrance in Hebrew)"
   },
   problem: {
-    title: "Problem",
+    title: "Problem"
   },
   resources: {
-    title: "Resources",
-  },
+    title: "Resources"
+  }
 } as const;
 
 const PAGE_STYLING = {
@@ -57,9 +60,9 @@ const PAGE_STYLING = {
   paragraphClasses: "mt-4 text-lg",
   linkClasses: "underline",
   iconClasses: "inline w-4 h-4",
-  iconWithMargin: "inline w-4 h-4 ml-1",
+  iconWithMargin: "inline w-4 h-4 ml-1"
 } as const;
-import type { SectionVariants } from './types';
+import type { SectionVariants } from "./types";
 
 const sectionVariants: SectionVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -77,7 +80,7 @@ const AboutPage = () => {
   return (
     <div className={PAGE_STYLING.container}>
       <div className={PAGE_STYLING.spacing}>
-        <motion.div 
+        <motion.div
           className={PAGE_STYLING.sectionSpacing}
           initial="hidden"
           animate="visible"
@@ -124,12 +127,11 @@ const AboutPage = () => {
               >
                 UNESCO report
               </Link>
-              <ArrowUpRight className="inline w-4 h-4" />{" "}
-              warned of risks to Holocaust memory both embedded in the
-              technology and possible with bad actors. LLMs have invented
-              survivor quotes and “hallucinated” about less-documented history.
-              Generative AI is so ubiquitous that not confronting these
-              challenges risks mass-disinformation.
+              <ArrowUpRight className="inline w-4 h-4" /> warned of risks to
+              Holocaust memory both embedded in the technology and possible with
+              bad actors. LLMs have invented survivor quotes and “hallucinated”
+              about less-documented history. Generative AI is so ubiquitous that
+              not confronting these challenges risks mass-disinformation.
             </p>
           </motion.div>
 
@@ -158,33 +160,32 @@ const AboutPage = () => {
               >
                 Dr. David P. Boder's survivor interviews
               </Link>
-              <ArrowUpRight className="inline w-4 h-4" />. There is
-              no chunking or AI summary as part of the ingestion process, just
-              PDF to text conversion and cleanup. Post-ingestion, Zekher’s
-              technology does not strain museum or university servers.
+              <ArrowUpRight className="inline w-4 h-4" />. There is no chunking
+              or AI summary as part of the ingestion process, just PDF to text
+              conversion and cleanup. Post-ingestion, Zekher’s technology does
+              not strain museum or university servers.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
               That information powers a familiar{" "}
               <Link href="/chat" className="underline">
                 Chat
               </Link>
-              <MessagesSquare className="inline w-4 h-4 ml-1" />{" "}
-              experience. The system uses Lexicon content to answer user’s
-              queries before offering real interview audio snippets as a
-              supplement. The system is agentic, meaning that the LLM has access
-              to tools that query the data sources and enable citations.
-              Zekher’s system prompt tells the model to acknowledge if
-              information is missing in the Lexicon and prohibits summarizing
-              survivor testimony. Users can read and listen to the sources once
-              the model sees them.
+              <MessagesSquare className="inline w-4 h-4 ml-1" /> experience. The
+              system uses Lexicon content to answer user’s queries before
+              offering real interview audio snippets as a supplement. The system
+              is agentic, meaning that the LLM has access to tools that query
+              the data sources and enable citations. Zekher’s system prompt
+              tells the model to acknowledge if information is missing in the
+              Lexicon and prohibits summarizing survivor testimony. Users can
+              read and listen to the sources once the model sees them.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
               A{" "}
-              <Link href="/developers/mcp" className="underline">
+              <Link href="/mcp" className="underline">
                 Model Context Protocol (MCP)
               </Link>
-              <Server className="inline w-4 h-4 ml-1" /> server
-              that can be used to add Zekher's Lexicon functionality into{" "}
+              <Server className="inline w-4 h-4 ml-1" /> server that can be used
+              to add Zekher's Lexicon functionality into{" "}
               <Link
                 href="https://claude.ai"
                 target="_blank"
@@ -202,18 +203,17 @@ const AboutPage = () => {
               >
                 OpenAI's ChatGPT
               </Link>
-              <ArrowUpRight className="inline w-4 h-4" />, etc. But
-              it could perhaps be more useful for developers of other agentic
-              chatbots who would like to prevent Holocaust denial in their
-              applications.
+              <ArrowUpRight className="inline w-4 h-4" />, etc. But it could
+              perhaps be more useful for developers of other agentic chatbots
+              who would like to prevent Holocaust denial in their applications.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
               A unified{" "}
               <Link href="/sources" className="underline">
                 source library
               </Link>
-              <Database className="inline w-4 h-4 ml-1" /> that is
-              the landing page for citations from both Chat and MCP.
+              <Database className="inline w-4 h-4 ml-1" /> that is the landing
+              page for citations from both Chat and MCP.
             </p>
           </motion.div>
         </motion.div>

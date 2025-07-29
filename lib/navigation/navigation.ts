@@ -27,7 +27,7 @@ const ROUTES = {
   ABOUT: "/about",
   CHAT: "/chat",
   SOURCES: "/sources",
-  DEVELOPERS_MCP: "/developers/mcp",
+  DEVELOPERS_MCP: "/mcp",
   DEVELOPERS: "/developers" // Redirects to MCP
 } as const;
 
