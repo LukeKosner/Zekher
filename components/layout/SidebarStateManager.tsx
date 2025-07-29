@@ -6,7 +6,7 @@ import { SidebarInset } from "@/components/ui/sidebar";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { RouteSlugGenerator } from "./RouteSlugGenerator";
-import { layoutConstants } from "./constants";
+import { layoutConstants } from "./config";
 import { usePathname } from "next/navigation";
 import type { SidebarStateManagerProps } from "./types";
 

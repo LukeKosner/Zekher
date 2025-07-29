@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import type { Variants } from "framer-motion";
-
 export interface DevelopersLayoutProps {
   children: React.ReactNode;
 }
@@ -59,5 +57,3 @@ export interface PageStyling {
   listClasses: string;
   borderClasses: string;
 }
-
-export type SectionVariants = Variants;

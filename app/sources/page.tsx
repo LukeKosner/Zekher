@@ -32,7 +32,7 @@ import { SourcesPageFallback } from "./components/skeletons";
 import { getAllLexiconEntries } from "@/lib/database";
 import { getAllTestimonies } from "@/lib/database";
 import { LexiconSource, TestimonySource } from "./types";
-import { sourcesPageConstants } from "./constants";
+import { sourcesPageConstants } from "./config";
 
 /**
  * Utility function to convert null values to undefined for UI consistency.

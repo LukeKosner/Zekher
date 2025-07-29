@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { AboutLayoutProps } from './types';
+import type { AboutLayoutProps } from "./types";
 
 // =============================================================================
 // ABOUT PAGE METADATA

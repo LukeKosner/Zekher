@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -164,7 +165,12 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
     : null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 pb-20">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20"
+    >
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-6">{testimony.survivor_name}</h1>
@@ -274,6 +280,6 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
           )}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

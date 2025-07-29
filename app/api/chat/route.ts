@@ -7,7 +7,7 @@ import {
   hasToolCall
 } from "ai";
 import { holocaustEducatorPrompt } from "./prompts";
-import { chatApiConstants, chatApiErrors } from "./constants";
+import { chatApiConstants, chatApiErrors } from "./config";
 import { logger, logApiRequest, logApiResponse } from "@/lib/monitoring";
 import type { ChatErrorResponse, ChatApiContext } from "./types";
 import * as Sentry from "@sentry/nextjs";

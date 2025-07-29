@@ -16,7 +16,7 @@ import {
   mcpConstants,
   errorMessages,
   nextStepsInstructions
-} from "./constants";
+} from "./config";
 
 /**
  * Search the Holocaust Lexicon for historical information

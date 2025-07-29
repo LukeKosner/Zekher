@@ -158,16 +158,7 @@ const SPEAKER_MAPPINGS: Record<string, SpeakerMapping> = {
   }
 };
 
-/**
- * Default URL configuration
- */
-const DEFAULT_URL_CONFIG: UrlConfig = {
-  NEXT_PUBLIC_BASE_URL: getBaseUrl(),
-  GOOGLE_CLOUD_STORAGE_BASE: "https://storage.googleapis.com/zekher-storage",
-  AUDIO_PATH: "/audio",
-  LEXICON_PATH: "/lexicon/pdf",
-  TESTIMONY_PATH: "/testimony"
-};
+import { DEFAULT_URL_CONFIG } from "./config";
 
 /**
  * Validates the URL configuration

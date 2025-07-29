@@ -19,7 +19,7 @@ import { Download, ExternalLink, ArrowUpRight } from "lucide-react";
 import { LexiconCardProps } from "@/app/sources/types";
 import { cn } from "@/lib";
 import { generateSourceUrl } from "@/lib";
-import { sourcesPageConstants } from "../constants";
+import { sourcesPageConstants } from "../config";
 import Link from "next/link";
 
 export function LexiconCard({ source, className }: LexiconCardProps) {

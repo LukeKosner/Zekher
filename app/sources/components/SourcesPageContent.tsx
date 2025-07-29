@@ -2,7 +2,7 @@
 
 import { LazyLoadWrapper } from "@/components/LazyLoadWrapper";
 import { LexiconCardSkeleton, TestimonyCardSkeleton } from "./skeletons";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/pagination";
 import { LexiconCard } from "@/app/sources/components/LexiconCard";
 import { TestimonyCard } from "@/app/sources/components/TestimonyCard";
-import { sourcesPageConstants } from "../constants";
+import { sourcesPageConstants } from "../config";
 import { LexiconSource, TestimonySource } from "@/app/sources/types";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -109,7 +109,12 @@ function SourceLibrary({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-6xl mx-auto p-6"
+    >
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-4">
           {sourcesPageConstants.pageContent.title}
@@ -380,7 +385,7 @@ function SourceLibrary({
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }
 

@@ -17,7 +17,7 @@ import { ExternalLink } from "lucide-react";
 import { TestimonyCardProps } from "@/app/sources/types";
 import { cn } from "@/lib";
 import { generateSourceUrl } from "@/lib";
-import { sourcesPageConstants } from "../constants";
+import { sourcesPageConstants } from "../config";
 import Link from "next/link";
 
 export function TestimonyCard({ source, className }: TestimonyCardProps) {

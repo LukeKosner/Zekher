@@ -1,7 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import { searchLexicon } from "./utils";
-import { mcpUsageInstructions, mcpConstants } from "./constants";
+import { mcpUsageInstructions, mcpConstants } from "./config";
 import type { McpLexiconResponse } from "./types";
 
 /**

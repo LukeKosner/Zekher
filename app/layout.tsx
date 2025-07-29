@@ -6,7 +6,7 @@
  * authentication, and metadata configuration.
  */
 
-import { layoutConstants } from "@/components/layout/constants";
+import { layoutConstants } from "@/components/layout/config";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
