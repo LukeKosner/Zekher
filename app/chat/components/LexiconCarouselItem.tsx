@@ -36,6 +36,7 @@ export const LexiconCarouselItem = ({ source, index }: { source: LexiconCarousel
 
   return (
     <UICarouselItem
+      key={source.id || index}
       className="pl-2 md:pl-4 basis-full xl:basis-1/2"
     >
       {/* Cropped preview */}

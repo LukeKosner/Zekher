@@ -20,9 +20,9 @@ export const LexiconCarousel = ({
       status={status}
       icon={<BookOpenCheck className="size-4 text-muted-foreground" />}
     >
-      {sources?.length ? sources.map((src, i) => (
+      {sources.map((src, i) => (
         <LexiconCarouselItem key={src.id || i} source={src} index={i} />
-      )) : <div>No sources available</div>}
+      ))}
     </Carousel>
   );
 };

@@ -510,13 +510,13 @@ function ChatContent() {
                           partIndex={partIndex}
                         />
                       );
-                      if (toolElement && React.isValidElement(toolElement)) {
+                      if (toolElement) {
                         renderedParts.push(toolElement);
                       }
                     }
                   });
 
-                  return renderedParts.length > 0 ? (
+                  return (
                     <motion.div
                       key={message.id || index}
                       initial={{ opacity: 0, y: 20 }}
@@ -526,7 +526,7 @@ function ChatContent() {
                     >
                       {renderedParts}
                     </motion.div>
-                  ) : null;
+                  );
                 }
 
                 // Regular messages

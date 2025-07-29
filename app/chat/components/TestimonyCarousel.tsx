@@ -38,7 +38,7 @@ export const TestimonyCarousel = ({
       status={status}
       icon={<Users className="size-4 text-muted-foreground" />}
     >
-      {sources?.length ? sources.map((t: TestimonyCarouselEntry, i: number) => {
+      {sources.map((t: TestimonyCarouselEntry, i: number) => {
         const segs = parseSegments(t.content || "");
         const fileLink = `/sources/testimony/${t.id}`;
 
@@ -105,7 +105,7 @@ export const TestimonyCarousel = ({
             </div>
           </CarouselItem>
         );
-      }) : <div>No sources available</div>}
+      })}
     </Carousel>
   );
 };
