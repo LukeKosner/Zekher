@@ -1,4 +1,4 @@
-import type { SectionVariants } from "./types";
+import type { SectionVariant } from "./types";
 
 export const ANIMATION_CONFIG = {
   duration: 0.8,
@@ -56,14 +56,14 @@ export const PAGE_STYLING = {
   iconWithMargin: "inline w-4 h-4 ml-1"
 } as const;
 
-export const sectionVariants: SectionVariants = {
+export const sectionVariant: SectionVariant = {
   hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
       duration: ANIMATION_CONFIG.duration,
-      ease: ANIMATION_CONFIG.ease
+      ease: "easeOut"
     }
   }
 };

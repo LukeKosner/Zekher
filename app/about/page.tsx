@@ -1,7 +1,7 @@
 import * as motion from "motion/react-client";
 import { ArrowUpRight, MessagesSquare, Server, Database } from "lucide-react";
 import Link from "next/link";
-import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariants } from "./config";
+import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariant } from "./config";
 
 const AboutPage = () => {
   return (
@@ -11,7 +11,7 @@ const AboutPage = () => {
           className={PAGE_STYLING.sectionSpacing}
           initial="hidden"
           animate="visible"
-          variants={sectionVariants}
+          variants={sectionVariant}
         >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
