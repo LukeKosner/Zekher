@@ -188,19 +188,6 @@ export async function POST(req: Request): Promise<Response> {
             showUsersAudio: {
               ...showUsersAudio,
               execute: async (params: any, options: any) => {
-                // Check if testimonyTool has been called first
-                if (!testimonyToolCalled) {
-                  logger.info("Audio tool blocked - testimonyTool not called first", {
-                    params
-                  });
-                  return {
-                    type: "audio_segments",
-                    segments: [],
-                    message:
-                      "Audio segments can only be accessed after searching testimonies. Please search for testimonies first."
-                  };
-                }
-
                 const callId = `audio-${JSON.stringify(params)}`;
                 if (toolCallTracker.has(callId)) {
                   logger.info("Duplicate audio tool call prevented", {
