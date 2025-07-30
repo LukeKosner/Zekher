@@ -2,7 +2,10 @@
  * Shared type definitions used across multiple domains
  */
 
-import type { SelectLexiconSource, SelectTestimonySource } from "@/lib/database/schema";
+import type {
+  SelectLexiconSource,
+  SelectTestimonySource
+} from "@/lib/database/schema";
 
 // =============================================================================
 // API AND TOOL RESPONSE TYPES
@@ -29,6 +32,7 @@ export interface ToolTestimonyEntry {
   citation: string;
   filename: string;
   url?: string;
+  language?: string;
 }
 
 export interface LexiconResponse {
@@ -59,7 +63,7 @@ export type ToolResponse =
 // DATABASE TYPES WITH UI EXTENSIONS
 // =============================================================================
 
-/** 
+/**
  * Lexicon entry with computed fields for UI display.
  * Extends database schema with slug and UI-specific metadata.
  */
@@ -129,7 +133,11 @@ export interface ApiErrorResponse {
   /** Error message */
   error: string;
   /** Specific error type for programmatic handling */
-  errorType: "VALIDATION_ERROR" | "NOT_FOUND" | "SYSTEM_ERROR" | "AUTHENTICATION_ERROR";
+  errorType:
+    | "VALIDATION_ERROR"
+    | "NOT_FOUND"
+    | "SYSTEM_ERROR"
+    | "AUTHENTICATION_ERROR";
   /** Additional error metadata */
   metadata: {
     /** Error timestamp */
@@ -194,13 +202,4 @@ export interface StepPlan {
   stepName: string;
   description: string;
   toolName?: string;
-}
-
-/**
- * Blob URL configuration interface
- */
-export interface BlobUrls {
-  audio: Record<string, string>;
-  lexicon: Record<string, string>;
-  testimony: Record<string, string>;
 }

@@ -60,7 +60,8 @@ export const searchTestimonies = async (searchTerms: string[]) => {
           location: result.location || undefined,
           citation: `[${result.survivorName}](${sourceUrl})`,
           filename: result.id, // Use ID instead of processed filename
-          url: result.url || undefined
+          url: result.url || undefined,
+          language: (result as any).testimony_language || undefined
         };
       }
     );

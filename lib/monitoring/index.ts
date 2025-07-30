@@ -21,7 +21,6 @@ export {
   trackCitationUrlGeneration,
   trackUrlValidationError,
   trackSpeakerMappingError,
-  trackBlobUrlConfigError,
   createMonitoringContext,
   withMonitoring
 } from "./monitoring";

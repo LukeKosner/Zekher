@@ -10,7 +10,6 @@ export enum ErrorType {
   CITATION_URL_GENERATION = "CITATION_URL_GENERATION",
   URL_VALIDATION = "URL_VALIDATION",
   SPEAKER_MAPPING = "SPEAKER_MAPPING",
-  BLOB_URL_CONFIG = "BLOB_URL_CONFIG",
   NETWORK = "NETWORK",
   CONFIGURATION = "CONFIGURATION"
 }
@@ -36,7 +35,7 @@ export interface AudioLoadingMetrics {
   errorType?: ErrorType;
   errorMessage?: string;
   fallbackUsed: boolean;
-  urlSource: "blob" | "gcs" | "fallback";
+  urlSource: "gcs" | "fallback";
 }
 
 /**

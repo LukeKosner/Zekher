@@ -34,9 +34,10 @@ export interface AudioPlayerSuspenseProps {
 }
 
 import type { SelectLexiconSource, SelectTestimonySource } from "@/lib/database/schema";
+import type { ToolLexiconEntry, ToolTestimonyEntry } from "@/lib/shared/types";
 
-export type LexiconCarouselEntry = SelectLexiconSource;
-export type TestimonyCarouselEntry = SelectTestimonySource;
+export type LexiconCarouselEntry = ToolLexiconEntry;
+export type TestimonyCarouselEntry = ToolTestimonyEntry;
 
 export interface TestimonyCarouselProps {
   status: "result" | "loading";

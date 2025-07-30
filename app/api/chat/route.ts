@@ -3,13 +3,18 @@ import { google } from "@ai-sdk/google";
 import {
   streamText,
   convertToModelMessages,
-  type UIMessage,
-  hasToolCall
+  hasToolCall,
+  createUIMessageStream,
+  createUIMessageStreamResponse
 } from "ai";
 import { holocaustEducatorPrompt } from "./prompts";
 import { chatApiConstants, chatApiErrors } from "./config";
 import { logger, logApiRequest, logApiResponse } from "@/lib/monitoring";
-import type { ChatErrorResponse, ChatApiContext } from "./types";
+import type {
+  ChatErrorResponse,
+  ChatApiContext,
+  CustomUIMessage
+} from "./types";
 import * as Sentry from "@sentry/nextjs";
 
 export const maxDuration = 300;
@@ -30,83 +35,98 @@ export async function POST(req: Request): Promise<Response> {
     logApiRequest("POST", chatApiConstants.endpoint);
     logger.info("Chat started", { msgs: requestData.messages?.length || 0 });
 
-    const { messages }: { messages: UIMessage[] } = requestData;
+    const { messages }: { messages: CustomUIMessage[] } = requestData;
 
-    const streamResult = streamText({
-      model: google(chatApiConstants.modelName),
-      messages: convertToModelMessages(messages),
-      system: holocaustEducatorPrompt,
-      stopWhen: hasToolCall("showUsersAudio"),
-      onStepFinish: (result) => {
-        const { finishReason, usage, providerMetadata, text } = result;
+    const stream = createUIMessageStream<CustomUIMessage>({
+      execute: ({ writer }) => {
+        const result = streamText({
+          model: google(chatApiConstants.modelName),
+          messages: convertToModelMessages(messages),
+          system: holocaustEducatorPrompt,
+          stopWhen: hasToolCall("showUsersAudio"),
+          onStepFinish: (result) => {
+            const { finishReason, usage, providerMetadata } = result;
 
-        if (finishReason === "content-filter") {
-          logger.warn("Content filtered", { usage, providerMetadata });
-          Sentry.captureMessage("Content filter triggered", {
-            level: "warning",
-            tags: { component: "api", endpoint: "chat" },
-            extra: { usage, providerMetadata }
-          });
-          
-          throw new Error("There was an error processing your request or your content has been filtered. Please try rephrasing your question.");
-        }
-      },
-      onFinish: (result) => {
-        const { finishReason, usage, text } = result;
+            if (finishReason === "content-filter") {
+              logger.warn("Content filtered", { usage, providerMetadata });
+              Sentry.captureMessage("Content filter triggered", {
+                level: "warning",
+                tags: { component: "api", endpoint: "chat" },
+                extra: { usage, providerMetadata }
+              });
 
-        logger.info("Chat finished", {
-          finishReason,
-          usage,
-          textLength: text?.length || 0
-        });
-      },
-      onError: (error) => {
-        logger.error("Stream error", { error });
-        Sentry.captureException(error, {
-          tags: { component: "api", endpoint: "chat", operation: "stream" }
-        });
-
-        throw error;
-      },
-
-      temperature: 0,
-      providerOptions: {
-        google: {
-          thinkingConfig: { includeThoughts: true },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_LOW_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_LOW_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_LOW_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_LOW_AND_ABOVE"
+              // Stream content-filter data instead of throwing error
+              writer.write({
+                type: "data-contentFilter",
+                id: "content-filter-" + Date.now(),
+                data: {
+                  finishReason,
+                  providerMetadata,
+                  timestamp: new Date().toISOString(),
+                  message:
+                    "Your message was filtered for safety reasons. Please rephrase your question."
+                }
+              });
             }
-          ]
-        }
-      },
-      tools: {
-        lexiconTool,
-        testimonyTool,
-        showUsersAudio
+          },
+          onFinish: (result) => {
+            const { finishReason, usage, providerMetadata } = result;
+
+            logger.info("Chat finished", {
+              finishReason,
+              usage,
+              providerMetadata
+            });
+          },
+          onError: (error) => {
+            logger.error("Stream error", { error });
+            Sentry.captureException(error, {
+              tags: { component: "api", endpoint: "chat", operation: "stream" }
+            });
+
+            throw error;
+          },
+
+          temperature: 0,
+          providerOptions: {
+            google: {
+              thinkingConfig: { includeThoughts: true },
+              safetySettings: [
+                {
+                  category: "HARM_CATEGORY_HATE_SPEECH",
+                  threshold: "BLOCK_ONLY_HIGH"
+                },
+                {
+                  category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                  threshold: "BLOCK_NONE"
+                },
+                {
+                  category: "HARM_CATEGORY_HARASSMENT",
+                  threshold: "BLOCK_ONLY_HIGH"
+                },
+                {
+                  category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                  threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                }
+              ]
+            }
+          },
+          tools: {
+            lexiconTool,
+            testimonyTool,
+            showUsersAudio
+          }
+        });
+
+        writer.merge(result.toUIMessageStream());
       }
     });
-
-    const response = streamResult.toUIMessageStreamResponse();
 
     const duration = Date.now() - context.startTime;
     logApiResponse("POST", chatApiConstants.endpoint, 200, { duration });
     logger.info("Chat completed", { ms: duration });
 
-    return response;
+    return createUIMessageStreamResponse({ stream });
   } catch (error) {
     return handleChatError(error, context);
   }

@@ -44,6 +44,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import * as Sentry from "@sentry/nextjs";
 import { ChatError } from "./components/ChatError";
+import type { CustomUIMessage } from "@/app/api/chat/types";
 
 const { logger } = Sentry;
 
@@ -59,22 +60,28 @@ const suggestions = [
 ];
 
 function ChatContent() {
-  const { messages, sendMessage, status, stop, error } = useChat({
-    maxSteps: 5,
-    onError: (err) => {
-      console.log("Chat error occurred", {
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined
-      });
-      logger.error("Chat error occurred", {
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined
-      });
-      Sentry.captureException(err, {
-        tags: { component: "chat", operation: "useChat" }
-      });
-    }
-  });
+  const [contentFilterData, setContentFilterData] = useState<any>(null);
+
+  const { messages, sendMessage, status, stop, error } =
+    useChat<CustomUIMessage>({
+      maxSteps: 3,
+      onError: (err) => {
+        logger.error("Chat error occurred", {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined
+        });
+        Sentry.captureException(err, {
+          tags: { component: "chat", operation: "useChat" }
+        });
+      },
+      onData: (dataPart) => {
+        // Handle streaming content-filter data
+        if (dataPart.type === "data-contentFilter") {
+          console.log("Content filter detected:", dataPart.data);
+          setContentFilterData(dataPart.data);
+        }
+      }
+    });
 
   const [input, setInput] = useState("");
 
@@ -96,6 +103,7 @@ function ChatContent() {
         try {
           sendMessage({ text: trimmedInput });
           setInput("");
+          setContentFilterData(null); // Clear any previous content filter data
         } catch (error) {
           logger.error("Failed to send message", {
             error: error instanceof Error ? error.message : String(error),
@@ -348,9 +356,9 @@ function ChatContent() {
         </AIConversation>
       )}
 
-      {error && (
+      {(error || contentFilterData) && (
         <div className="px-4 pt-4">
-          <ChatError error={error} />
+          <ChatError error={error} contentFilterData={contentFilterData} />
         </div>
       )}
 

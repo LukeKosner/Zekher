@@ -11,7 +11,13 @@ import {
 const { logger } = Sentry;
 
 // Re-export types for backward compatibility
-export { ErrorType, Severity, type AudioLoadingMetrics, type CitationUrlMetrics, type MonitoringConfig };
+export {
+  ErrorType,
+  Severity,
+  type AudioLoadingMetrics,
+  type CitationUrlMetrics,
+  type MonitoringConfig
+};
 
 import { DEFAULT_CONFIG } from "./config";
 
@@ -147,7 +153,9 @@ export function trackAudioLoading(metrics: AudioLoadingMetrics): Promise<void> {
 /**
  * Tracks citation URL generation metrics and errors
  */
-export function trackCitationUrlGeneration(metrics: CitationUrlMetrics): Promise<void> {
+export function trackCitationUrlGeneration(
+  metrics: CitationUrlMetrics
+): Promise<void> {
   const config = DEFAULT_CONFIG;
 
   return withSpan(
@@ -333,54 +341,6 @@ export function trackSpeakerMappingError(
 }
 
 /**
- * Tracks blob URL configuration errors
- */
-export function trackBlobUrlConfigError(
-  errorMessage: string,
-  configSection?: string
-): Promise<void> {
-  const config = DEFAULT_CONFIG;
-  const sanitizedError = sanitizeErrorMessage(errorMessage, config);
-
-  return withSpan(
-    "api",
-    "blob_url_config_error",
-    (span) => {
-      span.setAttributes({
-        "blob_config.section": configSection || "unknown"
-      });
-
-      if (config.enableErrorTracking) {
-        Sentry.withScope((scope) => {
-          scope.setTag("error_type", ErrorType.BLOB_URL_CONFIG);
-          scope.setTag("component", "blob_url_config");
-          scope.setLevel("warning");
-
-          scope.setContext("blob_config", {
-            section: configSection,
-            error_message: sanitizedError
-          });
-
-          Sentry.captureMessage(
-            `Blob URL config error: ${sanitizedError}`,
-            "warning"
-          );
-        });
-      }
-
-      console.warn("Blob URL configuration error:", {
-        section: configSection,
-        errorMessage: sanitizedError
-      });
-    },
-    {
-      operation: "track_blob_url_config_error",
-      config_section: configSection || "unknown"
-    }
-  );
-}
-
-/**
  * Creates a monitoring context for tracking multiple related operations
  */
 export function createMonitoringContext(operationName: string) {
@@ -483,9 +443,12 @@ export async function withMonitoring<T>(
     const duration = Date.now() - startTime;
 
     if (DEFAULT_CONFIG.logLevel === "debug") {
-      logger.info(logger.fmt`Operation completed successfully: ${operationName}`, {
+      logger.info(
+        logger.fmt`Operation completed successfully: ${operationName}`,
+        {
         duration: `${duration}ms`
-      });
+        }
+      );
     }
 
     return result;

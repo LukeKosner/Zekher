@@ -38,7 +38,8 @@ export async function searchSources(searchTerms: string[], sourceType: "lexicon"
           filename: sql`${testimonySources.filename}`,
           testimonyId: sql`${testimonySources.id}`,
           fullContent: sql`${testimonySources.content}`,
-          url: sql`${testimonySources.url}`
+          url: sql`${testimonySources.url}`,
+          testimony_language: sql`${testimonySources.testimony_language}`
         },
         exactMatchColumns: sourceType === "lexicon" ? [sql`${lexiconSources.title}`] : [sql`${testimonySources.survivor_name}`, sql`${testimonySources.filename}`],
         exactMatchBoost: 5.0,
@@ -66,7 +67,8 @@ export async function searchSources(searchTerms: string[], sourceType: "lexicon"
           date: (result.metadata as any).date,
           location: (result.metadata as any).location,
           filename: (result.metadata as any).filename,
-          url: (result.metadata as any).url
+          url: (result.metadata as any).url,
+          testimony_language: (result.metadata as any).testimony_language
         }
       ));
 

@@ -4,6 +4,19 @@
 
 import type { UIMessage } from "ai";
 
+// Define custom message type with content-filter data part schema
+export type CustomUIMessage = UIMessage<
+  never, // metadata type
+  {
+    contentFilter: {
+      finishReason: string;
+      providerMetadata: any;
+      timestamp: string;
+      message: string;
+    };
+  } // data parts type
+>;
+
 // Chat API request and response interfaces
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -13,7 +26,7 @@ export interface ChatMessage {
 }
 
 export interface ChatRequest {
-  messages: UIMessage[]; // Using UIMessage from ai package
+  messages: CustomUIMessage[]; // Using CustomUIMessage with content-filter support
 }
 
 export interface ChatErrorResponse {

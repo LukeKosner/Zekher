@@ -1,5 +1,3 @@
-import { getBlobUrl } from "./blob-urls";
-
 // Client-safe environment access
 function getBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -16,6 +14,61 @@ import type {
   UrlConfig,
   SpeakerMapping
 } from "./types";
+
+/**
+ * Simple URL generators for Google Cloud Storage
+ */
+
+export function getAudioUrl(filename: string): string {
+  // Handle null, undefined, or empty filename
+  if (!filename || filename.trim() === "") {
+    return "https://storage.googleapis.com/zekher-storage/audio/";
+  }
+
+  // Ensure filename has .mp3 extension for audio files
+  const mp3Filename = filename.endsWith(".mp3") ? filename : `${filename}.mp3`;
+
+  return `https://storage.googleapis.com/zekher-storage/audio/${mp3Filename}`;
+}
+
+export function getLexiconUrl(filename: string): string {
+  // Handle null, undefined, or empty filename
+  if (!filename || filename.trim() === "") {
+    return "https://storage.googleapis.com/zekher-storage/lexicon/pdf/";
+  }
+
+  // Ensure filename has .pdf extension
+  const pdfFilename = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+
+  return `https://storage.googleapis.com/zekher-storage/lexicon/pdf/${encodeURIComponent(
+    pdfFilename
+  )}`;
+}
+
+export function getTestimonyUrl(filename: string): string {
+  // Handle null, undefined, or empty filename
+  if (!filename || filename.trim() === "") {
+    return "https://storage.googleapis.com/zekher-storage/testimony/";
+  }
+
+  return `https://storage.googleapis.com/zekher-storage/testimony/${filename}`;
+}
+
+export function getBlobUrl(
+  type: "audio" | "lexicon" | "testimony",
+  filename: string
+): string {
+  switch (type) {
+    case "audio":
+      return getAudioUrl(filename);
+    case "lexicon":
+      return getLexiconUrl(filename);
+    case "testimony":
+      return getTestimonyUrl(filename);
+    default:
+      throw new Error(`Unknown type: ${type}`);
+  }
+}
 
 /**
  * Centralized speaker mappings based on testimony.json data
@@ -379,14 +432,8 @@ export function generateAudioUrl(params: AudioUrlParams): string {
     audioFilename = `${lastName}.mp3`;
   }
 
-  // Try blob URL first, then fall back to Google Cloud Storage
-  try {
-    return getBlobUrl("audio", audioFilename);
-  } catch (error) {
-    // If blob URL fails, construct Google Cloud Storage URL
-    const gcsUrl = `${config.GOOGLE_CLOUD_STORAGE_BASE}${config.AUDIO_PATH}/${audioFilename}`;
-    return gcsUrl;
-  }
+  // Generate Google Cloud Storage URL
+  return getBlobUrl("audio", audioFilename);
 }
 
 /**
@@ -448,15 +495,8 @@ export function generateLexiconPdfUrl(filename: string): string {
   // Keep the filename as-is (PDFs are stored with same format as titles)
   const pdfFilename = `${baseFilename}.pdf`;
 
-  // Try blob URL first, then fall back to Google Cloud Storage
-  try {
-    return getBlobUrl("lexicon", pdfFilename);
-  } catch (error) {
-    // If blob URL fails, construct Google Cloud Storage URL
-    const encodedFilename = encodeURIComponent(pdfFilename);
-    const gcsUrl = `${config.GOOGLE_CLOUD_STORAGE_BASE}${config.LEXICON_PATH}/${encodedFilename}`;
-    return gcsUrl;
-  }
+  // Generate Google Cloud Storage URL
+  return getBlobUrl("lexicon", pdfFilename);
 }
 
 /**
@@ -468,7 +508,9 @@ export function validateEnvironment(): void {
     validateUrlConfig(DEFAULT_URL_CONFIG);
   } catch (error) {
     throw new Error(
-      `Environment validation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Environment validation failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 }
