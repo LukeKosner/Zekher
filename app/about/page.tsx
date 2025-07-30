@@ -143,6 +143,17 @@ const AboutPage = () => {
               page for citations from both Chat and MCP.
             </p>
           </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+          >
+            <h2 className="text-2xl font-semibold">Acknowledgements</h2>
+            <p className={PAGE_STYLING.paragraphClasses}>
+              Thank you to the many people who have advised and support me since
+              I started working on applying AI to the Holocaust in 2023. 
+            </p>
+          </motion.div>
         </motion.div>
       </div>
     </div>

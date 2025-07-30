@@ -38,12 +38,13 @@ export async function POST(req: Request): Promise<Response> {
     const { messages }: { messages: CustomUIMessage[] } = requestData;
 
     const stream = createUIMessageStream<CustomUIMessage>({
+      originalMessages: messages,
       execute: ({ writer }) => {
         const result = streamText({
           model: google(chatApiConstants.modelName),
           messages: convertToModelMessages(messages),
           system: holocaustEducatorPrompt,
-          stopWhen: hasToolCall("showUsersAudio"),
+          stopWhen: hasToolCall("tool-showUsersAudio"),
           onStepFinish: (result) => {
             const { finishReason, usage, providerMetadata } = result;
 
