@@ -47,20 +47,6 @@ import { ChatError } from "./components/ChatError";
 
 const { logger } = Sentry;
 
-// Lazy load audio player
-const AudioPlayer = dynamic(
-  () =>
-    import("@/app/chat/components/AudioPlayer").then((mod) => ({
-      default: mod.AudioPlayer
-    })),
-  {
-    loading: () => (
-      <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-20 rounded-md" />
-    ),
-    ssr: false
-  }
-);
-
 const suggestions = [
   "What was the Holocaust?",
   "When did the Holocaust happen?",
@@ -73,13 +59,13 @@ const suggestions = [
 ];
 
 function ChatContent() {
-  const [contentFilterError, setContentFilterError] = useState<any>(null);
-  
   const { messages, sendMessage, status, stop, error } = useChat({
     maxSteps: 5,
     onError: (err) => {
-      console.error("🔴 Frontend Error Handler - useChat onError:", err);
-      
+      console.log("Chat error occurred", {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      });
       logger.error("Chat error occurred", {
         error: err instanceof Error ? err.message : String(err),
         stack: err instanceof Error ? err.stack : undefined
@@ -87,45 +73,10 @@ function ChatContent() {
       Sentry.captureException(err, {
         tags: { component: "chat", operation: "useChat" }
       });
-    },
-    onFinish: (message, options) => {
-      console.log("✅ Frontend onFinish Check - Callback called:", { 
-        message: message, 
-        options: options,
-        finishReason: options?.finishReason,
-        providerMetadata: options?.experimental_providerMetadata 
-      });
-      
-      const finishReason = options?.finishReason;
-      const providerMetadata = options?.experimental_providerMetadata;
-      
-      if (finishReason === "content-filter") {
-        console.log("🛡️ Frontend Content Filter Detected - Setting error state!", providerMetadata);
-        
-        // Create a content filter error
-        const filterError = new Error(`CONTENT_FILTER:${JSON.stringify({
-          message: "Content has been filtered due to safety policies. Please rephrase your question and try again.",
-          type: "content_filter",
-          timestamp: new Date().toISOString(),
-          providerMetadata: providerMetadata
-        })}`);
-        
-        console.log("💾 Frontend State Update - Setting content filter error:", filterError);
-        setContentFilterError(filterError);
-      } else {
-        console.log("✨ Frontend Clean State - No content filter, clearing error. FinishReason:", finishReason);
-        // Clear content filter error on successful completion  
-        setContentFilterError(null);
-      }
     }
   });
 
   const [input, setInput] = useState("");
-  
-  // Debug: log messages to see structure
-  console.log("📊 Frontend State Check - Current messages:", messages);
-  console.log("⚠️ Frontend Error State - Current error:", error);
-  console.log("🛡️ Frontend Filter State - Current contentFilterError:", contentFilterError);
 
   // Handlers
   const handleSubmit = (e: React.FormEvent) => {
@@ -145,7 +96,6 @@ function ChatContent() {
         try {
           sendMessage({ text: trimmedInput });
           setInput("");
-          setContentFilterError(null); // Clear any previous content filter errors
         } catch (error) {
           logger.error("Failed to send message", {
             error: error instanceof Error ? error.message : String(error),
@@ -214,265 +164,6 @@ function ChatContent() {
     }
   };
 
-  const hasAudioSegments = (result: any) => {
-    return (
-      result &&
-      typeof result === "object" &&
-      (result.type === "audio_segments" || Array.isArray(result.segments))
-    );
-  };
-
-  const renderToolResult = (toolInvocation: any): React.ReactNode => {
-    if (toolInvocation.state !== "result") return null;
-
-    const resultData = toolInvocation.result;
-    const isLexiconResult = resultData?.entries?.some(
-      (e: any) => e.title && !e.survivorName
-    );
-    const isTestimonyResult = resultData?.entries?.some(
-      (e: any) => e.survivorName
-    );
-
-    return (
-      <AIToolContent>
-        <AIToolParameters parameters={toolInvocation.args || {}} />
-        <div className="space-y-2">
-          <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-            Results
-          </h4>
-          <div className="rounded-md bg-muted/50 p-3">
-            {isLexiconResult && (
-              <div className="space-y-1">
-                <div className="text-muted-foreground text-xs font-medium">
-                  Found{" "}
-                  {toolInvocation.result.totalResults ||
-                    toolInvocation.result.entries.length}{" "}
-                  lexicon entries:
-                </div>
-                {toolInvocation.result.entries.map(
-                  (entry: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="text-xs bg-background rounded p-2 border"
-                    >
-                      <div className="font-medium text-foreground">
-                        <a
-                          href={generateSourceUrl({
-                            pageType: "lexicon",
-                            filename: entry.id || entry.filename
-                          })}
-                          className="hover:underline"
-                        >
-                          {entry.title}
-                        </a>
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-
-            {isTestimonyResult && (
-              <div className="space-y-1">
-                <div className="text-muted-foreground text-xs font-medium">
-                  Found {resultData.totalResults} testimonies:
-                </div>
-                {resultData.entries.map((testimony: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="text-xs bg-background rounded p-2 border"
-                  >
-                    <div className="font-medium text-foreground">
-                      <a
-                        href={generateSourceUrl({
-                          pageType: "testimony",
-                          filename: testimony.id || testimony.filename
-                        })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {testimony.survivorName}
-                      </a>
-                    </div>
-                    <div className="text-muted-foreground mt-1">
-                      {testimony.location && `${testimony.location}`}
-                      {testimony.location && testimony.timeReference && ` • `}
-                      {testimony.timeReference && `${testimony.timeReference}`}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!isLexiconResult && !isTestimonyResult && (
-              <div className="text-xs text-muted-foreground">
-                {typeof resultData === "string"
-                  ? resultData
-                  : "Tool executed successfully"}
-              </div>
-            )}
-          </div>
-        </div>
-      </AIToolContent>
-    );
-  };
-
-  const renderToolInvocation = (
-    part: any,
-    messageId: string,
-    partIndex: number
-  ): React.ReactElement | null => {
-    const isToolPart =
-      typeof part.type === "string" && part.type.startsWith("tool-");
-    if (!isToolPart) return null;
-
-    const toolName = part.type.replace("tool-", "");
-    const toolInvocation = {
-      toolCallId: part.toolCallId,
-      state:
-        part.state === "output-available" ? "result" : part.state || "call",
-      args: part.input || {},
-      result: part.output
-    };
-
-    const toolDisplay = getToolDisplay(toolName);
-
-    // Handle audio segments specially
-    if (
-      toolName === "showUsersAudio" &&
-      (toolInvocation.state === "result" ||
-        part.state === "output-available" ||
-        part.output) &&
-      hasAudioSegments(toolInvocation.result || part.output)
-    ) {
-      const resultData = toolInvocation.result || part.output;
-      const audioData = {
-        type: resultData.type || "audio_segments",
-        segments: resultData.segments || resultData
-      };
-
-      return (
-        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <AITool status="completed" defaultOpen={true}>
-            <AIToolHeader
-              name={toolDisplay.displayName}
-              status="completed"
-              icon={
-                <span className="size-4 text-muted-foreground">
-                  {toolDisplay.icon}
-                </span>
-              }
-            />
-            <AIToolContent>
-              <div className="space-y-4">
-                {audioData.segments.map((segment: any, segIdx: number) => (
-                  <ErrorBoundary
-                    key={`audio-${segIdx}`}
-                    componentName="AudioPlayer"
-                    fallback={
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                          Audio player unavailable.
-                          <br />
-                          <span className="font-medium">Transcript:</span>{" "}
-                          {segment.transcriptExcerpt}
-                          <br />
-                          <span className="font-medium">Audio File:</span>{" "}
-                          {segment.audioFile}
-                        </p>
-                      </div>
-                    }
-                  >
-                    <AudioPlayer segment={segment} />
-                  </ErrorBoundary>
-                ))}
-              </div>
-            </AIToolContent>
-          </AITool>
-        </AIMessage>
-      );
-    }
-
-    // Handle other tools with standard UI
-    if (toolName === "showUsersAudio" && toolInvocation.state !== "result") {
-      const isRunning =
-        toolInvocation.state === "call" ||
-        toolInvocation.state === "partial-call" ||
-        (!toolInvocation.state && !toolInvocation.result);
-
-      return (
-        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <AITool
-            status={
-              isRunning
-                ? "running"
-                : toolInvocation.state === "result"
-                ? "completed"
-                : "pending"
-            }
-            defaultOpen={true}
-          >
-            <AIToolHeader
-              name={toolDisplay.displayName}
-              status={
-                isRunning
-                  ? "running"
-                  : toolInvocation.state === "result"
-                  ? "completed"
-                  : "pending"
-              }
-              icon={
-                <span className="size-4 text-muted-foreground">
-                  {toolDisplay.icon}
-                </span>
-              }
-            />
-            <AIToolContent>
-              {isRunning ? (
-                Object.keys(toolInvocation.args || {}).length > 0 ? (
-                  <AIToolParameters parameters={toolInvocation.args || {}} />
-                ) : (
-                  <div className="text-xs text-muted-foreground animate-pulse">
-                    Selecting relevant audio segments...
-                  </div>
-                )
-              ) : toolInvocation.state === "result" ? (
-                renderToolResult(toolInvocation)
-              ) : (
-                <div className="text-xs text-muted-foreground">
-                  Tool in unknown state: {toolInvocation.state || "undefined"}
-                </div>
-              )}
-            </AIToolContent>
-          </AITool>
-        </AIMessage>
-      );
-    }
-
-    // Handle showUsersAudio tool that completed but doesn't have audio segments
-    if (toolName === "showUsersAudio" && toolInvocation.state === "result") {
-      return (
-        <AIMessage from="assistant" key={`${messageId}-tool-${partIndex}`}>
-          <AITool status="completed" defaultOpen={true}>
-            <AIToolHeader
-              name={toolDisplay.displayName}
-              status="completed"
-              icon={
-                <span className="size-4 text-muted-foreground">
-                  {toolDisplay.icon}
-                </span>
-              }
-            />
-            <AIToolContent>{renderToolResult(toolInvocation)}</AIToolContent>
-          </AITool>
-        </AIMessage>
-      );
-    }
-
-    return null;
-  };
-
   return (
     <div className="relative flex h-full w-full flex-col min-h-0">
       {messages.length === 0 ? (
@@ -486,18 +177,28 @@ function ChatContent() {
               {messages.map((message, index) => {
                 const isUser = message.role === "user";
                 const prevMessage = messages[index - 1];
-                const isNewConversationTurn = !prevMessage || prevMessage.role !== message.role;
-                const marginClass = isNewConversationTurn && index > 0 ? "mt-4" : "";
+                const isNewConversationTurn =
+                  !prevMessage || prevMessage.role !== message.role;
+                const marginClass =
+                  isNewConversationTurn && index > 0 ? "mt-4" : "";
 
                 // Handle structured assistant messages with parts
-                if (!isUser && Array.isArray(message.parts) && message.parts.length > 0) {
+                if (
+                  !isUser &&
+                  Array.isArray(message.parts) &&
+                  message.parts.length > 0
+                ) {
                   const renderedParts: React.ReactElement[] = [];
 
                   message.parts.forEach((part, partIndex) => {
                     // Skip empty or invalid parts
                     if (!part || !part.type) return;
-                    
-                    if (part.type === "text" && part.text && part.text.trim().length > 0) {
+
+                    if (
+                      part.type === "text" &&
+                      part.text &&
+                      part.text.trim().length > 0
+                    ) {
                       // Split text on double newlines to create separate bubbles
                       const textSegments = part.text
                         .split("\n\n")
@@ -522,7 +223,11 @@ function ChatContent() {
                           </AIMessage>
                         );
                       });
-                    } else if (part.type === "reasoning" && part.text && part.text.trim().length > 0) {
+                    } else if (
+                      part.type === "reasoning" &&
+                      part.text &&
+                      part.text.trim().length > 0
+                    ) {
                       const isReasoningStreaming =
                         (part as any).state !== "done" &&
                         status === "streaming";
@@ -532,24 +237,27 @@ function ChatContent() {
                       renderedParts.push(
                         <AIMessage
                           from="assistant"
-                          key={`${message.id}-reasoning-${partIndex}`}>
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{
-                                duration: 0.3,
-                                ease: "easeOut",
-                                delay: reasoningCount * 0.15
-                              }}
+                          key={`${message.id}-reasoning-${partIndex}`}
+                        >
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              duration: 0.3,
+                              ease: "easeOut",
+                              delay: reasoningCount * 0.15
+                            }}
+                          >
+                            <AIReasoning
+                              isStreaming={isReasoningStreaming}
+                              defaultOpen={false}
                             >
-                              <AIReasoning
-                                isStreaming={isReasoningStreaming}
-                                defaultOpen={false}
-                              >
-                                <AIReasoningTrigger />
-                                <AIReasoningContent>{part.text}</AIReasoningContent>
-                              </AIReasoning>
-                            </motion.div>
+                              <AIReasoningTrigger />
+                              <AIReasoningContent>
+                                {part.text}
+                              </AIReasoningContent>
+                            </AIReasoning>
+                          </motion.div>
                         </AIMessage>
                       );
                     } else if (
@@ -585,15 +293,26 @@ function ChatContent() {
                 }
 
                 // Regular messages - validate content exists
-                const userContent = isUser 
-                  ? ((message as any).parts?.[0]?.text || (message as any).content || "").trim()
+                const userContent = isUser
+                  ? (
+                      (message as any).parts?.[0]?.text ||
+                      (message as any).content ||
+                      ""
+                    ).trim()
                   : "";
                 const assistantContent = !isUser
-                  ? ((message as any).parts?.[0]?.text || (message as any).content || "").trim()
+                  ? (
+                      (message as any).parts?.[0]?.text ||
+                      (message as any).content ||
+                      ""
+                    ).trim()
                   : "";
-                
+
                 // Skip messages with no content
-                if ((isUser && !userContent) || (!isUser && !assistantContent)) {
+                if (
+                  (isUser && !userContent) ||
+                  (!isUser && !assistantContent)
+                ) {
                   return null;
                 }
 
@@ -629,9 +348,9 @@ function ChatContent() {
         </AIConversation>
       )}
 
-      {(error || contentFilterError) && (
+      {error && (
         <div className="px-4 pt-4">
-          <ChatError error={error || contentFilterError} />
+          <ChatError error={error} />
         </div>
       )}
 
