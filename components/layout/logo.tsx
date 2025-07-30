@@ -20,11 +20,12 @@ export function Logo() {
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Image
-              src="/android-chrome-512x512.png"
+              src="/zekher-logo.png"
               alt="Zekher logo"
-              width={32}
-              height={32}
+              width={512}
+              height={512}
               className="size-8 object-contain rounded-lg"
+              quality={100}
               priority
             />
             <div className="grid flex-1 text-left text-sm leading-tight">

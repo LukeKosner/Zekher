@@ -6,8 +6,7 @@ import { BreadcrumbNavigation } from "@/components/layout/PageHeader/Breadcrumb"
 import { ConditionalTitle } from "@/components/layout/PageHeader/Title";
 import { Menu } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import Image from "next/image";
+import { cn } from "@/lib";
 
 export function PageHeader({
   slug,
@@ -20,9 +19,28 @@ export function PageHeader({
   sidebarOpen?: boolean;
   isMobile?: boolean;
 }) {
+  // Step 1: Add computed gap variable
+  const gap = isMobile
+    ? "0px"
+    : sidebarOpen
+    ? "var(--sidebar-width)"
+    : "var(--sidebar-width-icon)";
+
   return (
-    <header className="sticky top-0 z-50 flex h-12 md:h-16 shrink-0 items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-      {/* Desktop: Sidebar trigger + breadcrumbs */}
+    <header
+      // Step 2: Inline the gap into the header's style
+      style={{ left: gap, width: `calc(100% - ${gap})` }}
+      className={cn(
+        "fixed inset-y-0 top-0 z-50 flex items-center gap-2",
+        // Height: shorter when sidebar is closed (keep mobile at h-12)
+        sidebarOpen ? "h-12 md:h-16" : "h-12 md:h-12",
+        "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "border-b border-border overscroll-none",
+        // Step 3: Add smooth transitions and remove old width classes
+        "transition-[left,width,height] duration-200 ease-linear"
+      )}
+    >
+      {/* Desktop: Sidebar trigger  breadcrumbs */}
       <div className="items-center gap-2 px-4 hidden md:flex">
         <SidebarTrigger className="-ml-1" />
         <Separator
@@ -31,8 +49,6 @@ export function PageHeader({
         />
         <BreadcrumbNavigation slug={slug} />
       </div>
-
-    
 
       <ConditionalTitle
         title={title}

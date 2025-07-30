@@ -34,7 +34,15 @@ export function SidebarStateManager({ children }: SidebarStateManagerProps) {
             />
           )}
         </RouteSlugGenerator>
-        <main className={`flex-1 ${isChatRoute ? "overflow-y-auto" : ""}`}>
+        <main
+          className={`flex-1 ${
+            isChatRoute
+              ? `overflow-y-auto flex-1 ${
+                  open ? "pt-12 md:pt-16" : "pt-12 md:pt-12"
+                }`
+              : `${open ? "pt-12 md:pt-16" : "pt-12 md:pt-12"}`
+          }`}
+        >
           {children}
         </main>
         {!isChatRoute && <PageFooter />}

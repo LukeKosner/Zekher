@@ -7,6 +7,7 @@ import {
   CardContent,
   CardFooter
 } from "@/components/ui/card";
+import * as motion from "motion/react-client";
 
 export function LexiconCardSkeleton() {
   return (
@@ -95,7 +96,12 @@ export function SourcesPageFallback() {
 
 export function LexiconPageFallback() {
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 pb-20">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20"
+    >
       {/* Header Skeleton */}
       <div className="mb-8">
         <Skeleton className="h-8 w-64 mb-6" />
@@ -125,20 +131,24 @@ export function LexiconPageFallback() {
       <div className="mt-8 text-center">
         <Skeleton className="h-4 w-80 mx-auto" />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function TestimonyPageFallback() {
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 pb-20">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20"
+    >
       {/* Header Skeleton */}
       <div className="mb-8">
-        <Skeleton className="h-8 w-64 mb-4" />
-        <Skeleton className="h-5 w-96 mb-6" />
+        <Skeleton className="h-8 w-64 mb-6" />
 
         {/* Metadata Skeleton */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-3">
           <Skeleton className="h-6 w-24 rounded-full" />
           <Skeleton className="h-6 w-32 rounded-full" />
           <Skeleton className="h-6 w-28 rounded-full" />
@@ -146,30 +156,31 @@ export function TestimonyPageFallback() {
       </div>
 
       {/* Audio Content Skeleton */}
-      <div className="mb-8">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="border-l-2 border-muted pl-3 py-2">
-                  <Skeleton className="h-8 w-24 mb-2 rounded" />
-                  <Skeleton className="h-4 w-full mb-1" />
-                  <Skeleton className="h-4 w-5/6 mb-1" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="group border-l-2 border-muted pl-4 py-3"
+              >
+                <Skeleton className="h-8 w-24 mb-2 rounded" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-5/6 mb-1" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Footer Skeleton */}
-      <div className="mt-8 text-center">
+      <div className="mt-8 mb-4 text-center">
         <Skeleton className="h-4 w-80 mx-auto" />
       </div>
-    </div>
+    </motion.div>
   );
 }

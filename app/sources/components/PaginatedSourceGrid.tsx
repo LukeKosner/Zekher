@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { LazyLoadWrapper } from "@/components/LazyLoadWrapper";
 import { LexiconCard } from "./LexiconCard";
 import { TestimonyCard } from "./TestimonyCard";

@@ -25,9 +25,9 @@ export const layoutConstants = {
       type: "image/png"
     },
     openGraphImage: {
-      url: "/opengraph-image.png",
-      width: 512,
-      height: 512,
+      url: "/zekher-logo.png",
+      width: 2048,
+      height: 2048,
       alt: "Zekher - Holocaust Education"
     }
   },

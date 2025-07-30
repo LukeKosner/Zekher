@@ -146,13 +146,15 @@ const AboutPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.8, delay: 0.9, ease: "easeOut" }}
           >
             <h2 className="text-2xl font-semibold">Acknowledgements</h2>
             <p className={PAGE_STYLING.paragraphClasses}>
-              Thank you to the many people who have advised and support me since
-              I started working on applying AI to the Holocaust in 2023. 
+              Thank you to the many people who have advised and supported me
+              since I started working on this project in 2023. Every
+              conversation has led to a feature in V3.
             </p>
+            <p className={PAGE_STYLING.paragraphClasses}></p>
           </motion.div>
         </motion.div>
       </div>
