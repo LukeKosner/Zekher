@@ -1,5 +1,11 @@
 import * as motion from "motion/react-client";
-import { ArrowUpRight, MessagesSquare, Server, Database } from "lucide-react";
+import {
+  ArrowUpRight,
+  MessagesSquare,
+  Server,
+  Database,
+  GitBranch
+} from "lucide-react";
 import Link from "next/link";
 import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariant } from "./config";
 
@@ -150,11 +156,23 @@ const AboutPage = () => {
           >
             <h2 className="text-2xl font-semibold">Acknowledgements</h2>
             <p className={PAGE_STYLING.paragraphClasses}>
-              Thank you to the many people who have advised and supported me
-              since I started working on this project in 2023. Every
-              conversation has led to a feature in V3.
+              Thank you to the many people who have advised and supported this
+              project in 2023. Every conversation has led to a feature in V3.
+              Most importantly, Zekher now answers questions with updated
+              information rather then data supplied by survivor testimony. This
+              both avoids outdated information and misrepresenting survivors.
             </p>
-            <p className={PAGE_STYLING.paragraphClasses}></p>
+            <p className={PAGE_STYLING.paragraphClasses}>
+              Zekher was designed to be an open-source project. The first
+              version is still hosted on GitHub, and this version will be added
+              once any vulnerabilities are patched. This project would not be
+              possible without other open source projects. You can find them{" "}
+              <Link href="/oss.txt" className="underline">
+                here
+                <GitBranch className="inline w-4 h-4 ml-1" />
+              </Link>
+              .
+            </p>
           </motion.div>
         </motion.div>
       </div>
