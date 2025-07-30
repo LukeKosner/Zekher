@@ -20,6 +20,8 @@ export const AudioCarousel = ({
   name,
   segments
 }: AudioCarouselProps) => {
+  const isSingleCard = segments.length === 1;
+  
   return (
     <Carousel
       name={name}
@@ -29,9 +31,13 @@ export const AudioCarousel = ({
       {segments.map((segment, index) => (
         <CarouselItem
           key={`${segment.testimonyId}-${segment.startTime}-${index}`}
-          className="pl-2 md:pl-4 basis-full xl:basis-1/2 flex"
+          className={`pl-2 md:pl-4 flex ${
+            isSingleCard 
+              ? "basis-full" 
+              : "basis-full xl:basis-1/2"
+          }`}
         >
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full h-full">
             <ErrorBoundary
               componentName="AudioPlayer"
               fallback={
@@ -45,7 +51,7 @@ export const AudioCarousel = ({
                 </div>
               }
             >
-              <AudioPlayer segment={segment} className="flex-1" />
+              <AudioPlayer segment={segment} className="h-full" />
             </ErrorBoundary>
           </div>
         </CarouselItem>

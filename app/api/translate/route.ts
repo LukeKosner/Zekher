@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TranslationServiceClient } from "@google-cloud/translate";
 import * as Sentry from "@sentry/nextjs";
+import { getGCPCredentials } from "@/lib/shared/config";
 
 const { logger } = Sentry;
 
-// Initialize the Google Cloud Translation client
-const translationClient = new TranslationServiceClient();
+// Initialize the Google Cloud Translation client with credentials
+const translationClient = new TranslationServiceClient(getGCPCredentials());
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,7 +46,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get project ID from environment - try multiple possible env vars
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || 
+    const projectId = process.env.GCP_PROJECT_ID || 
+                     process.env.GOOGLE_CLOUD_PROJECT_ID || 
                      process.env.GOOGLE_CLOUD_PROJECT ||
                      process.env.GCP_PROJECT ||
                      process.env.PROJECT_ID;
