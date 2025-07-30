@@ -198,7 +198,7 @@ function ChatContent() {
                 ) {
                   const renderedParts: React.ReactElement[] = [];
 
-                  message.parts.forEach((part, partIndex) => {
+                  (message.parts || []).forEach((part, partIndex) => {
                     // Skip empty or invalid parts
                     if (!part || !part.type) return;
 
@@ -239,7 +239,7 @@ function ChatContent() {
                       const isReasoningStreaming =
                         (part as any).state !== "done" &&
                         status === "streaming";
-                      const reasoningCount = message.parts
+                      const reasoningCount = (message.parts || [])
                         .slice(0, partIndex)
                         .filter((p) => p.type === "reasoning").length;
                       renderedParts.push(

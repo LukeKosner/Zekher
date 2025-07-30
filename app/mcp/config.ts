@@ -2,7 +2,7 @@ import type { SectionVariants } from "./types";
 
 export const ANIMATION_CONFIG = {
   duration: 0.8,
-  ease: "easeOut" as const,
+  ease: "easeOut",
   delays: {
     section1: 0.2,
     section2: 0.4,
@@ -70,7 +70,7 @@ export const sectionVariants: SectionVariants = {
     y: 0,
     transition: {
       duration: ANIMATION_CONFIG.duration,
-      ease: ANIMATION_CONFIG.ease
+      ease: "easeOut"
     }
   }
 };

@@ -46,7 +46,7 @@ async function LexiconPageContent(props: any) {
     
     if (externalRedirectUrl) {
       console.log("LexiconPageContent: External redirect to:", externalRedirectUrl);
-      return <ExternalRedirect url={externalRedirectUrl} title={lexiconEntry.title} />;
+      return <ExternalRedirect url={externalRedirectUrl} title={lexiconEntry.title || undefined} />;
     }
 
     console.log("LexiconPageContent: No redirect needed, showing page");

@@ -59,6 +59,7 @@ export const searchLexicon = async (searchTerms: string[]) => {
         const fullTitle = result.title || `Entry ${result.id}`;
 
         return {
+          id: result.id,
           title: fullTitle,
           content: result.content,
           citation: `[${fullTitle}](${sourceUrl})`,
