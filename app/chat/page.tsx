@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import * as Sentry from "@sentry/nextjs";
+import { ChatError } from "./components/ChatError";
 
 const { logger } = Sentry;
 
@@ -72,9 +73,13 @@ const suggestions = [
 ];
 
 function ChatContent() {
-  const { messages, sendMessage, status, stop } = useChat({
+  const [contentFilterError, setContentFilterError] = useState<any>(null);
+  
+  const { messages, sendMessage, status, stop, error } = useChat({
     maxSteps: 5,
     onError: (err) => {
+      console.error("🔴 Frontend Error Handler - useChat onError:", err);
+      
       logger.error("Chat error occurred", {
         error: err instanceof Error ? err.message : String(err),
         stack: err instanceof Error ? err.stack : undefined
@@ -82,10 +87,45 @@ function ChatContent() {
       Sentry.captureException(err, {
         tags: { component: "chat", operation: "useChat" }
       });
+    },
+    onFinish: (message, options) => {
+      console.log("✅ Frontend onFinish Check - Callback called:", { 
+        message: message, 
+        options: options,
+        finishReason: options?.finishReason,
+        providerMetadata: options?.experimental_providerMetadata 
+      });
+      
+      const finishReason = options?.finishReason;
+      const providerMetadata = options?.experimental_providerMetadata;
+      
+      if (finishReason === "content-filter") {
+        console.log("🛡️ Frontend Content Filter Detected - Setting error state!", providerMetadata);
+        
+        // Create a content filter error
+        const filterError = new Error(`CONTENT_FILTER:${JSON.stringify({
+          message: "Content has been filtered due to safety policies. Please rephrase your question and try again.",
+          type: "content_filter",
+          timestamp: new Date().toISOString(),
+          providerMetadata: providerMetadata
+        })}`);
+        
+        console.log("💾 Frontend State Update - Setting content filter error:", filterError);
+        setContentFilterError(filterError);
+      } else {
+        console.log("✨ Frontend Clean State - No content filter, clearing error. FinishReason:", finishReason);
+        // Clear content filter error on successful completion  
+        setContentFilterError(null);
+      }
     }
   });
 
   const [input, setInput] = useState("");
+  
+  // Debug: log messages to see structure
+  console.log("📊 Frontend State Check - Current messages:", messages);
+  console.log("⚠️ Frontend Error State - Current error:", error);
+  console.log("🛡️ Frontend Filter State - Current contentFilterError:", contentFilterError);
 
   // Handlers
   const handleSubmit = (e: React.FormEvent) => {
@@ -105,6 +145,7 @@ function ChatContent() {
         try {
           sendMessage({ text: trimmedInput });
           setInput("");
+          setContentFilterError(null); // Clear any previous content filter errors
         } catch (error) {
           logger.error("Failed to send message", {
             error: error instanceof Error ? error.message : String(error),
@@ -586,6 +627,12 @@ function ChatContent() {
           </AIConversationContent>
           <AIConversationScrollButton />
         </AIConversation>
+      )}
+
+      {(error || contentFilterError) && (
+        <div className="px-4 pt-4">
+          <ChatError error={error || contentFilterError} />
+        </div>
       )}
 
       <motion.div
