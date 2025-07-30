@@ -111,7 +111,7 @@ export async function POST(req: Request): Promise<Response> {
                 },
                 {
                   category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                  threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                  threshold: "BLOCK_ONLY_HIGH"
                 }
               ]
             }
