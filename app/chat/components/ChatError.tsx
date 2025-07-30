@@ -1,5 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Shield } from "lucide-react";
+import { AlertTriangle, Shield, AlertCircle } from "lucide-react";
 
 interface ChatErrorProps {
   error?: Error;
@@ -9,6 +9,8 @@ interface ChatErrorProps {
     timestamp: string;
     message: string;
   };
+  duplicateToolCalls?: boolean;
+  errorDetected?: string | null;
 }
 
 /* ---------- Helpers ---------- */
@@ -61,13 +63,33 @@ const formatErrorMessage = (message: string): string[] => {
   }
 };
 
-export function ChatError({ error, contentFilterData }: ChatErrorProps) {
+export function ChatError({
+  error,
+  contentFilterData,
+  duplicateToolCalls,
+  errorDetected
+}: ChatErrorProps) {
   const isFilter = Boolean(contentFilterData);
+  const isDuplicate = Boolean(duplicateToolCalls);
+  const isErrorDetected = Boolean(errorDetected);
 
   /* Build bullets */
   let bullets: string[] = [];
 
-  if (isFilter && contentFilterData?.providerMetadata) {
+  if (isErrorDetected) {
+    bullets = [];
+    if (errorDetected) {
+      bullets.push(
+        `Detected content: ${errorDetected.substring(0, 100)}${
+          errorDetected.length > 100 ? "..." : ""
+        }`
+      );
+    }
+  } else if (isDuplicate) {
+    bullets = [
+      "The AI sent duplicate tool calls and the stream was stopped to prevent issues"
+    ];
+  } else if (isFilter && contentFilterData?.providerMetadata) {
     bullets = highestRiskCategories(contentFilterData.providerMetadata);
     if (bullets.length === 0) bullets = ["Unsafe or disallowed content"];
   } else if (error) {
@@ -76,19 +98,42 @@ export function ChatError({ error, contentFilterData }: ChatErrorProps) {
     bullets = ["Something went wrong – please try again."];
   }
 
+  const alertVariant =
+    isDuplicate || isErrorDetected ? "default" : "destructive";
+  const alertClassName =
+    isDuplicate || isErrorDetected
+      ? "mb-4 border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/50 dark:text-amber-200"
+      : "mb-4";
+
   return (
-    <Alert variant="destructive" className="mb-4">
-      {isFilter ? (
+    <Alert variant={alertVariant} className={alertClassName}>
+      {isErrorDetected ? (
+        <AlertCircle className="h-4 w-4" />
+      ) : isDuplicate ? (
+        <AlertCircle className="h-4 w-4" />
+      ) : isFilter ? (
         <Shield className="h-4 w-4" />
       ) : (
         <AlertTriangle className="h-4 w-4" />
       )}
 
-      <AlertTitle>{isFilter ? "Your message was blocked" : "Error"}</AlertTitle>
+      <AlertTitle>
+        {isErrorDetected
+          ? "Error Content Detected"
+          : isDuplicate
+          ? "Duplicate Tool Calls Detected"
+          : isFilter
+          ? "Your message was blocked"
+          : "Error"}
+      </AlertTitle>
 
       <AlertDescription>
         {isFilter &&
           "Zekher rejects unsafe messages to protect Holocaust memory."}
+        {isDuplicate &&
+          "The stream was automatically stopped to prevent processing duplicate operations."}
+        {isErrorDetected &&
+          "The response contained error content and was automatically stopped."}
       </AlertDescription>
       <AlertDescription>
         <ul className="list-disc pl-4 text-sm">
@@ -111,10 +156,22 @@ export function ChatError({ error, contentFilterData }: ChatErrorProps) {
               here
             </a>
             . Feel free to{" "}
-            <a href="mailto:hey@lukekosner.com" className="underline">
+            <a href="mailto:support@zekher.com" className="underline">
               contact us
             </a>{" "}
             if you have any questions.
+          </span>
+        </AlertDescription>
+      )}
+
+      {(isDuplicate || isErrorDetected) && (
+        <AlertDescription className="text-sm">
+          <span>
+            You can try your request again. If this issue persists, please{" "}
+            <a href="mailto:support@zekher.com" className="underline">
+              contact us
+            </a>
+            .
           </span>
         </AlertDescription>
       )}

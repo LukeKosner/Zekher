@@ -20,6 +20,16 @@ import type { SlideImage } from "../types";
 
 const images: SlideImage[] = [
   {
+    src: "/jean-carlo-emer-JdoWy1eo6BE-unsplash.jpg",
+    alt: "Memorial site",
+    question: "What was it like to enter Auschwitz?",
+    photographerName: "Jean Carlo Emer",
+    photographerUrl:
+      "https://unsplash.com/@jeancarloemer?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash",
+    unsplashUrl:
+      "https://unsplash.com/photos/brown-wooden-fence-during-daytime-JdoWy1eo6BE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
+  },
+  {
     src: "/eelco-bohtlingk-gGT876GkSm0-unsplash.jpg",
     alt: "Holocaust Memorial",
     question: "How do we remember the Holocaust?",
@@ -39,16 +49,7 @@ const images: SlideImage[] = [
     unsplashUrl:
       "https://unsplash.com/photos/stones-on-ground-LJOyziXadvg?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
   },
-  {
-    src: "/jean-carlo-emer-JdoWy1eo6BE-unsplash.jpg",
-    alt: "Memorial site",
-    question: "What was it like to enter Auschwitz?",
-    photographerName: "Jean Carlo Emer",
-    photographerUrl:
-      "https://unsplash.com/@jeancarloemer?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash",
-    unsplashUrl:
-      "https://unsplash.com/photos/brown-wooden-fence-during-daytime-JdoWy1eo6BE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
-  },
+
   {
     src: "/joseph-dYNRtckOYGE-unsplash.jpg",
     alt: "Memorial sculpture",
@@ -115,7 +116,7 @@ export function HolocaustImageSlideshow({
   return (
     <div
       className={cn(
-        "w-full sm:max-w-md md:max-w-4xl mx-auto flex flex-col items-center justify-center"
+        "w-full sm:max-w-md md:max-w-2xl lg:max-w-4xl mx-auto flex flex-col items-center justify-center"
       )}
     >
       <motion.div
@@ -144,7 +145,7 @@ export function HolocaustImageSlideshow({
             {images.map((image, index) => (
               <CarouselItem key={index}>
                 <div
-                  className="relative overflow-hidden rounded-lg cursor-pointer aspect-[4/5] sm:aspect-[3/4] md:aspect-[16/9] min-h-[280px] sm:min-h-[320px]"
+                  className="relative overflow-hidden rounded-lg cursor-pointer aspect-[4/5] sm:aspect-[3/4] md:aspect-[4/3] lg:aspect-[16/9] min-h-[280px] sm:min-h-[320px]"
                   onClick={() => handleImageClick(image.question)}
                 >
                   <Image
@@ -160,7 +161,7 @@ export function HolocaustImageSlideshow({
 
                   {/* Centered question */}
                   <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-4 md:p-8">
-                    <h2 className="text-white text-lg sm:text-xl md:text-3xl lg:text-4xl font-semibold text-center leading-tight">
+                    <h2 className="text-white text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-semibold text-center leading-tight">
                       {image.question}
                     </h2>
                   </div>
@@ -196,8 +197,8 @@ export function HolocaustImageSlideshow({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
+          <CarouselPrevious className="hidden lg:flex" />
+          <CarouselNext className="hidden lg:flex" />
         </Carousel>
       </motion.div>
 

@@ -165,17 +165,24 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
     : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20"
-    >
+    <div className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20">
       {/* Header */}
-      <div className="mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="mb-8"
+      >
         <h1 className="text-3xl font-bold mb-6">{testimony.survivor_name}</h1>
+      </motion.div>
 
-        {/* Metadata */}
+      {/* Metadata */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+        className="mb-8"
+      >
         <div className="flex flex-wrap gap-3">
           {formattedDate && (
             <Badge variant="outline" className="flex items-center gap-1.5">
@@ -202,10 +209,15 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
             </Badge>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content - Audio Segments */}
-      <Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+      >
+        <Card>
         <CardHeader>
           <CardTitle className="text-xl">Testimony</CardTitle>
         </CardHeader>
@@ -255,13 +267,19 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </motion.div>
 
       {/* Hidden audio element for playback */}
       <audio ref={audioRef} style={{ display: "none" }} />
 
       {/* Footer */}
-      <div className="mt-8 mb-4 text-sm text-muted-foreground text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        className="mt-8 mb-4 text-sm text-muted-foreground text-center"
+      >
         <p>
           This testimony comes from the{" "}
           <Link 
@@ -279,7 +297,7 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
             <> Added on {new Date(testimony.createdAt).toLocaleDateString()}.</>
           )}
         </p>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

@@ -20,8 +20,8 @@ const AboutPage = () => {
           >
             <h2 className="text-2xl font-semibold">Mission</h2>
             <p className={PAGE_STYLING.paragraphClasses}>
-              Zekher (זכר, remembrance in Hebrew) is an open-source project that
-              integrates high-quality sources about the Holocaust into the
+              Zekher (זכר, "remembrance" in Hebrew) is an open-source project
+              that integrates high-quality sources about the Holocaust into the
               generative artificial intelligence answer pipeline. The goal is to
               preserve Holocaust memory with AI—both by mitigating Holocaust
               denial in large language models’ answers and by connecting users

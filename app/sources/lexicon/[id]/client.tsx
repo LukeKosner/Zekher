@@ -23,17 +23,24 @@ export function LexiconPageClient({ lexiconEntry }: { lexiconEntry: any }) {
   }, [txtUrl]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20"
-    >
+    <div className="w-full max-w-4xl mx-auto px-6 pt-12 pb-20">
       {/* Header */}
-      <div className="mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="mb-8"
+      >
         <h1 className="text-3xl font-bold mb-6">{displayTitle}</h1>
+      </motion.div>
 
-        {/* Action buttons */}
+      {/* Action buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+        className="mb-8"
+      >
         <div className="flex flex-wrap gap-3">
           {pdfUrl && (
             <>
@@ -57,10 +64,15 @@ export function LexiconPageClient({ lexiconEntry }: { lexiconEntry: any }) {
             </>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* PDF Viewer Card */}
-      <div className="mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+        className="mb-8"
+      >
         <div className="w-full h-[800px] md:h-[800px] rounded-lg border bg-card overflow-hidden">
           {pdfUrl ? (
             <object
@@ -121,10 +133,15 @@ export function LexiconPageClient({ lexiconEntry }: { lexiconEntry: any }) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Footer */}
-      <div className="mt-8 mb-4 text-sm text-muted-foreground text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        className="mt-8 mb-4 text-sm text-muted-foreground text-center"
+      >
         <p>
           This entry comes from Yad Vashem's{" "}
           <Link 
@@ -139,7 +156,7 @@ export function LexiconPageClient({ lexiconEntry }: { lexiconEntry: any }) {
           . Zekher hosts these documents to avoid putting pressure on Yad
           Vashem's servers. Zekher claims no ownership over the content.
         </p>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

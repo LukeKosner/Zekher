@@ -192,8 +192,8 @@ const DevelopersPage = () => {
               If you're interested in using Zekher's MCP server for your
               applications or have questions about integration, please reach out
               to{" "}
-              <Link href="mailto:hey@lukekosner.com" className="underline">
-                hey@lukekosner.com
+              <Link href="mailto:support@zekher.com" className="underline">
+                support@zekher.com
               </Link>
               . We're gauging developer interest and would love to hear about
               your use case.

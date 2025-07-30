@@ -19,25 +19,28 @@ export function PageHeader({
   sidebarOpen?: boolean;
   isMobile?: boolean;
 }) {
-  // Step 1: Add computed gap variable
-  const gap = isMobile
-    ? "0px"
-    : sidebarOpen
+  // Desktop only: compute gap for positioning
+  const gap = sidebarOpen
     ? "var(--sidebar-width)"
     : "var(--sidebar-width-icon)";
 
   return (
     <header
-      // Step 2: Inline the gap into the header's style
-      style={{ left: gap, width: `calc(100% - ${gap})` }}
+      // Desktop only: use computed positioning via CSS custom properties
+      style={{ 
+        "--computed-left": gap,
+        "--computed-width": `calc(100% - ${gap})`
+      } as React.CSSProperties}
       className={cn(
         "fixed inset-y-0 top-0 z-50 flex items-center gap-2",
         // Height: shorter when sidebar is closed (keep mobile at h-12)
         sidebarOpen ? "h-12 md:h-16" : "h-12 md:h-12",
         "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "border-b border-border overscroll-none",
-        // Step 3: Add smooth transitions and remove old width classes
-        "transition-[left,width,height] duration-200 ease-linear"
+        // Mobile: full width
+        "left-0 right-0 w-full",
+        // Desktop: computed positioning
+        "md:left-[var(--computed-left)] md:w-[var(--computed-width)] md:right-auto"
       )}
     >
       {/* Desktop: Sidebar trigger  breadcrumbs */}

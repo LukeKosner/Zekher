@@ -35,7 +35,7 @@ export const INTERNAL_LINKS = {
 export const CONTENT_SECTIONS = {
   mission: {
     title: "Mission",
-    hebrewTranslation: "(זכר, remembrance in Hebrew)"
+    hebrewTranslation: `(זכר, "remembrance" in Hebrew)`
   },
   problem: {
     title: "Problem"

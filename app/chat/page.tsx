@@ -30,7 +30,7 @@ import {
   AIToolContent,
   AIToolParameters
 } from "@/components/ui/kibo-ui/ai/tool";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,6 +61,11 @@ const suggestions = [
 
 function ChatContent() {
   const [contentFilterData, setContentFilterData] = useState<any>(null);
+  const [duplicateToolCalls, setDuplicateToolCalls] = useState(false);
+  const [seenToolCallIds, setSeenToolCallIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [errorDetected, setErrorDetected] = useState<string | null>(null);
 
   const { messages, sendMessage, status, stop, error } =
     useChat<CustomUIMessage>({
@@ -80,10 +85,57 @@ function ChatContent() {
           console.log("Content filter detected:", dataPart.data);
           setContentFilterData(dataPart.data);
         }
+
+        // Log the data part to understand its structure
+        console.log("Data part received:", dataPart);
+      },
+      onToolCall: ({ toolCall }) => {
+        // Track tool calls to detect duplicates
+        if (seenToolCallIds.has(toolCall.toolCallId)) {
+          console.warn("Duplicate tool call detected:", toolCall.toolCallId);
+          setDuplicateToolCalls(true);
+          stop(); // Stop the stream immediately
+          return;
+        }
+
+        // Add to seen tool calls
+        setSeenToolCallIds((prev) => new Set([...prev, toolCall.toolCallId]));
       }
     });
 
   const [input, setInput] = useState("");
+
+  // Monitor messages for error content during streaming
+  useEffect(() => {
+    if (status === "streaming" && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "assistant") {
+        // Check if the message has parts with text content
+        if (Array.isArray(lastMessage.parts)) {
+          for (const part of lastMessage.parts) {
+            if (part.type === "text" && part.text) {
+              if (isErrorContent(part.text)) {
+                console.warn(
+                  "Error content detected during streaming:",
+                  part.text
+                );
+                setErrorDetected(part.text);
+                stop();
+                return;
+              }
+            }
+          }
+        }
+        // Also check direct content field
+        const content = (lastMessage as any).content;
+        if (content && isErrorContent(content)) {
+          console.warn("Error content detected in message content:", content);
+          setErrorDetected(content);
+          stop();
+        }
+      }
+    }
+  }, [messages, status, stop]);
 
   // Handlers
   const handleSubmit = (e: React.FormEvent) => {
@@ -104,6 +156,9 @@ function ChatContent() {
           sendMessage({ text: trimmedInput });
           setInput("");
           setContentFilterData(null); // Clear any previous content filter data
+          setDuplicateToolCalls(false); // Clear duplicate tool calls flag
+          setSeenToolCallIds(new Set()); // Clear seen tool call IDs
+          setErrorDetected(null); // Clear error detected flag
         } catch (error) {
           logger.error("Failed to send message", {
             error: error instanceof Error ? error.message : String(error),
@@ -118,11 +173,69 @@ function ChatContent() {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setInput(suggestion);
+    const trimmedSuggestion = suggestion.trim();
+
+    if (trimmedSuggestion && trimmedSuggestion.length > 0) {
+      // Prevent duplicate messages
+      const recentUserMessages = messages
+        .filter((msg) => msg.role === "user")
+        .slice(-3)
+        .map(
+          (msg) => (msg as any).parts?.[0]?.text || (msg as any).content || ""
+        );
+
+      if (!recentUserMessages.includes(trimmedSuggestion)) {
+        try {
+          sendMessage({ text: trimmedSuggestion });
+          setInput(""); // Clear input after sending
+          setContentFilterData(null); // Clear any previous content filter data
+          setDuplicateToolCalls(false); // Clear duplicate tool calls flag
+          setSeenToolCallIds(new Set()); // Clear seen tool call IDs
+          setErrorDetected(null); // Clear error detected flag
+        } catch (error) {
+          logger.error("Failed to send suggestion message", {
+            error: error instanceof Error ? error.message : String(error),
+            suggestionLength: trimmedSuggestion.length
+          });
+          Sentry.captureException(error, {
+            tags: { component: "chat", operation: "sendSuggestionMessage" }
+          });
+        }
+      }
+    }
   };
 
   const handleQuestionClick = (question: string) => {
-    setInput(question);
+    const trimmedQuestion = question.trim();
+
+    if (trimmedQuestion && trimmedQuestion.length > 0) {
+      // Prevent duplicate messages
+      const recentUserMessages = messages
+        .filter((msg) => msg.role === "user")
+        .slice(-3)
+        .map(
+          (msg) => (msg as any).parts?.[0]?.text || (msg as any).content || ""
+        );
+
+      if (!recentUserMessages.includes(trimmedQuestion)) {
+        try {
+          sendMessage({ text: trimmedQuestion });
+          setInput(""); // Clear input after sending
+          setContentFilterData(null); // Clear any previous content filter data
+          setDuplicateToolCalls(false); // Clear duplicate tool calls flag
+          setSeenToolCallIds(new Set()); // Clear seen tool call IDs
+          setErrorDetected(null); // Clear error detected flag
+        } catch (error) {
+          logger.error("Failed to send question message", {
+            error: error instanceof Error ? error.message : String(error),
+            questionLength: trimmedQuestion.length
+          });
+          Sentry.captureException(error, {
+            tags: { component: "chat", operation: "sendQuestionMessage" }
+          });
+        }
+      }
+    }
   };
 
   // Helper functions
@@ -135,45 +248,8 @@ function ChatContent() {
     );
   };
 
-  const renderErrorContent = (text: string) => {
-    return (
-      <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md p-3">
-        <div className="flex items-start gap-2">
-          <div className="text-red-600 dark:text-red-400 text-xs font-medium">
-            Error
-          </div>
-        </div>
-        <div className="text-red-700 dark:text-red-300 text-sm mt-1 font-mono whitespace-pre-wrap">
-          {text}
-        </div>
-      </div>
-    );
-  };
-
-  const getToolDisplay = (toolName: string) => {
-    switch (toolName) {
-      case "lexiconTool":
-        return {
-          icon: <History size={18} />,
-          displayName: "Holocaust Lexicon"
-        };
-      case "testimonyTool":
-        return {
-          icon: <Users size={18} />,
-          displayName: "Survivor Testimonies"
-        };
-      case "showUsersAudio":
-        return {
-          icon: <AudioWaveform size={18} />,
-          displayName: "Audio Selections"
-        };
-      default:
-        return { icon: <BookOpenCheck size={18} />, displayName: toolName };
-    }
-  };
-
   return (
-    <div className="relative flex h-full w-full flex-col min-h-0">
+    <div className="relative flex h-full max-w-full flex-col min-h-0">
       {messages.length === 0 ? (
         <div className="flex-1 flex items-center justify-center px-6">
           <HolocaustImageSlideshow onQuestionClick={handleQuestionClick} />
@@ -214,7 +290,6 @@ function ChatContent() {
 
                       textSegments.forEach((segment, segmentIndex) => {
                         const trimmedSegment = segment.trim();
-                        const isError = isErrorContent(trimmedSegment);
 
                         renderedParts.push(
                           <AIMessage
@@ -222,11 +297,7 @@ function ChatContent() {
                             key={`${message.id}-text-${partIndex}-${segmentIndex}`}
                           >
                             <AIMessageContent>
-                              {isError ? (
-                                renderErrorContent(trimmedSegment)
-                              ) : (
-                                <AIResponse>{trimmedSegment}</AIResponse>
-                              )}
+                              <AIResponse>{trimmedSegment}</AIResponse>
                             </AIMessageContent>
                           </AIMessage>
                         );
@@ -334,17 +405,11 @@ function ChatContent() {
                   >
                     <AIMessage from={isUser ? "user" : "assistant"}>
                       <AIMessageContent>
-                        {isUser
-                          ? userContent
-                          : (() => {
-                              const isError = isErrorContent(assistantContent);
-
-                              return isError ? (
-                                renderErrorContent(assistantContent)
-                              ) : (
-                                <AIResponse>{assistantContent}</AIResponse>
-                              );
-                            })()}
+                        {isUser ? (
+                          userContent
+                        ) : (
+                          <AIResponse>{assistantContent}</AIResponse>
+                        )}
                       </AIMessageContent>
                     </AIMessage>
                   </motion.div>
@@ -356,9 +421,14 @@ function ChatContent() {
         </AIConversation>
       )}
 
-      {(error || contentFilterData) && (
+      {(error || contentFilterData || duplicateToolCalls || errorDetected) && (
         <div className="px-4 pt-4">
-          <ChatError error={error} contentFilterData={contentFilterData} />
+          <ChatError
+            error={error}
+            contentFilterData={contentFilterData}
+            duplicateToolCalls={duplicateToolCalls}
+            errorDetected={errorDetected}
+          />
         </div>
       )}
 

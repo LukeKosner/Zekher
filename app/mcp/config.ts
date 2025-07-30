@@ -31,7 +31,7 @@ export const MCP_SERVER_CONFIG = {
 } as const;
 
 export const CONTACT = {
-  email: "hey@lukekosner.com"
+  email: "support@zekher.com"
 } as const;
 
 export const MCP_CAPABILITIES = {

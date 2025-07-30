@@ -212,7 +212,7 @@ export default function Home() {
 
             <div className="flex flex-row items-center justify-center gap-4">
               <Button asChild variant="outline" size="lg">
-                <Link href="mailto:hey@lukekosner.com">
+                <Link href="mailto:support@zekher.com">
                   Email Us
                   <Mail className="w-4 h-4 ml-2" />
                 </Link>

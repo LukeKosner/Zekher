@@ -5,7 +5,7 @@
  * Follows Shadcn UI design patterns with respectful, accessible interactions.
  */
 
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -40,10 +40,32 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
     filename: source.id
   });
 
-  // State for txt preview
-  const [txtPreview, setTxtPreview] = React.useState<string>("");
-  React.useEffect(() => {
-    if (txtUrl) {
+  // State for txt preview and lazy loading
+  const [txtPreview, setTxtPreview] = useState<string>("");
+  const [isInView, setIsInView] = useState(false);
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.unobserve(element); // Only trigger once
+        }
+      },
+      { rootMargin: "50px" } // Load 50px before coming into view
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isInView && txtUrl) {
       fetch(txtUrl)
         .then((res) => (res.ok ? res.text() : ""))
         .then((text) => {
@@ -55,10 +77,10 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
           setTxtPreview(""); // Silently fail for preview
         });
     }
-  }, [txtUrl]);
+  }, [isInView, txtUrl]);
 
   return (
-    <Card className={cn("flex flex-col h-full", className)}>
+    <Card className={cn("flex flex-col h-full", className)} ref={elementRef}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -100,32 +122,38 @@ export function LexiconCard({ source, className }: LexiconCardProps) {
           <>
             {pdfUrl && (
               <div className="relative w-full h-48 rounded-md overflow-hidden border mb-4">
-                <object
-                  data={`${pdfUrl}#toolbar=0`}
-                  type="application/pdf"
-                  width="100%"
-                  height="100%"
-                  className="absolute top-0 left-0 block"
-                  style={{
-                    maxHeight: "100%",
-                    containIntrinsicSize: "100% 100%",
-                    overflow: "hidden"
-                  }}
-                >
-                  <div className="p-4 text-sm text-muted-foreground">
-                    <p>
-                      {sourcesPageConstants.cardText.lexicon.pdfPreviewFallback}
-                    </p>
-                    <a
-                      href={pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {sourcesPageConstants.cardText.lexicon.openInNewTab}
-                    </a>
+                {isInView ? (
+                  <object
+                    data={`${pdfUrl}#toolbar=0`}
+                    type="application/pdf"
+                    width="100%"
+                    height="100%"
+                    className="absolute top-0 left-0 block"
+                    style={{
+                      maxHeight: "100%",
+                      containIntrinsicSize: "100% 100%",
+                      overflow: "hidden"
+                    }}
+                  >
+                    <div className="p-4 text-sm text-muted-foreground">
+                      <p>
+                        {sourcesPageConstants.cardText.lexicon.pdfPreviewFallback}
+                      </p>
+                      <a
+                        href={pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        {sourcesPageConstants.cardText.lexicon.openInNewTab}
+                      </a>
+                    </div>
+                  </object>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-muted/30 text-xs text-muted-foreground">
+                    Loading PDF preview...
                   </div>
-                </object>
+                )}
               </div>
             )}
             {txtUrl && txtPreview && !pdfUrl && (

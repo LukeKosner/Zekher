@@ -293,6 +293,8 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
             {segment.testimonyId ? (
               <Link
                 href={`/sources/testimony/${segment.testimonyId}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-blue-600 transition-colors"
               >
                 {segment.speakerName}
@@ -480,6 +482,8 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
                 {" • "}
                 <Link
                   href={`/sources/testimony/${segment.testimonyId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:text-blue-600 transition-colors underline"
                 >
                   Full Testimony
