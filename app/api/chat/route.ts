@@ -114,6 +114,10 @@ export async function POST(req: Request): Promise<Response> {
               ]
             }
           },
+          experimental_telemetry: {
+            isEnabled: true,
+            functionId: "chat"
+          },
           tools: {
             lexiconTool: {
               ...lexiconTool,
