@@ -13,77 +13,6 @@ import { getTestimonyById } from "@/lib/database";
 import { logger } from "@/lib/monitoring";
 import { toolDescriptions, nextStepsInstructions } from "@/lib/tools";
 
-/**
- * Extract timestamp from transcript excerpt
- * Looks for patterns like [00:01:23] or [01:23] and converts to seconds
- */
-function extractTimestampFromTranscript(transcript: string): number | null {
-  // Look for timestamp patterns like [00:01:23] or [01:23]
-  const timestampRegex = /\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\]/;
-  const match = transcript.match(timestampRegex);
-
-  if (match) {
-    const hours = parseInt(match[1] || "0", 10);
-    const minutes = parseInt(match[2], 10);
-    const seconds = parseInt(match[3], 10);
-
-    return hours * 3600 + minutes * 60 + seconds;
-  }
-
-  return null;
-}
-
-/**
- * Generate audio file URL from speaker name using centralized URL generation
- * Always overrides any AI-provided audioFile values
- */
-function generateAudioFileFromSpeaker(speakerName: string): {
-  url: string;
-  urlSource: "blob" | "gcs" | "fallback";
-} {
-  if (!speakerName || typeof speakerName !== "string") {
-    trackSpeakerMappingError(
-      speakerName || "undefined",
-      "Speaker name is required and must be a string"
-    );
-    throw new Error("Speaker name is required and must be a string");
-  }
-
-  const trimmedName = speakerName.trim();
-  if (!trimmedName) {
-    trackSpeakerMappingError(speakerName, "Speaker name cannot be empty");
-    throw new Error("Speaker name cannot be empty");
-  }
-
-  try {
-    // Use centralized URL generation with proper fallback chain
-    const audioUrlParams: AudioUrlParams = {
-      speakerName: trimmedName
-    };
-
-    const url = generateAudioUrl(audioUrlParams);
-
-    // Determine URL source based on the URL pattern
-    let urlSource: "blob" | "gcs" | "fallback";
-    if (url.startsWith("blob:")) {
-      urlSource = "blob";
-    } else if (url.includes("storage.googleapis.com")) {
-      urlSource = "gcs";
-    } else {
-      urlSource = "fallback";
-    }
-
-    return { url, urlSource };
-  } catch (error) {
-    const errorMessage = `Failed to generate audio URL for speaker "${speakerName}": ${
-      error instanceof Error ? error.message : "Unknown error"
-    }`;
-
-    trackSpeakerMappingError(speakerName, errorMessage, false);
-    throw new Error(errorMessage);
-  }
-}
-
 // Input schema - AI provides these fields only (audioFile removed)
 const audioSegmentInputSchema = z.object({
   testimonyId: z.string().describe("The ID of the testimony"),
@@ -100,13 +29,14 @@ const audioSegmentInputSchema = z.object({
   language: z.string().optional().describe("Language spoken if not English"),
   significance: z
     .string()
-    .max(300)
+    .max(500)
     .describe(
       "Brief explanation (1-2 sentences) of why this segment is important"
     )
 });
 
 export const showUsersAudio = tool({
+  name: "showUsersAudio",
   description: toolDescriptions.showUsersAudio.description,
   inputSchema: z.object({
     segments: z
@@ -185,7 +115,9 @@ export const showUsersAudio = tool({
           return processedSegment;
         } catch (error) {
           const loadTimeMs = Date.now() - startTime;
-          const errorMessage = `Failed to process audio segment for ${segment.speakerName}: ${error instanceof Error ? error.message : "Unknown error"}`;
+          const errorMessage = `Failed to process audio segment for ${
+            segment.speakerName
+          }: ${error instanceof Error ? error.message : "Unknown error"}`;
           errors.push(errorMessage);
 
           // Log detailed error information for debugging
@@ -248,7 +180,11 @@ export const showUsersAudio = tool({
               success: false,
               loadTimeMs: Date.now() - startTime,
               errorType: ErrorType.CONFIGURATION,
-              errorMessage: `All fallbacks failed: ${fallbackError instanceof Error ? fallbackError.message : "Unknown error"}`,
+              errorMessage: `All fallbacks failed: ${
+                fallbackError instanceof Error
+                  ? fallbackError.message
+                  : "Unknown error"
+              }`,
               fallbackUsed: true,
               urlSource: "fallback"
             };
@@ -271,7 +207,10 @@ export const showUsersAudio = tool({
     const result = {
       type: "audio_segments",
       segments: processedSegments,
-      message: `${nextStepsInstructions.audio.replace("for the selected segments", `for ${processedSegments.length} segment(s)`)}`
+      message: `${nextStepsInstructions.audio.replace(
+        "for the selected segments",
+        `for ${processedSegments.length} segment(s)`
+      )}`
     };
 
     if (errors.length > 0) {

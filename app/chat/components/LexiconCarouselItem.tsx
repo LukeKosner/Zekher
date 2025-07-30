@@ -7,7 +7,15 @@ import { CarouselItem as UICarouselItem } from "@/components/ui/carousel";
 import { generateSourceUrl } from "@/lib";
 import type { LexiconCarouselEntry } from "../types";
 
-export const LexiconCarouselItem = ({ source, index }: { source: LexiconCarouselEntry, index: number }) => {
+export const LexiconCarouselItem = ({
+  source,
+  index,
+  basisClass = "basis-full xl:basis-1/2"
+}: {
+  source: LexiconCarouselEntry;
+  index: number;
+  basisClass?: string;
+}) => {
   const [txtPreview, setTxtPreview] = useState("");
 
   useEffect(() => {
@@ -28,14 +36,14 @@ export const LexiconCarouselItem = ({ source, index }: { source: LexiconCarousel
   const internalUrl = source.id
     ? generateSourceUrl({
         pageType: "lexicon",
-        filename: source.id,
+        filename: source.id
       })
     : "#";
 
   return (
     <UICarouselItem
       key={source.id || index}
-      className="pl-2 md:pl-4 basis-full xl:basis-1/2"
+      className={`pl-2 md:pl-4 ${basisClass}`}
     >
       {/* Cropped preview - navigate to lexicon page */}
       <Link
@@ -52,7 +60,7 @@ export const LexiconCarouselItem = ({ source, index }: { source: LexiconCarousel
             style={{
               maxWidth: "100%",
               maxHeight: "100%",
-              containIntrinsicSize: "100% 100%",
+              containIntrinsicSize: "100% 100%"
             }}
           >
             <div className="flex h-full w-full items-center justify-center bg-muted/30 text-xs text-muted-foreground px-4 text-center">
@@ -82,10 +90,7 @@ export const LexiconCarouselItem = ({ source, index }: { source: LexiconCarousel
             Yad Vashem
           </Link>
           {" • "}
-          <Link
-            href={internalUrl}
-            className="transition-colors underline"
-          >
+          <Link href={internalUrl} className="transition-colors underline">
             View Entry
             <ExternalLink className="inline size-3 ml-1" />
           </Link>

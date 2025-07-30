@@ -140,70 +140,70 @@ export function HolocaustImageSlideshow({
           ]}
           className="w-full"
         >
-        <CarouselContent>
-          {images.map((image, index) => (
-            <CarouselItem key={index}>
-              <div
-                className="relative overflow-hidden rounded-lg cursor-pointer aspect-[3/4] md:aspect-[16/9]"
-                onClick={() => handleImageClick(image.question)}
-              >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  className="object-cover object-center"
-                  priority={index === 0}
-                />
+          <CarouselContent>
+            {images.map((image, index) => (
+              <CarouselItem key={index}>
+                <div
+                  className="relative overflow-hidden rounded-lg cursor-pointer aspect-[4/5] sm:aspect-[3/4] md:aspect-[16/9] min-h-[280px] sm:min-h-[320px]"
+                  onClick={() => handleImageClick(image.question)}
+                >
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    className="object-cover object-center"
+                    priority={index === 0}
+                  />
 
-                {/* Dark overlay for text readability */}
-                <div className="absolute inset-0 bg-black/30" />
+                  {/* Dark overlay for text readability */}
+                  <div className="absolute inset-0 bg-black/30" />
 
-                {/* Centered question */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <h2 className="text-white text-2xl md:text-3xl lg:text-4xl font-semibold text-center px-4 md:px-8">
-                    {image.question}
-                  </h2>
+                  {/* Centered question */}
+                  <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-4 md:p-8">
+                    <h2 className="text-white text-lg sm:text-xl md:text-3xl lg:text-4xl font-semibold text-center leading-tight">
+                      {image.question}
+                    </h2>
+                  </div>
+
+                  {/* Photo credit badge */}
+                  <Badge className="absolute bottom-1.5 sm:bottom-2 md:bottom-3 right-1.5 sm:right-2 md:right-3 max-w-[calc(100%-0.75rem)] sm:max-w-[calc(100%-1rem)] text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs">
+                    <span className="flex items-center gap-x-0.5 sm:gap-x-1 flex-wrap leading-tight">
+                      Photo by{" "}
+                      <Link
+                        className="underline inline-flex items-center gap-0.5 whitespace-nowrap"
+                        href={image.photographerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {image.photographerName}
+                        <ArrowUpRight className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 flex-shrink-0" />
+                      </Link>{" "}
+                      on{" "}
+                      <Link
+                        className="underline inline-flex items-center gap-0.5 whitespace-nowrap"
+                        href={image.unsplashUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Unsplash
+                        <ArrowUpRight className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 flex-shrink-0" />
+                      </Link>
+                    </span>
+                  </Badge>
                 </div>
-
-                {/* Photo credit badge */}
-                <Badge className="absolute bottom-2 md:bottom-3 right-2 md:right-3 max-w-[calc(100%-1rem)]">
-                  <span className="text-[9px] md:text-[10px] lg:text-xs flex items-center gap-x-1 flex-wrap">
-                    Photo by{" "}
-                    <Link
-                      className="underline inline-flex items-center gap-0.5 whitespace-nowrap"
-                      href={image.photographerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {image.photographerName}
-                      <ArrowUpRight className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" />
-                    </Link>{" "}
-                    on{" "}
-                    <Link
-                      className="underline inline-flex items-center gap-0.5 whitespace-nowrap"
-                      href={image.unsplashUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Unsplash
-                      <ArrowUpRight className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" />
-                    </Link>
-                  </span>
-                </Badge>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
           <CarouselPrevious className="hidden md:flex" />
           <CarouselNext className="hidden md:flex" />
         </Carousel>
       </motion.div>
 
       {/* Carousel tracker dots */}
-      <motion.div 
-        className="flex justify-center mt-4 gap-2"
+      <motion.div
+        className="flex justify-center mt-3 sm:mt-4 gap-1.5 sm:gap-2"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
@@ -218,6 +218,7 @@ export function HolocaustImageSlideshow({
                 : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
             )}
             onClick={() => api?.scrollTo(index)}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </motion.div>

@@ -91,6 +91,7 @@ export const searchLexicon = async (searchTerms: string[]) => {
 
 // Tool definition
 export const lexiconTool = tool({
+  name: "lexiconTool",
   description: toolDescriptions.lexiconTool.description,
   inputSchema: z.object({
     terms: z

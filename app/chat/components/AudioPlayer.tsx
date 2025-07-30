@@ -346,7 +346,9 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
                         {showTranslation ? "Hide" : "Show"} Translation
                       </span>
                       <ChevronDown
-                        className={`w-3 h-3 transition-transform ${showTranslation ? "rotate-180" : ""}`}
+                        className={`w-3 h-3 transition-transform ${
+                          showTranslation ? "rotate-180" : ""
+                        }`}
                       />
                     </>
                   ) : (
@@ -398,10 +400,10 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
               isLoading
                 ? "Loading audio..."
                 : error
-                  ? "Audio unavailable"
-                  : isPlaying
-                    ? `Pause audio from ${segment.speakerName}`
-                    : `Play audio from ${segment.speakerName}`
+                ? "Audio unavailable"
+                : isPlaying
+                ? `Pause audio from ${segment.speakerName}`
+                : `Play audio from ${segment.speakerName}`
             }
             aria-describedby={`audio-transcript-${segment.testimonyId}`}
           >
@@ -429,11 +431,15 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
               style={{
                 background: `linear-gradient(to right, #2563eb 0%, #2563eb ${progress}%, #d1d5db ${progress}%, #d1d5db 100%)`
               }}
-              aria-label={`Audio progress: ${formatTime(currentTime)} of ${formatTime(duration)}`}
+              aria-label={`Audio progress: ${formatTime(
+                currentTime
+              )} of ${formatTime(duration)}`}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progress}
-              aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+              aria-valuetext={`${formatTime(currentTime)} of ${formatTime(
+                duration
+              )}`}
             />
             {isLoading && (
               <div
@@ -462,9 +468,10 @@ export function AudioPlayer({ segment, className }: AudioPlayerProps) {
                   href={segment.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors"
+                  className="transition-colors underline"
                 >
                   David P. Boder Collection
+                  <ExternalLink className="inline size-3 ml-1" />
                 </Link>
               </>
             )}

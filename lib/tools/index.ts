@@ -10,10 +10,7 @@ export {
   errorMessages
 } from "./prompts";
 
-// Orchestrator utility
-export * from "./orchestrator";
-
 // Utilities (existing tool files)
 export * from "./audio";
-export * from "./lexicon-search";
-export * from "./testimony-search";
+export * from "./lexicon";
+export * from "./testimony";

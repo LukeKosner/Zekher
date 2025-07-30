@@ -191,15 +191,3 @@ export interface SpeakerMapping {
   audioFilename: string;
   testimonyFilename: string;
 }
-
-/**
- * Orchestrator scenario types and planning
- */
-export type OrchestratorScenario = "personal" | "factual" | "unclear";
-
-export interface StepPlan {
-  stepNumber: number;
-  stepName: string;
-  description: string;
-  toolName?: string;
-}

@@ -37,6 +37,9 @@ export async function POST(req: Request): Promise<Response> {
 
     const { messages }: { messages: CustomUIMessage[] } = requestData;
 
+    // Track tool calls to prevent duplicates within the same conversation turn
+    const toolCallTracker = new Set<string>();
+
     const stream = createUIMessageStream<CustomUIMessage>({
       originalMessages: messages,
       execute: ({ writer }) => {
@@ -44,7 +47,6 @@ export async function POST(req: Request): Promise<Response> {
           model: google(chatApiConstants.modelName),
           messages: convertToModelMessages(messages),
           system: holocaustEducatorPrompt,
-          stopWhen: hasToolCall("tool-showUsersAudio"),
           onStepFinish: (result) => {
             const { finishReason, usage, providerMetadata } = result;
 
@@ -113,9 +115,95 @@ export async function POST(req: Request): Promise<Response> {
             }
           },
           tools: {
-            lexiconTool,
-            testimonyTool,
-            showUsersAudio
+            lexiconTool: {
+              ...lexiconTool,
+              execute: async (params: any, options: any) => {
+                const callId = `lexicon-${JSON.stringify(params)}`;
+                if (toolCallTracker.has(callId)) {
+                  logger.info("Duplicate lexicon tool call prevented", {
+                    params
+                  });
+                  return {
+                    error:
+                      "This search was already performed in this conversation turn.",
+                    entries: [],
+                    formattedText: "Search already performed.",
+                    nextSteps:
+                      "Please ask a different question or refine your search terms."
+                  };
+                }
+                toolCallTracker.add(callId);
+                if (!lexiconTool.execute) {
+                  return {
+                    error: "Lexicon search is temporarily unavailable.",
+                    entries: [],
+                    formattedText:
+                      "Search tool is not available right now. Please try asking your question again.",
+                    nextSteps:
+                      "Please rephrase your question or try again later."
+                  };
+                }
+                return lexiconTool.execute(params, options);
+              }
+            },
+            testimonyTool: {
+              ...testimonyTool,
+              execute: async (params: any, options: any) => {
+                const callId = `testimony-${JSON.stringify(params)}`;
+                if (toolCallTracker.has(callId)) {
+                  logger.info("Duplicate testimony tool call prevented", {
+                    params
+                  });
+                  return {
+                    error:
+                      "This search was already performed in this conversation turn.",
+                    entries: [],
+                    formattedText: "Search already performed.",
+                    nextSteps:
+                      "Please ask a different question or refine your search terms."
+                  };
+                }
+                toolCallTracker.add(callId);
+                if (!testimonyTool.execute) {
+                  return {
+                    error: "Testimony search is temporarily unavailable.",
+                    entries: [],
+                    formattedText:
+                      "Search tool is not available right now. Please try asking your question again.",
+                    nextSteps:
+                      "Please rephrase your question or try again later."
+                  };
+                }
+                return testimonyTool.execute(params, options);
+              }
+            },
+            showUsersAudio: {
+              ...showUsersAudio,
+              execute: async (params: any, options: any) => {
+                const callId = `audio-${JSON.stringify(params)}`;
+                if (toolCallTracker.has(callId)) {
+                  logger.info("Duplicate audio tool call prevented", {
+                    params
+                  });
+                  return {
+                    type: "audio_segments",
+                    segments: [],
+                    message:
+                      "Audio segments were already processed in this conversation turn."
+                  };
+                }
+                toolCallTracker.add(callId);
+                if (!showUsersAudio.execute) {
+                  return {
+                    type: "audio_segments",
+                    segments: [],
+                    message:
+                      "Audio tool is not available right now. Please try asking your question again."
+                  };
+                }
+                return showUsersAudio.execute(params, options);
+              }
+            }
           }
         });
 

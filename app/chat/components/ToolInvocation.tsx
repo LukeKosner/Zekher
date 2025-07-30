@@ -8,6 +8,7 @@ import {
 import { LexiconCarousel } from "./LexiconCarousel";
 import { TestimonyCarousel } from "./TestimonyCarousel";
 import { AudioPlayer } from "./AudioPlayer";
+import { AudioCarousel } from "./AudioCarousel";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BookOpenCheck, Users, History, AudioWaveform } from "lucide-react";
 import { generateSourceUrl } from "@/lib";
@@ -20,8 +21,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
   const toolName = part.type.replace("tool-", "");
   const toolInvocation = {
     toolCallId: part.toolCallId,
-    state:
-      part.state === "output-available" ? "result" : part.state || "call",
+    state: part.state === "output-available" ? "result" : part.state || "call",
     args: part.input || {},
     result: part.output
   };
@@ -171,43 +171,12 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
     };
 
     return (
-      <AIMessage from="assistant" >
-        <AITool status="completed" defaultOpen={true}>
-          <AIToolHeader
-            name={toolDisplay.displayName}
-            status="completed"
-            icon={
-              <span className="size-4 text-muted-foreground">
-                {toolDisplay.icon}
-              </span>
-            }
-          />
-          <AIToolContent>
-            <div className="space-y-4">
-              {audioData.segments.map((segment: any, segIdx: number) => (
-                <ErrorBoundary
-                  key={`audio-${segIdx}`}
-                  componentName="AudioPlayer"
-                  fallback={
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                        Audio player unavailable.
-                        <br />
-                        <span className="font-medium">Transcript:</span>{" "}
-                        {segment.transcriptExcerpt}
-                        <br />
-                        <span className="font-medium">Audio File:</span>{" "}
-                        {segment.audioFile}
-                      </p>
-                    </div>
-                  }
-                >
-                  <AudioPlayer segment={segment} />
-                </ErrorBoundary>
-              ))}
-            </div>
-          </AIToolContent>
-        </AITool>
+      <AIMessage from="assistant">
+        <AudioCarousel
+          status="result"
+          name={toolDisplay.displayName}
+          segments={audioData.segments}
+        />
       </AIMessage>
     );
   }
@@ -215,7 +184,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
   // Handle lexicon and testimony tools with carousels
   if (toolName === "lexiconTool") {
     return (
-      <AIMessage from="assistant" >
+      <AIMessage from="assistant">
         <LexiconCarousel
           status={toolInvocation.state}
           name={toolDisplay.displayName}
@@ -227,7 +196,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
 
   if (toolName === "testimonyTool") {
     return (
-      <AIMessage from="assistant" >
+      <AIMessage from="assistant">
         <TestimonyCarousel
           status={toolInvocation.state}
           name={toolDisplay.displayName}
@@ -245,14 +214,14 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
       (!toolInvocation.state && !toolInvocation.result);
 
     return (
-      <AIMessage from="assistant" >
+      <AIMessage from="assistant">
         <AITool
           status={
             isRunning
               ? "running"
               : toolInvocation.state === "result"
-                ? "completed"
-                : "pending"
+              ? "completed"
+              : "pending"
           }
           defaultOpen={true}
         >
@@ -262,8 +231,8 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
               isRunning
                 ? "running"
                 : toolInvocation.state === "result"
-                  ? "completed"
-                  : "pending"
+                ? "completed"
+                : "pending"
             }
             icon={
               <span className="size-4 text-muted-foreground">
@@ -296,7 +265,7 @@ export function ToolInvocation({ part, messageId, partIndex }: any) {
   // Handle showUsersAudio tool that completed but doesn't have audio segments
   if (toolName === "showUsersAudio" && toolInvocation.state === "result") {
     return (
-      <AIMessage from="assistant" >
+      <AIMessage from="assistant">
         <AITool status="completed" defaultOpen={true}>
           <AIToolHeader
             name={toolDisplay.displayName}

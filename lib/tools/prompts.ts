@@ -26,6 +26,7 @@ export const toolDescriptions = {
 - Focus on segments that directly answer the user's question
 - Prioritize emotional impact and historical significance
 - Keep transcriptExcerpt concise (2-3 sentences max) and EXACTLY as spoken.
+- Use original language!
 - DON'T ADD ELLIPSIS. If there's more to the audio, use another segment.
 - Only include essential significance description
 

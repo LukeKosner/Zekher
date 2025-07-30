@@ -48,7 +48,6 @@ Combat Holocaust memory challenges from generative AI by providing AI models wit
 
 - **AI SDK** - Vercel's AI toolkit for streaming responses
 - **Google Gemini 2.5 Pro** - Primary language model
-- **Multi-step Tool Orchestration** - Structured AI workflow
 
 ### UI & Styling
 

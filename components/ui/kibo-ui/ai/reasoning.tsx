@@ -165,7 +165,7 @@ export const AIReasoningContent = memo(
       <Banner className="flex items-center gap-1.5">
         <BannerIcon icon={CircleAlert} />
         <BannerTitle>
-          Reasoning content may contain inaccuracies or hallucinations. Use for
+          Reasoning content usually contains inaccuracies or hallucinations. Use for
           context only.
         </BannerTitle>
       </Banner>

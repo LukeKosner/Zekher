@@ -103,6 +103,7 @@ export const searchTestimonies = async (searchTerms: string[]) => {
 
 // Tool definition
 export const testimonyTool = tool({
+  name: "testimonyTool",
   description: toolDescriptions.testimonyTool.description,
   inputSchema: z.object({
     terms: z
