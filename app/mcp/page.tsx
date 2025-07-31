@@ -56,87 +56,11 @@ const DevelopersPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
           >
-            <h2 className="text-2xl font-semibold">Claude Setup</h2>
-            <p className="mt-4 text-lg">
-              To add Zekher's MCP server to Claude, you need to configure a
-              Custom Connector.
-            </p>
-
-            <div className="mt-6 space-y-4">
-              <div>
-                <h3 className="text-lg font-medium mb-2">
-                  Configuration Steps
-                </h3>
-                <ol className="list-decimal list-inside space-y-2 text-lg">
-                  <li>
-                    Find{" "}
-                    <Link
-                      className="underline"
-                      href="https://claude.ai/settings/connectors"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Connectors
-                    </Link>
-                    <ArrowUpRight className="inline w-4 h-4" /> in Settings
-                  </li>
-                  <li>Tap "Add custom connector"</li>
-                  <li>Enter the server URL and name the connector</li>
-                </ol>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-                  <Terminal className="w-5 h-5" />
-                  Server Configuration
-                </h3>
-                <div className="bg-muted rounded-lg p-4 font-mono text-sm">
-                  <div className="space-y-2">
-                    <div>
-                      <span className="text-muted-foreground">Server URL:</span>
-                      <br />
-                      <code className="text-foreground">
-                        {baseUrl}/handler/sse
-                      </code>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Protocol:</span>
-                      <br />
-                      <code className="text-foreground">
-                        SSE (Server-Sent Events)
-                      </code>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          >
-            <h2 className="text-2xl font-semibold">Other Clients</h2>
-            <p className="mt-4 text-lg">
-              For other MCP-compatible clients, use the server URL{" "}
-              <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
-                {baseUrl}/handler/mcp
-              </code>{" "}
-              with standard HTTP protocol. The implementation differences across
-              clients may affect configuration steps, but the endpoint remains
-              consistent.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
-          >
             <h2 className="text-2xl font-semibold">Available Capabilities</h2>
             <p className="mt-4 text-lg">
               Once connected, the MCP server provides access to these
-              capabilities:
+              capabilities. For optimal setup and citation generation, it's
+              important to use both the prompt and tool together:
             </p>
 
             <div className="mt-6 space-y-6">
@@ -178,6 +102,90 @@ const DevelopersPage = () => {
                 </div>
               </div>
             </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+          >
+            <h2 className="text-2xl font-semibold">Claude Setup</h2>
+            <p className="mt-4 text-lg">
+              To add Zekher's MCP server to Claude, you need to configure a
+              Custom Connector.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-medium mb-2">
+                  Configuration Steps
+                </h3>
+                <ol className="list-decimal list-inside space-y-2 text-lg">
+                  <li>
+                    Find{" "}
+                    <Link
+                      className="underline"
+                      href="https://claude.ai/settings/connectors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Connectors
+                    </Link>
+                    <ArrowUpRight className="inline w-4 h-4" /> in Settings
+                  </li>
+                  <li>Tap "Add custom connector"</li>
+                  <li>Enter the server URL and name the connector "Zekher"</li>
+                  <li>
+                    Create a new Chat. Tap the plus button, then click "Add from
+                    Zekher," then "holocaust_education_context" to add the
+                    prompt to the chat. Tap the tool button, then Zekher to make
+                    sure that the tool is enabled.
+                  </li>
+                  <li>Ask a question about the Holocaust</li>
+                </ol>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                  <Terminal className="w-5 h-5" />
+                  Server Configuration
+                </h3>
+                <div className="bg-muted rounded-lg p-4 font-mono text-sm">
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-muted-foreground">Server URL:</span>
+                      <br />
+                      <code className="text-foreground">
+                        {baseUrl}/handler/sse
+                      </code>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Protocol:</span>
+                      <br />
+                      <code className="text-foreground">
+                        SSE (Server-Sent Events)
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+          >
+            <h2 className="text-2xl font-semibold">Other Clients</h2>
+            <p className="mt-4 text-lg">
+              For other MCP-compatible clients, use the server URL{" "}
+              <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
+                {baseUrl}/handler/mcp
+              </code>{" "}
+              with standard HTTP protocol. The implementation differences across
+              clients may affect configuration steps, but the endpoint remains
+              consistent.
+            </p>
           </motion.div>
 
           <motion.div

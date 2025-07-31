@@ -10,24 +10,6 @@ import type { McpLexiconResponse } from "./types";
  */
 const handler = createMcpHandler(
   async (server) => {
-    server.prompt(
-      mcpConstants.promptName,
-      mcpConstants.promptDescription,
-      async () => {
-        return {
-          messages: [
-            {
-              role: "assistant",
-              content: {
-                type: "text",
-                text: mcpConstants.promptText
-              }
-            }
-          ]
-        };
-      }
-    );
-
     server.tool(
       mcpConstants.toolName,
       mcpConstants.toolDescription,
@@ -35,10 +17,36 @@ const handler = createMcpHandler(
         terms: z
           .array(z.string())
           .max(mcpConstants.maxTerms)
-          .describe(mcpConstants.parameterDescription)
+          .describe(mcpConstants.parameterDescription),
+        confirmInstructionsRead: z
+          .boolean()
+          .optional()
+          .describe("Set to true to confirm you have read the holocaust_education_context prompt and will follow citation guidelines")
       },
-      async ({ terms }) => {
+      async ({ terms, confirmInstructionsRead }) => {
         try {
+          // Check if instructions were confirmed as read
+          if (confirmInstructionsRead !== true) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    {
+                      error: "Instructions not confirmed",
+                      message: "Please read the instructions below and set confirmInstructionsRead to true to confirm you understand the citation guidelines.",
+                      instructions: mcpConstants.promptText,
+                      usageInstructions: mcpUsageInstructions,
+                      nextSteps: "Read the instructions above, then call this tool again with confirmInstructionsRead: true"
+                    },
+                    null,
+                    2
+                  )
+                }
+              ]
+            };
+          }
+
           const result = await searchLexicon(terms);
 
           const response: McpLexiconResponse = {
@@ -78,17 +86,35 @@ const handler = createMcpHandler(
         }
       }
     );
+
+    server.prompt(
+      mcpConstants.promptName,
+      mcpConstants.promptDescription,
+      async () => {
+        return {
+          messages: [
+            {
+              role: "assistant",
+              content: {
+                type: "text",
+                text: mcpConstants.promptText
+              }
+            }
+          ]
+        };
+      }
+    );
   },
   {
     capabilities: {
-      prompts: {
-        [mcpConstants.promptName]: {
-          description: mcpConstants.promptDescription
-        }
-      },
       tools: {
         [mcpConstants.toolName]: {
           description: mcpConstants.toolDescription
+        }
+      },
+      prompts: {
+        [mcpConstants.promptName]: {
+          description: mcpConstants.promptDescription
         }
       }
     }
