@@ -172,7 +172,7 @@ export default function Home() {
                 buttonText="Try Chat"
                 buttonIcon={<MessagesSquare className="w-4 h-4 ml-2" />}
                 buttonLink="/chat"
-                buttonVariant="primary"
+                buttonVariant="outline"
               />
               <FeatureCard
                 title="MCP Server"

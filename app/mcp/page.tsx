@@ -94,13 +94,13 @@ const DevelopersPage = () => {
                     <div>
                       <span className="text-muted-foreground">Server URL:</span>
                       <br />
-                      <code className="text-foreground">{baseUrl}/sse</code>
+                      <code className="text-foreground">{baseUrl}/handler/mcp</code>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Protocol:</span>
                       <br />
                       <code className="text-foreground">
-                        SSE (Server-Sent Events)
+                        HTTP (Model Context Protocol)
                       </code>
                     </div>
                   </div>
@@ -116,17 +116,12 @@ const DevelopersPage = () => {
           >
             <h2 className="text-2xl font-semibold">Other Clients</h2>
             <p className="mt-4 text-lg">
-              Other MCP-compatible clients may have variations in their spec
-              compliance. If{" "}
+              For other MCP-compatible clients, use the server URL{" "}
               <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
-                {baseUrl}/sse
+                {baseUrl}/handler/mcp
               </code>{" "}
-              doesn't work, try{" "}
-              <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
-                {baseUrl}handler/mcp
-              </code>{" "}
-              as the server URL. The implementation differences across clients
-              can affect which endpoint responds correctly.
+              with standard HTTP protocol. The implementation differences across clients
+              may affect configuration steps, but the endpoint remains consistent.
             </p>
           </motion.div>
 
