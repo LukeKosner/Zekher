@@ -8,6 +8,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariant } from "./config";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 const AboutPage = () => {
   return (
@@ -26,12 +32,23 @@ const AboutPage = () => {
           >
             <h2 className="text-2xl font-semibold">Mission</h2>
             <p className={PAGE_STYLING.paragraphClasses}>
-              Zekher (זכר, "remembrance" in Hebrew) is an open-source project
-              that integrates high-quality sources about the Holocaust into the
-              generative artificial intelligence answer pipeline. The goal is to
-              preserve Holocaust memory with AI—both by mitigating Holocaust
-              denial in large language models’ answers and by connecting users
-              with verified information and survivor testimonies.
+              Zekher (זכר, "remembrance" in Hebrew) is an{" "}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="underline cursor-help">open-source*</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>v3 repository coming with stable version</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>{" "}
+              project that integrates high-quality sources about the Holocaust
+              into the generative artificial intelligence answer pipeline. The
+              goal is to preserve Holocaust memory with AI—both by mitigating
+              Holocaust denial in large language models' answers and by
+              connecting users with verified information and survivor
+              testimonies.
             </p>
           </motion.div>
 
@@ -160,7 +177,8 @@ const AboutPage = () => {
               project in 2023. Every conversation has led to a feature in V3.
               Most importantly, Zekher now answers questions with updated
               information rather then data supplied by survivor testimony. This
-              both avoids outdated information and misrepresenting survivors.
+              both avoids outdated information and misrepresenting survivor
+              testimony.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
               Zekher was designed to be an open-source project. The first
