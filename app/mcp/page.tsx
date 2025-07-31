@@ -94,13 +94,15 @@ const DevelopersPage = () => {
                     <div>
                       <span className="text-muted-foreground">Server URL:</span>
                       <br />
-                      <code className="text-foreground">{baseUrl}/handler/mcp</code>
+                      <code className="text-foreground">
+                        {baseUrl}/handler/sse
+                      </code>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Protocol:</span>
                       <br />
                       <code className="text-foreground">
-                        HTTP (Model Context Protocol)
+                        SSE (Server-Sent Events)
                       </code>
                     </div>
                   </div>
@@ -120,8 +122,9 @@ const DevelopersPage = () => {
               <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
                 {baseUrl}/handler/mcp
               </code>{" "}
-              with standard HTTP protocol. The implementation differences across clients
-              may affect configuration steps, but the endpoint remains consistent.
+              with standard HTTP protocol. The implementation differences across
+              clients may affect configuration steps, but the endpoint remains
+              consistent.
             </p>
           </motion.div>
 
