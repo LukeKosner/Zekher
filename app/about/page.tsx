@@ -80,8 +80,8 @@ const AboutPage = () => {
               <ArrowUpRight className="inline w-4 h-4" /> warned of risks to
               Holocaust memory both embedded in the technology and possible with
               bad actors. LLMs have invented survivor quotes and “hallucinated”
-              about less-documented history. Generative AI is so ubiquitous that
-              not confronting these challenges risks mass-disinformation.
+              about less-documented history. But generative AI is so ubiquitous that
+              not confronting these challenges risks mass-misinformation.
             </p>
           </motion.div>
 
@@ -130,12 +130,12 @@ const AboutPage = () => {
               read and listen to the sources once the model sees them.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
-              A{" "}
+              Zekher provides a{" "}
               <Link href="/mcp" className="underline">
                 Model Context Protocol (MCP)
               </Link>
               <Server className="inline w-4 h-4 ml-1" /> server that can be used
-              to add Zekher's Lexicon functionality into{" "}
+              to add Lexicon information into{" "}
               <Link
                 href="https://claude.ai"
                 target="_blank"
@@ -158,9 +158,9 @@ const AboutPage = () => {
               who would like to prevent Holocaust denial in their applications.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
-              A unified{" "}
+              All sources are displayed in a unified{" "}
               <Link href="/sources" className="underline">
-                source library
+                library
               </Link>
               <Database className="inline w-4 h-4 ml-1" /> that is the landing
               page for citations from both Chat and MCP.
