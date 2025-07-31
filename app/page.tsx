@@ -94,8 +94,8 @@ export default function Home() {
               </Button>
               <Button asChild variant="outline">
                 <Link className="no-underline" href="/sources">
-                  Browse Sources
-                  <LibraryBig className="w-4 h-4 ml-2" />
+                  About
+                  <Info className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
             </motion.div>

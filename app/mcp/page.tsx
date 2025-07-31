@@ -2,6 +2,7 @@ import * as motion from "motion/react-client";
 import { ArrowUpRight, Code, Terminal } from "lucide-react";
 import Link from "next/link";
 import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariants } from "./config";
+import { mcpConstants } from "../handler/[mcp]/config";
 
 const DevelopersPage = () => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -122,7 +123,7 @@ const DevelopersPage = () => {
                 </h3>
                 <ol className="list-decimal list-inside space-y-2 text-lg">
                   <li>
-                    Find{" "}
+                    Go to{" "}
                     <Link
                       className="underline"
                       href="https://claude.ai/settings/connectors"
@@ -133,16 +134,14 @@ const DevelopersPage = () => {
                     </Link>
                     <ArrowUpRight className="inline w-4 h-4" /> in Settings
                   </li>
-                  <li>Tap "Add custom connector"</li>
-                  <li>Enter the server URL and name the connector "Zekher"</li>
+                  <li>Click "Add custom connector"</li>
+                  <li>Enter server URL and name it "Zekher"</li>
                   <li>
-                    Create a new Chat. Tap the plus button, then click "Add from
-                    Zekher," then "holocaust_education_context" to add the
-                    prompt to the chat. Tap the tool button, then click "Add
-                    Zekher" to make
-                    sure that the tool is enabled.
+                    Start new chat. Add prompt: click +, "Add from Zekher,"
+                    {mcpConstants.promptName}. Add tool: click tool button,
+                    "Zekher," and enable {mcpConstants.toolName}.
                   </li>
-                  <li>Ask a question about the Holocaust</li>
+                  <li>Ask about the Holocaust</li>
                 </ol>
               </div>
               <div>
