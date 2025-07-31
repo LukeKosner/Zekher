@@ -32,23 +32,12 @@ const AboutPage = () => {
           >
             <h2 className="text-2xl font-semibold">Mission</h2>
             <p className={PAGE_STYLING.paragraphClasses}>
-              Zekher (זכר, "remembrance" in Hebrew) is an{" "}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="underline cursor-help">open-source*</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>v3 repository coming with stable version</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>{" "}
-              project that integrates high-quality sources about the Holocaust
-              into the generative artificial intelligence answer pipeline. The
-              goal is to preserve Holocaust memory with AI—both by mitigating
-              Holocaust denial in large language models' answers and by
-              connecting users with verified information and survivor
-              testimonies.
+              Zekher (זכר, "remembrance" in Hebrew) is a project that integrates
+              high-quality sources about the Holocaust into the generative
+              artificial intelligence answer pipeline. The goal is to preserve
+              Holocaust memory with AI—both by mitigating Holocaust denial in
+              large language models' answers and by connecting users with
+              verified information and survivor testimonies.
             </p>
           </motion.div>
 
@@ -80,8 +69,8 @@ const AboutPage = () => {
               <ArrowUpRight className="inline w-4 h-4" /> warned of risks to
               Holocaust memory both embedded in the technology and possible with
               bad actors. LLMs have invented survivor quotes and “hallucinated”
-              about less-documented history. But generative AI is so ubiquitous that
-              not confronting these challenges risks mass-misinformation.
+              about less-documented history. But generative AI is so ubiquitous
+              that not confronting these challenges risks mass-misinformation.
             </p>
           </motion.div>
 

@@ -205,8 +205,9 @@ export default function Home() {
                 Get Involved
               </h2>
               <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-                Zekher is an open-source project in beta. If you have any
-                questions, feedback, or want to contribute, please reach out.
+                Zekher is a project in beta. We hope to open-source everything
+                soon. If you have any questions, feedback, or want to
+                contribute, please reach out.
               </p>
             </div>
 

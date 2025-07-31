@@ -62,13 +62,15 @@ export const nextStepsInstructions = {
 export const errorMessages = {
   lexicon: {
     noTerms: "No search terms provided",
-    noResults: "No results found",
+    noResults:
+      "No results found. Tell the user to try a different query. Do not use background knowledge to answer a question.",
     systemError: "An error occurred while searching the Lexicon."
   },
 
   testimony: {
     noTerms: "No search terms provided",
-    noResults: "No results found",
+    noResults:
+      "No results found. Tell the user to try a different query. Do not use background knowledge to answer a question.",
     systemError: "An error occurred while searching testimonies."
   },
 
