@@ -5,7 +5,7 @@ import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariants } from "./config";
 import { mcpConstants } from "../handler/[mcp]/config";
 
 const DevelopersPage = () => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://zekher.com";
 
   return (
     <div className={PAGE_STYLING.container}>
