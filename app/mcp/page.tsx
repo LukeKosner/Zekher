@@ -138,7 +138,8 @@ const DevelopersPage = () => {
                   <li>
                     Create a new Chat. Tap the plus button, then click "Add from
                     Zekher," then "holocaust_education_context" to add the
-                    prompt to the chat. Tap the tool button, then Zekher to make
+                    prompt to the chat. Tap the tool button, then click "Add
+                    Zekher" to make
                     sure that the tool is enabled.
                   </li>
                   <li>Ask a question about the Holocaust</li>
