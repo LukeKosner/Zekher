@@ -161,7 +161,7 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
 
   const paragraphs = formatTestimonyContent(testimony.content);
   const formattedDate = testimony.date
-    ? new Date(testimony.date).toLocaleDateString()
+    ? new Date(testimony.date).toLocaleDateString('en-US', { timeZone: 'UTC' })
     : null;
 
   return (
@@ -294,7 +294,7 @@ export function TestimonyPageClient({ testimony }: TestimonyPageClientProps) {
           . Zekher hosts these documents to avoid putting pressure on Aviary
           servers. Zekher claims no ownership over this content.
           {testimony.createdAt && (
-            <> Added on {new Date(testimony.createdAt).toLocaleDateString()}.</>
+            <> Added on {new Date(testimony.createdAt).toLocaleDateString('en-US', { timeZone: 'UTC' })}.</>
           )}
         </p>
       </motion.div>

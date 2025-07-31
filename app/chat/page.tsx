@@ -266,6 +266,18 @@ function ChatContent() {
                 const marginClass =
                   isNewConversationTurn && index > 0 ? "mt-4" : "";
 
+                // Filter out intermediate assistant messages containing only tool calls
+                if (message.role === 'assistant' && (message as any).toolInvocations) {
+                  // Check if message has no text content or empty parts
+                  const hasTextContent = Array.isArray(message.parts) 
+                    ? message.parts.some(part => part.type === 'text' && part.text?.trim())
+                    : (message as any).content?.trim();
+                  
+                  if (!hasTextContent) {
+                    return null; // Skip rendering tool-call-only messages
+                  }
+                }
+
                 // Handle structured assistant messages with parts
                 if (
                   !isUser &&
