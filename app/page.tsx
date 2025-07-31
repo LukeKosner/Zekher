@@ -93,7 +93,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link className="no-underline" href="/sources">
+                <Link className="no-underline" href="/about">
                   About
                   <Info className="w-4 h-4 ml-2" />
                 </Link>
