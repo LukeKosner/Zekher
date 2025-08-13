@@ -69,7 +69,6 @@ function ChatContent() {
 
   const { messages, sendMessage, status, stop, error } =
     useChat<CustomUIMessage>({
-      maxSteps: 3,
       onError: (err) => {
         logger.error("Chat error occurred", {
           error: err instanceof Error ? err.message : String(err),
@@ -338,6 +337,7 @@ function ChatContent() {
                               ease: "easeOut",
                               delay: reasoningCount * 0.15
                             }}
+                            style={{ willChange: 'transform, opacity' }}
                           >
                             <AIReasoning
                               isStreaming={isReasoningStreaming}
@@ -377,6 +377,7 @@ function ChatContent() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
                       className={cn("flex flex-col", marginClass)}
+                      style={{ willChange: 'transform, opacity' }}
                     >
                       {renderedParts}
                     </motion.div>
@@ -414,6 +415,7 @@ function ChatContent() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                     className={marginClass}
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     <AIMessage from={isUser ? "user" : "assistant"}>
                       <AIMessageContent>

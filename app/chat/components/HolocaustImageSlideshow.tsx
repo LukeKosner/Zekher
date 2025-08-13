@@ -124,6 +124,7 @@ export function HolocaustImageSlideshow({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="w-full"
+        style={{ willChange: 'transform, opacity' }}
       >
         <Carousel
           setApi={setApi}
@@ -154,6 +155,7 @@ export function HolocaustImageSlideshow({
                     fill
                     className="object-cover object-center"
                     priority={index === 0}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 60vw"
                   />
 
                   {/* Dark overlay for text readability */}

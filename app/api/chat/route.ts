@@ -5,11 +5,13 @@ import {
   convertToModelMessages,
   hasToolCall,
   createUIMessageStream,
-  createUIMessageStreamResponse
+  createUIMessageStreamResponse,
+  stepCountIs
 } from "ai";
 import { holocaustEducatorPrompt } from "./prompts";
 import { chatApiConstants, chatApiErrors } from "./config";
 import { logger, logApiRequest, logApiResponse } from "@/lib/monitoring";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import type {
   ChatErrorResponse,
   ChatApiContext,
@@ -49,6 +51,7 @@ export async function POST(req: Request): Promise<Response> {
           model: "google/gemini-2.5-pro",
           messages: convertToModelMessages(messages),
           system: holocaustEducatorPrompt,
+          stopWhen: stepCountIs(4),
           onStepFinish: (result) => {
             const { finishReason, usage, providerMetadata } = result;
 
@@ -84,6 +87,7 @@ export async function POST(req: Request): Promise<Response> {
             });
           },
           onError: (error) => {
+            console.log(JSON.stringify(error, null, 2));
             logger.error("Stream error", { error });
             Sentry.captureException(error, {
               tags: { component: "api", endpoint: "chat", operation: "stream" }
