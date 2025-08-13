@@ -27,9 +27,9 @@ export interface CitationInfo {
 const CitationContext = createContext<CitationInfo[]>([]);
 
 const fadeUp = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.25 } },
-  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } }
+  initial: { opacity: 0, y: 2 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.1, ease: "easeOut" } },
+  exit: { opacity: 0, y: -2, transition: { duration: 0.1 } }
 };
 
 // Helper to create motion components with proper prop filtering
@@ -51,12 +51,23 @@ const createMotionComponent =
       onTransitionEnd,
       ...htmlProps
     } = props;
+    
+    // Add a slight staggered delay based on position for smoother animations
+    const elementIndex = node?.position?.start.offset || 0;
+    const staggerDelay = Math.min(elementIndex * 0.02, 0.2); // Max 200ms delay
+    
     const MotionTag = motion[Tag] as any;
     return (
       <MotionTag
         key={node?.position?.start.offset}
         className={cn(defaultClassName, className)}
-        {...fadeUp}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ 
+          duration: 0.2, 
+          ease: "easeOut",
+          delay: staggerDelay
+        }}
         {...htmlProps}
       >
         {children}
