@@ -87,7 +87,6 @@ export async function POST(req: Request): Promise<Response> {
             });
           },
           onError: (error) => {
-            console.log(JSON.stringify(error, null, 2));
             logger.error("Stream error", { error });
             Sentry.captureException(error, {
               tags: { component: "api", endpoint: "chat", operation: "stream" }

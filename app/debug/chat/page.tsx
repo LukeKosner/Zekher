@@ -15,7 +15,6 @@ export default function ChatDebugPage() {
 
   const { messages, sendMessage, status, stop, error } =
     useChat<CustomUIMessage>({
-      maxSteps: 3,
       onError: (err) => {
         console.error("Chat error:", err);
         setRawResponse(JSON.stringify(err, null, 2));

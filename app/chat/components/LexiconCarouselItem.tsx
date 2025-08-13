@@ -63,6 +63,7 @@ const PDFPreview = ({ url, className }: { url: string; className?: string }) => 
         const renderContext = {
           canvasContext: context,
           viewport: scaledViewport,
+          canvas: canvas,
         };
         
         await page.render(renderContext).promise;
