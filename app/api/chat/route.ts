@@ -46,7 +46,7 @@ export async function POST(req: Request): Promise<Response> {
       originalMessages: messages,
       execute: ({ writer }) => {
         const result = streamText({
-          model: google(chatApiConstants.modelName),
+          model: "google/gemini-2.5-pro",
           messages: convertToModelMessages(messages),
           system: holocaustEducatorPrompt,
           onStepFinish: (result) => {
