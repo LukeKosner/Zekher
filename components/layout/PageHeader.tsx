@@ -39,8 +39,9 @@ export function PageHeader({
         "border-b border-border overscroll-none",
         // Mobile: full width
         "left-0 right-0 w-full",
-        // Desktop: computed positioning
-        "md:left-[var(--computed-left)] md:w-[var(--computed-width)] md:right-auto"
+        // Desktop: computed positioning with transition matching sidebar close duration
+        "md:left-[var(--computed-left)] md:w-[var(--computed-width)] md:right-auto",
+        "transition-[left,width,height] duration-300 ease-in-out"
       )}
     >
       {/* Desktop: Sidebar trigger  breadcrumbs */}

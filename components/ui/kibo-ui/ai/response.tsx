@@ -207,6 +207,9 @@ function transformCitationsToFootnotes(text: string): string {
 
 function transformCitationsToLinks(text: string): string {
   try {
+    // First unescape any escaped markdown links that might have been accidentally escaped
+    text = text.replace(/\\(\[)/g, '$1').replace(/\\(\])/g, '$1').replace(/\\(\()/g, '$1').replace(/\\(\))/g, '$1');
+
     // First try footnote transformation
     const footnoteTransformed = transformCitationsToFootnotes(text);
     if (footnoteTransformed !== text) {

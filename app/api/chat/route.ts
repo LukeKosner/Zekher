@@ -41,8 +41,6 @@ export async function POST(req: Request): Promise<Response> {
 
     // Track tool calls to prevent duplicates within the same conversation turn
     const toolCallTracker = new Set<string>();
-    // Track whether testimonyTool has been called to allow showUsersAudio
-    let testimonyToolCalled = false;
 
     const stream = createUIMessageStream<CustomUIMessage>({
       originalMessages: messages,
@@ -173,8 +171,6 @@ export async function POST(req: Request): Promise<Response> {
                   };
                 }
                 toolCallTracker.add(callId);
-                // Mark that testimonyTool has been called
-                testimonyToolCalled = true;
                 if (!testimonyTool.execute) {
                   return {
                     error: "Testimony search is temporarily unavailable.",

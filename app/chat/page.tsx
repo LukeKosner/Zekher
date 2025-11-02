@@ -324,6 +324,15 @@ function ChatContent() {
                       const reasoningCount = (message.parts || [])
                         .slice(0, partIndex)
                         .filter((p) => p.type === "reasoning").length;
+
+                      // Fix escaped newlines in reasoning text
+                      let reasoningText = part.text;
+                      reasoningText = reasoningText.replace(/\\n\\n/g, "\n\n");
+                      reasoningText = reasoningText.replace(/\\n/g, "\n");
+
+                      // Remove citation markdown from reasoning (citations shouldn't be in reasoning)
+                      reasoningText = reasoningText.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
                       renderedParts.push(
                         <AIMessage
                           from="assistant"
@@ -345,7 +354,7 @@ function ChatContent() {
                             >
                               <AIReasoningTrigger />
                               <AIReasoningContent>
-                                {part.text}
+                                {reasoningText}
                               </AIReasoningContent>
                             </AIReasoning>
                           </motion.div>
