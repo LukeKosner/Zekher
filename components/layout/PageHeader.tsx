@@ -27,10 +27,12 @@ export function PageHeader({
   return (
     <header
       // Desktop only: use computed positioning via CSS custom properties
-      style={{ 
-        "--computed-left": gap,
-        "--computed-width": `calc(100% - ${gap})`
-      } as React.CSSProperties}
+      style={
+        {
+          "--computed-left": gap,
+          "--computed-width": `calc(100% - ${gap})`
+        } as React.CSSProperties
+      }
       className={cn(
         "fixed inset-y-0 top-0 z-50 flex items-center gap-2",
         // Height: shorter when sidebar is closed (keep mobile at h-12)
