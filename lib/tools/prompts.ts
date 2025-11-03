@@ -40,7 +40,7 @@ Return confirmation that audio has been queued for playback.`,
 // Next steps instructions for each tool
 export const nextStepsInstructions = {
   lexicon:
-    "Provide your answer using multiple sources from this historical data. Use the citation field from each entry EXACTLY as provided (copy the markdown format [Title](url) exactly). Then ask if the user would like to hear survivor accounts.",
+    "Provide your answer using multiple sources from this historical data. CRITICAL: You MUST use the 'citation' field from each entry for all citations - do NOT use pdfUrl, txtUrl, or any other URL fields. Copy the citation markdown format [Title](url) EXACTLY as provided in the citation field. Then ask if the user would like to hear survivor accounts.",
 
   testimony:
     "Now use showUsersAudio to present relevant audio segments from these testimonies.",
