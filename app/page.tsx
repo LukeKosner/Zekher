@@ -8,7 +8,8 @@ import {
   Server,
   Mail,
   Info,
-  LibraryBig
+  LibraryBig,
+  Github
 } from "lucide-react";
 import Link from "next/link";
 import { FeatureCard } from "./components/FeatureCard";
@@ -205,13 +206,22 @@ export default function Home() {
                 Get Involved
               </h2>
               <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-                Zekher is a project in beta. We hope to open-source everything
-                soon. If you have any questions, feedback, or want to
-                contribute, please reach out.
+                Zekher is open source. Contribute, share feedback, or reach out
+                with questions.
               </p>
             </div>
 
             <div className="flex flex-row items-center justify-center gap-4">
+              <Button asChild variant="default" size="lg">
+                <Link
+                  href="https://github.com/LukeKosner/Zekher"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on GitHub
+                  <Github className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href="mailto:support@zekher.com">
                   Email Us

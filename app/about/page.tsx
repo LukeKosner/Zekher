@@ -4,7 +4,8 @@ import {
   MessagesSquare,
   Server,
   Database,
-  GitBranch
+  GitBranch,
+  Github
 } from "lucide-react";
 import Link from "next/link";
 import { ANIMATION_CONFIG, PAGE_STYLING, sectionVariant } from "./config";
@@ -170,10 +171,18 @@ const AboutPage = () => {
               testimony.
             </p>
             <p className={PAGE_STYLING.paragraphClasses}>
-              Zekher was designed to be an open-source project. The first
-              version is still hosted on GitHub, and this version will be added
-              once any vulnerabilities are patched. This project would not be
-              possible without other open source projects. You can find them{" "}
+              Zekher is open source and available on{" "}
+              <Link
+                href="https://github.com/LukeKosner/Zekher"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                GitHub
+                <Github className="inline w-4 h-4 ml-1" />
+              </Link>
+              . This project would not be possible without other open source
+              projects. You can find them{" "}
               <Link href="/oss.txt" className="underline">
                 here
                 <GitBranch className="inline w-4 h-4 ml-1" />

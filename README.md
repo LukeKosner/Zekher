@@ -69,7 +69,7 @@ Combat Holocaust memory challenges from generative AI by providing AI models wit
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/LukeKosner/Zekher.git
 cd zekher
 ```
 
