@@ -107,7 +107,7 @@ bun dev
 
 Visit [http://localhost:3000](http://localhost:3000) to see the application.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── app/                    # Next.js App Router
