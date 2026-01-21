@@ -1,8 +1,8 @@
-# Zekher (זכר) - Holocaust Education Platform
+# Zekher (זכר)
 
-**Zekher** (Hebrew for "memory") is an AI-powered Holocaust education platform that provides responsible access to historical information and survivor testimonies. Built to combat Holocaust memory challenges from generative AI by providing factual information from authoritative sources.
+**Zekher** (Hebrew for "remembrance") is an AI-powered Holocaust education platform that provides responsible access to historical information and survivor testimonies. Built to combat Holocaust memory challenges from generative AI by providing factual information from authoritative sources.
 
-## ⚠️ Private Beta Disclaimer
+## Private Beta Disclaimer
 
 **This application is currently in private beta and is not recommended for production use.**
 
@@ -15,11 +15,11 @@
 
 **For authoritative Holocaust education, please consult established institutions like the United States Holocaust Memorial Museum, Yad Vashem, and peer-reviewed academic sources.**
 
-## 🎯 Mission
+## Mission
 
 Combat Holocaust memory challenges from generative AI by providing AI models with factual information from authoritative sources rather than ignoring AI's educational potential.
 
-## ✨ Features
+## Features
 
 - **AI Chat Interface** - Educational conversations about Holocaust history
 - **Authoritative Sources** - Historical facts from Yad Vashem's Holocaust Lexicon
@@ -28,7 +28,7 @@ Combat Holocaust memory challenges from generative AI by providing AI models wit
 - **MCP** - Integration endpoints for educational applications
 - **Hybrid Search** - Combines semantic and text-based search for accurate results
 
-## 🏗️ Technology Stack
+## Technology Stack
 
 ### Core Framework
 
@@ -56,7 +56,7 @@ Combat Holocaust memory challenges from generative AI by providing AI models wit
 - **Motion** - Animation library
 - **Lucide React** - Icon library
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -136,7 +136,7 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 └── public/                # Static assets & images
 ```
 
-## 🛠️ Development Commands
+## Development Commands
 
 ### Development
 
@@ -167,18 +167,18 @@ bun ingest:testimony # Ingest testimony data only
 bun ingest:clear     # Clear all ingested data
 ```
 
-## 🎯 Target Users
+## Target Users
 
 - **Students & Educators** - Seeking accurate Holocaust information
 - **Developers** - Building educational applications
 - **Researchers** - Accessing survivor testimonies and historical data
 
-## 📊 Monitoring
+## Monitoring
 
 - **Sentry** - Error tracking and performance monitoring
 - **Vercel Analytics** - Usage analytics
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -188,7 +188,7 @@ bun ingest:clear     # Clear all ingested data
 6. Push to the branch: `git push origin feature/amazing-feature`
 7. Open a Pull Request
 
-## 📄 License
+## License
 
 ## This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
