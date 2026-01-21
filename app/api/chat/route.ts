@@ -46,7 +46,7 @@ export async function POST(req: Request): Promise<Response> {
       originalMessages: messages,
       execute: ({ writer }) => {
         const result = streamText({
-          model: "google/gemini-2.5-pro",
+          model: "google/gemini-3-flash",
           messages: convertToModelMessages(messages),
           system: holocaustEducatorPrompt,
           stopWhen: stepCountIs(4),
