@@ -73,7 +73,7 @@
     "drizzle-zod": "^0.8.3",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
-    "fs": "^0.0.1-security",
+    "fs": "^0.0.2",
     "lucide-react": "^0.525.0",
     "mcp-handler": "^1.0.1",
     "motion": "^12.23.12",
