@@ -55,21 +55,11 @@ import {
   CHAT_SESSION_STORAGE_KEY,
   CHAT_THREAD_STORAGE_KEY,
   CHAT_THREAD_UPDATED_EVENT,
-  CHAT_RATE_REFRESH_EVENT
+  CHAT_RATE_REFRESH_EVENT,
+  MAIN_CHAT_SUGGESTIONS
 } from "./constants";
 
 const { logger } = Sentry;
-
-const suggestions = [
-  "What was the Holocaust?",
-  "When did the Holocaust happen?",
-  "How many people were killed during the Holocaust?",
-  "What were the main concentration camps?",
-  "Who were the victims of the Holocaust?",
-  "What was life like in the ghettos?",
-  "How did the world respond to the Holocaust?",
-  "What can we learn from Holocaust survivor testimonies?"
-];
 
 function ChatContent() {
   const authToken = useAuthToken();
@@ -611,7 +601,7 @@ function ChatContent() {
         transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
       >
         <AISuggestions className="px-4">
-          {suggestions.map((suggestion) => (
+          {MAIN_CHAT_SUGGESTIONS.map((suggestion) => (
             <AISuggestion
               key={suggestion}
               onClick={() => handleSuggestionClick(suggestion)}

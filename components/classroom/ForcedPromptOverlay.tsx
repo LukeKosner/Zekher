@@ -50,7 +50,8 @@ export function ForcedPromptOverlay({
             Teacher Interrupt
           </CardTitle>
           <CardDescription>
-            Your teacher asked everyone to respond to this prompt.
+            Your teacher sent a prompt that will trigger an AI response in your
+            chat.
           </CardDescription>
         </CardHeader>
 
@@ -60,7 +61,7 @@ export function ForcedPromptOverlay({
           </p>
 
           <Button onClick={handleRespond} size="sm">
-            Respond now
+            Continue
           </Button>
         </CardContent>
       </Card>

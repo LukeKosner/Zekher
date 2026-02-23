@@ -27,21 +27,15 @@ import {
   Clock,
   Users,
 } from "lucide-react";
+import { MAIN_CHAT_SUGGESTIONS } from "@/app/chat/constants";
 
-const SECTION_LABEL_CLASS =
-  "text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground";
 const TOPIC_PRESETS = [
   "Rise of Nazism",
   "The Nuremberg Trials",
   "Jewish resistance",
   "Liberation and memory",
 ];
-const SUGGESTED_PROMPT_PRESETS = [
-  "What choices were available to bystanders in this period?",
-  "How did propaganda shape daily life?",
-  "What parallels do you notice with modern misinformation?",
-  "Which survivor testimony gave you the strongest new insight?",
-];
+const SUGGESTED_PROMPT_PRESETS = MAIN_CHAT_SUGGESTIONS;
 
 export default function TeacherDashboard() {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -287,24 +281,21 @@ export default function TeacherDashboard() {
             <CardHeader>
               <CardTitle>Create New Class</CardTitle>
               <CardDescription>
-                Start a live classroom session and share the join code with
-                students.
+                Start a class, share the join code, and optionally preload a
+                few prompts.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreate} className="space-y-4">
-                <div className="space-y-3">
-                  <p className={SECTION_LABEL_CLASS}>Class Details</p>
-                  <div className="space-y-2">
-                    <Label htmlFor="class-name">Class Name</Label>
-                    <Input
-                      id="class-name"
-                      value={className}
-                      onChange={(e) => setClassName(e.target.value)}
-                      placeholder="e.g. Period 3 History"
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="class-name">Class Name</Label>
+                  <Input
+                    id="class-name"
+                    value={className}
+                    onChange={(e) => setClassName(e.target.value)}
+                    placeholder="e.g. Period 3 History"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -329,89 +320,87 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
-                <div className="h-px bg-border/70" />
+                <div className="space-y-2">
+                  <Label htmlFor="assignment-prompt">
+                    Opening Prompt (optional)
+                  </Label>
+                  <Textarea
+                    id="assignment-prompt"
+                    value={assignmentPrompt}
+                    onChange={(e) => setAssignmentPrompt(e.target.value)}
+                    placeholder="e.g. Read one testimony excerpt and identify one turning point in the narrator's experience."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Shows at the top of the student view when class starts.
+                  </p>
+                </div>
 
-                <div className="space-y-3">
-                  <p className={SECTION_LABEL_CLASS}>Prompt Setup</p>
-                  <div className="space-y-2">
-                    <Label htmlFor="assignment-prompt">
-                      Opening Assignment (optional)
-                    </Label>
-                    <Textarea
-                      id="assignment-prompt"
-                      value={assignmentPrompt}
-                      onChange={(e) => setAssignmentPrompt(e.target.value)}
-                      placeholder="e.g. Read one testimony excerpt and identify one turning point in the narrator's experience."
+                <div className="space-y-2">
+                  <Label htmlFor="suggested-prompt-input">
+                    Student Prompt Buttons (optional)
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="suggested-prompt-input"
+                      value={suggestedPromptInput}
+                      onChange={(e) => setSuggestedPromptInput(e.target.value)}
+                      placeholder="Add a prompt students can tap"
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter") return;
+                        e.preventDefault();
+                        addSuggestedPrompt(suggestedPromptInput);
+                      }}
+                      disabled={suggestedPrompts.length >= 6}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addSuggestedPrompt(suggestedPromptInput)}
+                      disabled={
+                        !suggestedPromptInput.trim() ||
+                        suggestedPrompts.length >= 6
+                      }
+                    >
+                      Add
+                    </Button>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="suggested-prompt-input">
-                      Suggested Student Prompts (optional)
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="suggested-prompt-input"
-                        value={suggestedPromptInput}
-                        onChange={(e) => setSuggestedPromptInput(e.target.value)}
-                        placeholder="Add a suggested question students can tap"
-                        onKeyDown={(e) => {
-                          if (e.key !== "Enter") return;
-                          e.preventDefault();
-                          addSuggestedPrompt(suggestedPromptInput);
-                        }}
-                        disabled={suggestedPrompts.length >= 6}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addSuggestedPrompt(suggestedPromptInput)}
-                        disabled={
-                          !suggestedPromptInput.trim() ||
-                          suggestedPrompts.length >= 6
-                        }
+                  <p className="text-xs text-muted-foreground">
+                    Students can tap these to start a question. Add up to 6.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedPrompts.map((prompt) => (
+                      <span
+                        key={prompt}
+                        className="inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-xs"
                       >
-                        Add
-                      </Button>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {suggestedPrompts.map((prompt) => (
-                        <span
-                          key={prompt}
-                          className="inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-xs"
-                        >
-                          {prompt}
-                          <button
-                            type="button"
-                            onClick={() => removeSuggestedPrompt(prompt)}
-                            className="rounded-sm p-0.5 hover:bg-muted"
-                            aria-label={`Remove suggested prompt: ${prompt}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {SUGGESTED_PROMPT_PRESETS.map((prompt) => (
+                        {prompt}
                         <button
-                          key={prompt}
                           type="button"
-                          onClick={() => addSuggestedPrompt(prompt)}
-                          className="rounded-md border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          disabled={suggestedPrompts.length >= 6}
+                          onClick={() => removeSuggestedPrompt(prompt)}
+                          className="rounded-sm p-0.5 hover:bg-muted"
+                          aria-label={`Remove suggested prompt: ${prompt}`}
                         >
-                          + {prompt}
+                          <X className="h-3 w-3" />
                         </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Up to 6 suggested prompts will be added to the live class
-                      at creation time.
-                    </p>
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {SUGGESTED_PROMPT_PRESETS.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => addSuggestedPrompt(prompt)}
+                        className="rounded-md border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        disabled={suggestedPrompts.length >= 6}
+                      >
+                        + {prompt}
+                      </button>
+                    ))}
                   </div>
                 </div>
 

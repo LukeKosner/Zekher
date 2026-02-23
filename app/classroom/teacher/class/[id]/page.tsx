@@ -74,19 +74,23 @@ export default function LiveClassPage() {
 
   const promptTypeMeta: Record<
     TeacherPromptType,
-    { label: string; placeholder: string }
+    { label: string; placeholder: string; description: string }
   > = {
     forced: {
       label: "Teacher interrupt",
-      placeholder: "Send an interrupt prompt students must answer...",
+      placeholder: "Force an immediate AI response in student chats...",
+      description:
+        "This pushes the prompt into each student chat so the model responds right away.",
     },
     suggested: {
       label: "Suggested prompt",
       placeholder: "Suggest a prompt students can ask...",
+      description: "Adds a tappable question students can choose to send.",
     },
     assignment: {
       label: "Assignment instructions",
       placeholder: "Share assignment instructions...",
+      description: "Shows as setup guidance before students start chatting.",
     },
   };
 
@@ -411,6 +415,9 @@ export default function LiveClassPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {promptTypeMeta[promptType].description}
+                </p>
 
                 <AIInput onSubmit={handleSendPrompt}>
                   <AIInputField
