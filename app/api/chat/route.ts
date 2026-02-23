@@ -8,6 +8,13 @@ import { chatApiErrors } from "./config";
 
 export const maxDuration = 300;
 
+function normalizeClientSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, 128);
+}
+
 function isRateLimitError(message: string): boolean {
   const normalized = message.toLowerCase();
   return (
@@ -141,22 +148,20 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const authorization = req.headers.get("authorization") ?? undefined;
-    const ip =
-      req.headers.get("x-forwarded-for") ??
-      req.headers.get("x-real-ip") ??
-      undefined;
+    const clientSessionId = normalizeClientSessionId(
+      requestData?.clientSessionId
+    );
     const proxyBaseUrl = convexSiteUrl ?? convexUrl!;
     const proxyResponse = await fetch(`${proxyBaseUrl}/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(authorization ? { Authorization: authorization } : {}),
-        ...(ip ? { "x-forwarded-for": ip } : {}),
       },
       body: JSON.stringify({
         messages: Array.isArray(requestData?.messages) ? requestData.messages : [],
         threadId: requestData?.threadId ?? undefined,
-        clientSessionId: requestData?.clientSessionId ?? undefined,
+        clientSessionId,
       }),
     });
 

@@ -1,6 +1,50 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import type { Id } from "./_generated/dataModel";
+
+async function assertTeacherOwnsClass(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">
+): Promise<void> {
+  const userId = await auth.getUserId(ctx);
+  if (!userId) {
+    throw new Error("Not authenticated");
+  }
+
+  const classDoc = await ctx.db.get(classId);
+  if (!classDoc) {
+    throw new Error("Class not found");
+  }
+
+  const teacher = await ctx.db
+    .query("teachers")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .unique();
+  if (!teacher || classDoc.teacherId !== teacher._id) {
+    throw new Error("Not authorized");
+  }
+}
+
+async function assertStudentSessionForClass(
+  ctx: QueryCtx | MutationCtx,
+  args: {
+    studentId: Id<"students">;
+    classId: Id<"classes">;
+    sessionToken: string;
+  }
+): Promise<void> {
+  const student = await ctx.db.get(args.studentId);
+  if (!student || student.sessionToken !== args.sessionToken) {
+    throw new Error("Invalid student or token");
+  }
+  if (student.classId !== args.classId) {
+    throw new Error("Student not in this class");
+  }
+  if (student.kickedAt) {
+    throw new Error("Student has been removed from this class");
+  }
+}
 
 export const mirrorMessage = mutation({
   args: {
@@ -50,24 +94,7 @@ export const getMessagesForClass = query({
     })
   ),
   handler: async (ctx, args) => {
-    // Auth check: must be the teacher who owns this class
-    const userId = await auth.getUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const classDoc = await ctx.db.get(args.classId);
-    if (!classDoc) {
-      throw new Error("Class not found");
-    }
-
-    const teacher = await ctx.db
-      .query("teachers")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
-    if (!teacher || classDoc.teacherId !== teacher._id) {
-      throw new Error("Not authorized");
-    }
+    await assertTeacherOwnsClass(ctx, args.classId);
 
     return await ctx.db
       .query("classMessages")
@@ -81,6 +108,7 @@ export const getMessagesForStudent = query({
   args: {
     studentId: v.id("students"),
     classId: v.id("classes"),
+    sessionToken: v.string(),
   },
   returns: v.array(
     v.object({
@@ -94,6 +122,8 @@ export const getMessagesForStudent = query({
     })
   ),
   handler: async (ctx, args) => {
+    await assertStudentSessionForClass(ctx, args);
+
     return await ctx.db
       .query("classMessages")
       .withIndex("by_studentId", (q) => q.eq("studentId", args.studentId))
@@ -119,6 +149,8 @@ export const getRecentActivity = query({
     })
   ),
   handler: async (ctx, args) => {
+    await assertTeacherOwnsClass(ctx, args.classId);
+
     return await ctx.db
       .query("classMessages")
       .withIndex("by_classId_and_sentAt", (q) => q.eq("classId", args.classId))

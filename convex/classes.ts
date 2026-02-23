@@ -185,7 +185,7 @@ export const getClassById = query({
       name: v.string(),
       topic: v.optional(v.string()),
       teacherId: v.id("teachers"),
-      joinCode: v.string(),
+      joinCode: v.optional(v.string()),
       status: v.union(v.literal("active"), v.literal("ended")),
       settings: v.object({
         activityCheckInterval: v.number(),
@@ -208,7 +208,20 @@ export const getClassById = query({
       .withIndex("by_classId", (q) => q.eq("classId", args.classId))
       .collect();
 
-    return { ...classDoc, studentCount: students.length };
+    const userId = await auth.getUserId(ctx);
+    let joinCode: string | undefined;
+
+    if (userId) {
+      const teacher = await ctx.db
+        .query("teachers")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique();
+      if (teacher && classDoc.teacherId === teacher._id) {
+        joinCode = classDoc.joinCode;
+      }
+    }
+
+    return { ...classDoc, joinCode, studentCount: students.length };
   },
 });
 

@@ -116,7 +116,17 @@ export function ShareButton({
     };
   }, [threadId]);
 
-  const canShare = !!resolvedThreadId && !!sessionId;
+  const hasShareContext = !!resolvedThreadId && !!sessionId;
+  const canManageShare = useQuery(
+    api.shares.canManageSharesForThread,
+    hasShareContext
+      ? {
+          threadId: resolvedThreadId as Id<"chatThreads">,
+          clientSessionId: sessionId
+        }
+      : "skip"
+  );
+  const canShare = hasShareContext && canManageShare === true;
   const existingShare = useQuery(
     api.shares.getMyActiveShareForThread,
     canShare
@@ -132,21 +142,38 @@ export function ShareButton({
     }
   }, [existingShare?.slug]);
 
+  useEffect(() => {
+    if (
+      threadId !== undefined ||
+      typeof window === "undefined" ||
+      canManageShare !== false
+    ) {
+      return;
+    }
+    window.localStorage.removeItem(CHAT_THREAD_STORAGE_KEY);
+    setResolvedThreadId(null);
+    setCreatedSlug(null);
+  }, [canManageShare, threadId]);
+
   const effectiveSlug = existingShare?.slug ?? createdSlug;
   const isShared = !!effectiveSlug;
   const shareUrl = effectiveSlug ? `${origin}/chat/shared/${effectiveSlug}` : null;
-  const loadingShareState = canShare && existingShare === undefined;
+  const loadingShareAccess = hasShareContext && canManageShare === undefined;
+  const loadingShareState = loadingShareAccess || (canShare && existingShare === undefined);
 
   const buttonTitle = useMemo(() => {
-    if (!canShare) return "Send a message to enable sharing.";
+    if (!hasShareContext) return "Send a message to enable sharing.";
+    if (canManageShare === false) {
+      return "This chat is no longer shareable in the current session.";
+    }
     if (actionLoading) return "Updating share settings...";
     if (dialogOpen) return "Manage sharing";
     if (error) return error;
     return isShared ? "Manage shared link" : "Share chat";
-  }, [actionLoading, canShare, dialogOpen, error, isShared]);
+  }, [actionLoading, canManageShare, dialogOpen, error, hasShareContext, isShared]);
 
   const onSwitchChange = async (nextChecked: boolean) => {
-    if (!resolvedThreadId) return;
+    if (!resolvedThreadId || !canShare) return;
 
     if (nextChecked && isShared) return;
     if (!nextChecked && !isShared) return;
@@ -168,7 +195,17 @@ export function ShareButton({
         setCreatedSlug(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update share settings");
+      const message =
+        err instanceof Error ? err.message : "Failed to update share settings";
+      if (message === "Not authorized") {
+        setError("This chat is no longer available for sharing.");
+        if (typeof window !== "undefined" && threadId === undefined) {
+          window.localStorage.removeItem(CHAT_THREAD_STORAGE_KEY);
+          setResolvedThreadId(null);
+        }
+      } else {
+        setError(message);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -221,7 +258,11 @@ export function ShareButton({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
             >
-              Send at least one message before creating a share link.
+              {!hasShareContext
+                ? "Send at least one message before creating a share link."
+                : canManageShare === false
+                  ? "This chat is no longer available in the current session. Send a new message to create a fresh shareable thread."
+                  : "Checking share availability..."}
             </motion.p>
           ) : (
             <motion.div

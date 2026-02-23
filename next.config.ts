@@ -2,6 +2,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV
+  },
   images: {
     unoptimized: false,
     remotePatterns: [
@@ -12,23 +15,30 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const allowOrigin = process.env.CORS_ALLOW_ORIGIN?.trim();
+    const corsHeaders = [
+      ...(allowOrigin
+        ? [
+            {
+              key: "Access-Control-Allow-Origin",
+              value: allowOrigin,
+            },
+          ]
+        : []),
+      {
+        key: "Access-Control-Allow-Methods",
+        value: "GET, POST, OPTIONS",
+      },
+      {
+        key: "Access-Control-Allow-Headers",
+        value: "Content-Type, Authorization",
+      },
+    ];
+
     return [
       {
         source: "/api/:path*",
-        headers: [
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*" // Set your origin
-          },
-          {
-            key: "Access-Control-Allow-Methods",
-            value: "GET, POST, PUT, DELETE, OPTIONS"
-          },
-          {
-            key: "Access-Control-Allow-Headers",
-            value: "Content-Type, Authorization"
-          }
-        ]
+        headers: corsHeaders,
       }
     ];
   }

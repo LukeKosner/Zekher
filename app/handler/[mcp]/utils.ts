@@ -2,9 +2,10 @@
  * MCP (Model Context Protocol) utilities backed by Convex.
  */
 
-import { fetchAction } from "convex/nextjs";
+import { fetchAction, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { errorMessages, nextStepsInstructions } from "./config";
+import type { ToolLexiconEntry } from "@/lib/shared/types";
 
 function isRateLimitError(message: string): boolean {
   const normalized = message.toLowerCase();
@@ -57,6 +58,54 @@ export const searchLexicon = async (
       entries: [],
       formattedText: isRateLimit ? "Rate limited" : errorMessages.systemError,
       nextSteps: nextStepsInstructions.noResults,
+    };
+  }
+};
+
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL ?? "https://zekher.com";
+}
+
+export const getLexiconEntryDetail = async (
+  sourceId: string,
+  options?: { token?: string }
+): Promise<{ entry?: ToolLexiconEntry & { citationUrl: string }; error?: string }> => {
+  try {
+    const trimmedId = sourceId?.trim();
+    if (!trimmedId) {
+      return { error: "Missing sourceId" };
+    }
+
+    const entry = await fetchQuery(
+      api.sources.getLexiconEntryBySourceId,
+      { sourceId: trimmedId },
+      { token: options?.token }
+    );
+
+    if (!entry) {
+      return { error: "Entry not found" };
+    }
+
+    const baseUrl = getBaseUrl();
+    const title = entry.title ?? `Entry ${entry.sourceId}`;
+    const citationUrl = `${baseUrl}/sources/lexicon/${entry.sourceId}`;
+
+    return {
+      entry: {
+        id: entry.sourceId,
+        title,
+        content: entry.content,
+        citation: `[${title}](${citationUrl})`,
+        filename: entry.filename ?? "",
+        pdfUrl: entry.pdfUrl ?? undefined,
+        txtUrl: entry.txtUrl ?? undefined,
+        redirectUrl: entry.redirectUrl ?? undefined,
+        citationUrl,
+      },
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Failed to load entry detail",
     };
   }
 };

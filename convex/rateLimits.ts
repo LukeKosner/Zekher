@@ -8,6 +8,13 @@ export type RateLimitChannel = "chat" | "mcp";
 export type RateLimitOwnerType = "user" | "anonymous";
 export const CHAT_ANONYMOUS_LIMIT = 10;
 
+function normalizeAnonymousSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, 128);
+}
+
 export const appRateLimiter = new RateLimiter(components.rateLimiter, {
   chatAnonymous: { kind: "fixed window", rate: CHAT_ANONYMOUS_LIMIT, period: HOUR },
   mcpAnonymous: { kind: "fixed window", rate: 10, period: HOUR },
@@ -73,7 +80,8 @@ export const getAnonymousChatRateStatus = query({
       return null;
     }
 
-    const anonymousOwnerId = args.clientSessionId ?? args.ip ?? "anon";
+    const anonymousOwnerId =
+      normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
     const now = Date.now();
     const windowStart = now - HOUR;
 

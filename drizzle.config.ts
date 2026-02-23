@@ -6,9 +6,9 @@ if (!env.DATABASE_URL) {
 }
 
 export default {
-  schema: "./lib/db/schema.ts",
+  schema: "./lib/database/schema.ts",
   dialect: "postgresql",
-  out: "./lib/db/migrations",
+  out: "./lib/database/migrations",
   dbCredentials: {
     url: env.DATABASE_URL
   }

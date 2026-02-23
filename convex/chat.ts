@@ -65,12 +65,22 @@ CRITICAL RULES:
 Remember: You're a librarian, not a historian. Your role is to fetch and present primary source material, not to know things yourself.
 `;
 const hasGatewayApiKey = Boolean(process.env.AI_GATEWAY_API_KEY);
+const hasVercelOidcToken = Boolean(process.env.VERCEL_OIDC_TOKEN);
+const hasGatewayAuth = hasGatewayApiKey || hasVercelOidcToken;
+const hasGoogleApiKey = Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
 const gatewayChatModel =
   process.env.AI_GATEWAY_CHAT_MODEL ?? "google/gemini-3-flash";
 const googleChatModel = process.env.GOOGLE_CHAT_MODEL ?? "gemini-3-flash";
-export const chatLanguageModel = hasGatewayApiKey
+export const chatLanguageModel = hasGatewayAuth
   ? gateway(gatewayChatModel)
   : google(googleChatModel);
+
+export function assertChatModelCredentials() {
+  if (hasGatewayAuth || hasGoogleApiKey) return;
+  throw new Error(
+    "No AI provider credentials configured. Set AI_GATEWAY_API_KEY (preferred) or VERCEL_OIDC_TOKEN for Gateway auth, or set GOOGLE_GENERATIVE_AI_API_KEY for direct Google provider auth."
+  );
+}
 
 export const googleProviderOptions = {
   google: {
@@ -132,6 +142,13 @@ export function normalizeUiMessages(messages: any[]): any[] {
       }
       return message;
     });
+}
+
+function normalizeAnonymousSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, 128);
 }
 
 const lexiconSchema = z.object({
@@ -444,7 +461,8 @@ export const getOrCreateThread = mutation({
   handler: async (ctx, args): Promise<Id<"chatThreads">> => {
     const userId = await auth.getUserId(ctx);
     const ownerType = userId ? "user" : "anonymous";
-    const ownerIdOrAnonId = userId ?? args.clientSessionId ?? args.ip ?? "anon";
+    const ownerIdOrAnonId =
+      userId ?? normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
     const resolved: { threadId: Id<"chatThreads">; agentThreadId: string } =
       await ctx.runMutation(internal.chat.getOrCreateThreadForOwner, {
         threadId: args.threadId,
@@ -511,7 +529,8 @@ export const listThreadMessages = query({
     if (!thread) return [];
 
     const userId = await auth.getUserId(ctx);
-    const ownerIdOrAnonId = userId ?? args.clientSessionId ?? args.ip ?? "anon";
+    const ownerIdOrAnonId =
+      userId ?? normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
     const ownerType = userId ? "user" : "anonymous";
     if (
       thread.ownerType !== ownerType ||
@@ -558,8 +577,10 @@ export const generateReply = action({
     assistant: { content: string; parts: Array<any> };
   }> => {
     const userId = await auth.getUserId(ctx);
+    assertChatModelCredentials();
     const ownerType = userId ? "user" : "anonymous";
-    const ownerIdOrAnonId = userId ?? args.clientSessionId ?? args.ip ?? "anon";
+    const ownerIdOrAnonId =
+      userId ?? normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
     const key = userId ?? ownerIdOrAnonId;
 
     const limit = await appRateLimiter.limit(

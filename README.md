@@ -25,7 +25,7 @@ Combat Holocaust memory challenges from generative AI by providing AI models wit
 - **Authoritative Sources** - Historical facts from Yad Vashem's Holocaust Lexicon
 - **Survivor Testimonies** - Personal accounts collected by Dr. David P. Boder
 - **Audio Integration** - Access to original survivor testimony recordings
-- **MCP** - Integration endpoints for educational applications
+- **MCP + MCP Apps** - Integration endpoints plus inline interactive UIs for compatible MCP hosts
 - **Hybrid Search** - Combines semantic and text-based search for accurate results
 
 ## 🏗️ Technology Stack

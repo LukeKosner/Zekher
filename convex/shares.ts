@@ -11,6 +11,13 @@ function createSlug(length = 12) {
   return slug;
 }
 
+function normalizeAnonymousSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, 128);
+}
+
 async function assertThreadAccessAndMaybePromoteOwner(
   ctx: any,
   thread: {
@@ -22,7 +29,8 @@ async function assertThreadAccessAndMaybePromoteOwner(
   options?: { allowOwnershipPromotion?: boolean }
 ) {
   const userId = await auth.getUserId(ctx);
-  const anonymousOwnerId = args.clientSessionId ?? args.ip ?? "anon";
+  const anonymousOwnerId =
+    normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
   const actorId = userId ?? anonymousOwnerId;
 
   const userOwnsThread =
@@ -187,6 +195,32 @@ export const getMyActiveShareForThread = query({
       slug: activeShare.slug,
       createdAt: activeShare.createdAt,
     };
+  },
+});
+
+export const canManageSharesForThread = query({
+  args: {
+    threadId: v.id("chatThreads"),
+    clientSessionId: v.optional(v.string()),
+    ip: v.optional(v.string()),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) return false;
+
+    try {
+      await assertThreadAccessAndMaybePromoteOwner(ctx, thread, args, {
+        allowOwnershipPromotion: false,
+      });
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message === "Not authorized") {
+        return false;
+      }
+      throw error;
+    }
   },
 });
 

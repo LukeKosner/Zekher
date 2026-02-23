@@ -23,10 +23,10 @@ export const EXTERNAL_LINKS = {
 } as const;
 
 export const MCP_SERVER_CONFIG = {
-  protocol: "SSE (Server-Sent Events)",
+  protocol: "Streamable HTTP",
   endpoints: {
-    primary: "/sse",
-    fallback: "/mcp"
+    primary: "/mcp",
+    fallback: "/sse"
   }
 } as const;
 
@@ -38,9 +38,19 @@ export const MCP_CAPABILITIES = {
   tools: {
     name: "yad_vashem_holocaust_lexicon",
     description:
-      "Search Yad Vashem's Holocaust Lexicon for historical information and terminology. Returns up to 6 sources with proper citations and usage guidelines.",
+      "Search Yad Vashem's Holocaust Lexicon with exact citations and MCP App rendering support.",
     maxResults: 6,
     maxTerms: 6
+  },
+  appTools: {
+    detailName: "yad_vashem_lexicon_entry_detail",
+    description:
+      "App-only detail loader used by the MCP App to drill into specific source entries."
+  },
+  appResource: {
+    uri: "ui://zekher/lexicon-explorer.html",
+    description:
+      "Interactive lexicon explorer UI resource rendered inline in MCP Apps-capable hosts."
   },
   prompts: {
     name: "holocaust_education_context",

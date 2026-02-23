@@ -1,10 +1,14 @@
 import {
   query,
   mutation,
+  type MutationCtx,
+  type QueryCtx,
   internalMutation,
 } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { auth } from "./auth";
+import type { Id } from "./_generated/dataModel";
 
 const ACTIVITY_QUESTIONS = [
   "What is the most important thing you've learned so far?",
@@ -13,6 +17,29 @@ const ACTIVITY_QUESTIONS = [
   "How does what you're learning connect to what you already knew?",
   "What has surprised you most in your research?",
 ];
+
+async function assertTeacherOwnsClass(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">
+): Promise<void> {
+  const userId = await auth.getUserId(ctx);
+  if (!userId) {
+    throw new Error("Not authenticated");
+  }
+
+  const classDoc = await ctx.db.get(classId);
+  if (!classDoc) {
+    throw new Error("Class not found");
+  }
+
+  const teacher = await ctx.db
+    .query("teachers")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .unique();
+  if (!teacher || classDoc.teacherId !== teacher._id) {
+    throw new Error("Not authorized");
+  }
+}
 
 export const sendActivityCheck = internalMutation({
   args: {
@@ -63,6 +90,17 @@ export const respondToCheck = mutation({
     if (!student || student.sessionToken !== args.sessionToken) {
       throw new Error("Invalid student or token");
     }
+    if (student.kickedAt) {
+      throw new Error("Student has been removed from this class");
+    }
+
+    const check = await ctx.db.get(args.checkId);
+    if (!check) {
+      throw new Error("Activity check not found");
+    }
+    if (check.classId !== student.classId) {
+      throw new Error("Activity check does not belong to this student");
+    }
 
     // Check if already responded
     const existing = await ctx.db
@@ -90,6 +128,8 @@ export const respondToCheck = mutation({
 export const getActiveCheck = query({
   args: {
     classId: v.id("classes"),
+    studentId: v.id("students"),
+    sessionToken: v.string(),
   },
   returns: v.union(
     v.object({
@@ -102,6 +142,17 @@ export const getActiveCheck = query({
     v.null()
   ),
   handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student || student.sessionToken !== args.sessionToken) {
+      throw new Error("Invalid student or token");
+    }
+    if (student.classId !== args.classId) {
+      throw new Error("Student not in this class");
+    }
+    if (student.kickedAt) {
+      throw new Error("Student has been removed from this class");
+    }
+
     const checks = await ctx.db
       .query("activityChecks")
       .withIndex("by_classId", (q) => q.eq("classId", args.classId))
@@ -124,6 +175,7 @@ export const getActiveCheck = query({
 
 export const getCheckResponses = query({
   args: {
+    classId: v.id("classes"),
     checkId: v.id("activityChecks"),
   },
   returns: v.array(
@@ -137,6 +189,13 @@ export const getCheckResponses = query({
     })
   ),
   handler: async (ctx, args) => {
+    await assertTeacherOwnsClass(ctx, args.classId);
+
+    const check = await ctx.db.get(args.checkId);
+    if (!check || check.classId !== args.classId) {
+      throw new Error("Activity check not found");
+    }
+
     return await ctx.db
       .query("activityResponses")
       .withIndex("by_checkId", (q) => q.eq("checkId", args.checkId))

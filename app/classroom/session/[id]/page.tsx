@@ -176,11 +176,15 @@ export default function StudentSessionPage() {
   const ackForcedPrompt = useMutation(api.forcedPrompts.ackForcedPrompt);
   const activeCheck = useQuery(
     api.activityChecks.getActiveCheck,
-    { classId }
+    studentId && sessionToken
+      ? { classId, studentId, sessionToken }
+      : "skip"
   );
   const unackedPrompts = useQuery(
     api.forcedPrompts.getUnackedPrompts,
-    studentId ? { classId, studentId } : "skip"
+    studentId && sessionToken
+      ? { classId, studentId, sessionToken }
+      : "skip"
   );
   const studentRecord = useQuery(
     api.students.getStudentByToken,

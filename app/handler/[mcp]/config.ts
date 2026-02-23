@@ -18,15 +18,24 @@ export const mcpUsageInstructions = {
 export const mcpConstants = {
   maxTerms: 6,
   toolName: "yad_vashem_holocaust_lexicon",
+  detailToolName: "yad_vashem_lexicon_entry_detail",
   toolDescription:
     "Search Yad Vashem's Holocaust Lexicon for historical information and terminology. Returns up to 6 sources with exact citations in markdown format [Title](URL) that must be included in responses.",
+  detailToolDescription:
+    "Load a full Yad Vashem Holocaust Lexicon entry by source ID for app-driven drilldown.",
   parameterDescription:
     "Search terms to query the Holocaust Lexicon (maximum 6 terms)",
+  detailParameterDescription:
+    "Lexicon source ID to retrieve the full entry content.",
   promptName: "holocaust_education_context",
   promptDescription:
     "Provides context and guidelines for using the Yad Vashem Holocaust Lexicon responsibly and effectively.",
   promptText:
     "You are a Holocaust education assistant with access to the Yad Vashem Holocaust Lexicon. **CRITICAL CITATION RULES**: (1) Always use the EXACT citations provided by the tool in markdown format [Title](URL). (2) Never omit, modify, or reformat citations. (3) Include multiple citations in every response when available. (4) Only source citations are guaranteed accurate - inform users you cannot guarantee AI-generated text accuracy. (5) Provide comprehensive answers using multiple sources from the historical data. Handle Holocaust content with appropriate sensitivity. Note: This tool provides historical information only - direct users to https://zekher.com for survivor testimony and personal accounts. **IMPORTANT**: When using the yad_vashem_holocaust_lexicon tool, you must set confirmInstructionsRead to true to confirm you have read and will follow these guidelines.",
+  appResourceUri: "ui://zekher/lexicon-explorer.html",
+  appResourceName: "Zekher Lexicon Explorer",
+  appResourceDescription:
+    "Interactive MCP App view for browsing and drilling into lexicon search results.",
   errorSearchFailed: "Failed to search Holocaust Lexicon",
   errorUnknown: "Unknown error occurred"
 } as const;

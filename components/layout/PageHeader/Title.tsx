@@ -17,6 +17,8 @@ export function ConditionalTitle({
   isMobile,
   title
 }: ConditionalTitleProps) {
+  const showBeta = process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+
   // Show title when sidebar is closed or collapsed
   const shouldShowTitle = sidebarOpen === false || isMobile;
 
@@ -31,7 +33,10 @@ export function ConditionalTitle({
           <Tooltip>
             <TooltipTrigger asChild>
               <h1 className="text-lg md:text-xl cursor-pointer">
-                {title} <span className="text-muted-foreground">Beta</span>
+                {title}
+                {showBeta ? (
+                  <span className="text-muted-foreground"> Beta</span>
+                ) : null}
               </h1>
             </TooltipTrigger>
             <TooltipContent>

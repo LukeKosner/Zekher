@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/sidebar";
 
 export function Logo() {
+  const showBeta = process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+
   return (
     <Link href="/">
       <SidebarMenu>
@@ -30,7 +32,10 @@ export function Logo() {
             />
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">
-                Zekher <span className="text-muted-foreground">Beta</span>
+                Zekher
+                {showBeta ? (
+                  <span className="text-muted-foreground"> Beta</span>
+                ) : null}
               </span>
               <span className="truncate text-xs">Holocaust Tools for AI</span>
             </div>

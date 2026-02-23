@@ -14,3 +14,22 @@ export interface McpLexiconResponse {
   };
   nextSteps: string;
 }
+
+export interface McpLexiconAppSource extends ToolLexiconEntry {
+  citationUrl: string;
+}
+
+export interface McpLexiconSearchStructuredContent
+  extends Record<string, unknown> {
+  type: "lexicon_search";
+  queryTerms: string[];
+  resultCount: number;
+  sources: McpLexiconAppSource[];
+  nextSteps: string;
+}
+
+export interface McpLexiconDetailStructuredContent
+  extends Record<string, unknown> {
+  type: "lexicon_entry_detail";
+  entry: McpLexiconAppSource;
+}

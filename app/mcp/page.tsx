@@ -45,10 +45,9 @@ const DevelopersPage = () => {
               </Link>
               <ArrowUpRight className="inline w-4 h-4" />, and custom
               applications. The server provides structured access to historical
-              information with proper citations and usage guidelines.
-              Unfortunately, no major AI apps support MCP free of charge. Once
-              there is an option, this will cease being simply a developer
-              feature.
+              information with proper citations and usage guidelines. It now
+              supports MCP Apps so compatible hosts can render an interactive
+              Zekher Lexicon Explorer UI inline with tool calls.
             </p>
           </motion.div>
 
@@ -67,20 +66,51 @@ const DevelopersPage = () => {
             <div className="mt-6 space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-3">Tools</h3>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Code className="w-4 h-4" />
+                      {mcpConstants.toolName}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Search Yad Vashem's Holocaust Lexicon and return cited
+                      historical sources. In MCP Apps-capable hosts, this tool
+                      renders the interactive lexicon explorer UI.
+                    </p>
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Parameters:</strong> Search terms to query the
+                      Holocaust Lexicon (maximum 6 terms), plus{" "}
+                      <code>confirmInstructionsRead: true</code>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Code className="w-4 h-4" />
+                      {mcpConstants.detailToolName}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      App-only tool used by the MCP App UI to fetch full entry
+                      details for a selected lexicon result.
+                    </p>
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Parameters:</strong> Source ID
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-3">UI Resource</h3>
                 <div className="border rounded-lg p-4">
                   <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Code className="w-4 h-4" />
-                    yad_vashem_holocaust_lexicon
+                    <Terminal className="w-4 h-4" />
+                    {mcpConstants.appResourceUri}
                   </h4>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Search Yad Vashem's Holocaust Lexicon for historical
-                    information and terminology. Returns up to 6 sources with
-                    proper citations and usage guidelines.
+                    HTML MCP App View rendered inline by compatible hosts. It
+                    displays results, citations, and supports entry drilldown.
                   </p>
-                  <div className="text-xs text-muted-foreground">
-                    <strong>Parameters:</strong> Search terms to query the
-                    Holocaust Lexicon (maximum 6 terms)
-                  </div>
                 </div>
               </div>
 
@@ -110,10 +140,10 @@ const DevelopersPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
           >
-            <h2 className="text-2xl font-semibold">Claude Setup</h2>
+            <h2 className="text-2xl font-semibold">Host Setup</h2>
             <p className="mt-4 text-lg">
-              To add Zekher's MCP server to Claude, you need to configure a
-              Custom Connector.
+              Configure the server endpoint in your MCP-capable host. Hosts that
+              support MCP Apps will render Zekher's inline UI automatically.
             </p>
 
             <div className="mt-6 space-y-4">
@@ -137,9 +167,8 @@ const DevelopersPage = () => {
                   <li>Click "Add custom connector"</li>
                   <li>Enter server URL and name it "Zekher"</li>
                   <li>
-                    Start new chat. Add prompt: click +, "Add from Zekher,"
-                    {mcpConstants.promptName}. Add tool: click tool button,
-                    "Zekher," and enable {mcpConstants.toolName}.
+                    Start a new chat and enable {mcpConstants.toolName}. Add{" "}
+                    {mcpConstants.promptName} for citation rules.
                   </li>
                   <li>Ask about the Holocaust</li>
                 </ol>
@@ -155,14 +184,23 @@ const DevelopersPage = () => {
                       <span className="text-muted-foreground">Server URL:</span>
                       <br />
                       <code className="text-foreground">
-                        {baseUrl}/handler/sse
+                        {baseUrl}/handler/mcp
                       </code>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Protocol:</span>
                       <br />
                       <code className="text-foreground">
-                        SSE (Server-Sent Events)
+                        Streamable HTTP
+                      </code>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">
+                        SSE Fallback:
+                      </span>
+                      <br />
+                      <code className="text-foreground">
+                        {baseUrl}/handler/sse
                       </code>
                     </div>
                   </div>
@@ -178,13 +216,16 @@ const DevelopersPage = () => {
           >
             <h2 className="text-2xl font-semibold">Other Clients</h2>
             <p className="mt-4 text-lg">
-              For other MCP-compatible clients, use the server URL{" "}
+              For other MCP-compatible clients, use{" "}
               <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
                 {baseUrl}/handler/mcp
               </code>{" "}
-              with standard HTTP protocol. The implementation differences across
-              clients may affect configuration steps, but the endpoint remains
-              consistent.
+              as the primary endpoint. If a client still requires legacy SSE,
+              use{" "}
+              <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
+                {baseUrl}/handler/sse
+              </code>
+              .
             </p>
           </motion.div>
 

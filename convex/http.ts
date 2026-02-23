@@ -12,6 +12,7 @@ import {
 } from "ai";
 import { appRateLimiter, rateLimitName } from "./rateLimits";
 import {
+  assertChatModelCredentials,
   buildAssistantParts,
   buildChatTools,
   chatLanguageModel,
@@ -35,6 +36,13 @@ function isRateLimitError(message: string): boolean {
   );
 }
 
+function normalizeAnonymousSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, 128);
+}
+
 http.route({
   path: "/chat",
   method: "POST",
@@ -54,15 +62,13 @@ http.route({
         );
       }
 
-      const forwardedFor =
-        req.headers.get("x-forwarded-for") ??
-        req.headers.get("x-real-ip") ??
-        undefined;
+      assertChatModelCredentials();
       const messages = normalizeUiMessages(body.messages as any[]);
 
       const userId = await auth.getUserId(ctx);
       const ownerType = userId ? "user" : "anonymous";
-      const ownerIdOrAnonId = userId ?? body.clientSessionId ?? forwardedFor ?? "anon";
+      const ownerIdOrAnonId =
+        userId ?? normalizeAnonymousSessionId(body.clientSessionId) ?? "anon";
       const key = userId ?? ownerIdOrAnonId;
 
       const limit = await appRateLimiter.limit(

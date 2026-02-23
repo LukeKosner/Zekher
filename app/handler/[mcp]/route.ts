@@ -1,8 +1,71 @@
 import { createMcpHandler } from "mcp-handler";
+import {
+  registerAppResource,
+  registerAppTool,
+  RESOURCE_MIME_TYPE,
+} from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
-import { searchLexicon } from "./utils";
+import { getLexiconExplorerAppHtml } from "./app-view";
+import { searchLexicon, getLexiconEntryDetail } from "./utils";
 import { mcpUsageInstructions, mcpConstants } from "./config";
-import type { McpLexiconResponse } from "./types";
+import type {
+  McpLexiconAppSource,
+  McpLexiconDetailStructuredContent,
+  McpLexiconResponse,
+  McpLexiconSearchStructuredContent,
+} from "./types";
+
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL ?? "https://zekher.com";
+}
+
+function toAppSource(source: {
+  id: string;
+  title: string;
+  content: string;
+  citation: string;
+  filename: string;
+  pdfUrl?: string | null;
+  txtUrl?: string | null;
+  redirectUrl?: string | null;
+}): McpLexiconAppSource {
+  return {
+    ...source,
+    citationUrl: `${getBaseUrl()}/sources/lexicon/${source.id}`,
+  };
+}
+
+function getLexiconContentPreview(content: string): string {
+  const cleaned = content.trim().replace(/\s+/g, " ");
+  return cleaned.length > 300 ? `${cleaned.slice(0, 300)}...` : cleaned;
+}
+
+function formatSearchResponseText(
+  response: McpLexiconResponse,
+  queryTerms: string[]
+): string {
+  if (!response.sources.length) {
+    return `No lexicon sources found for: ${queryTerms.join(", ")}. ${response.nextSteps}`;
+  }
+
+  const lines = response.sources.map((source, index) => {
+    return [
+      `${index + 1}. ${source.title}`,
+      `Citation: ${source.citation}`,
+      `Preview: ${getLexiconContentPreview(source.content)}`,
+    ].join("\n");
+  });
+
+  return [
+    `Found ${response.sources.length} lexicon source${
+      response.sources.length === 1 ? "" : "s"
+    } for: ${queryTerms.join(", ")}.`,
+    "",
+    ...lines,
+    "",
+    `Instructions: ${response.nextSteps}`,
+  ].join("\n");
+}
 
 /**
  * MCP (Model Context Protocol) handler for exposing Holocaust Lexicon search to external AI agents.
@@ -10,40 +73,79 @@ import type { McpLexiconResponse } from "./types";
  */
 const handler = createMcpHandler(
   async (server) => {
-    server.tool(
-      mcpConstants.toolName,
-      mcpConstants.toolDescription,
+    registerAppResource(
+      server,
+      mcpConstants.appResourceName,
+      mcpConstants.appResourceUri,
       {
-        terms: z
-          .array(z.string())
-          .max(mcpConstants.maxTerms)
-          .describe(mcpConstants.parameterDescription),
-        confirmInstructionsRead: z
-          .boolean()
-          .optional()
-          .describe("Set to true to confirm you have read the holocaust_education_context prompt and will follow citation guidelines")
+        description: mcpConstants.appResourceDescription,
+      },
+      async () => ({
+        contents: [
+          {
+            uri: mcpConstants.appResourceUri,
+            mimeType: RESOURCE_MIME_TYPE,
+            text: getLexiconExplorerAppHtml(),
+            _meta: {
+              ui: {
+                prefersBorder: true,
+              },
+            },
+          },
+        ],
+      })
+    );
+
+    registerAppTool(
+      server,
+      mcpConstants.toolName,
+      {
+        title: "Yad Vashem Holocaust Lexicon Search",
+        description: mcpConstants.toolDescription,
+        inputSchema: {
+          terms: z
+            .array(z.string())
+            .max(mcpConstants.maxTerms)
+            .describe(mcpConstants.parameterDescription),
+          confirmInstructionsRead: z
+            .boolean()
+            .optional()
+            .describe(
+              "Set to true to confirm you read the holocaust_education_context prompt and will follow citation guidelines"
+            ),
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false,
+        },
+        _meta: {
+          ui: {
+            resourceUri: mcpConstants.appResourceUri,
+          },
+          "openai/outputTemplate": mcpConstants.appResourceUri,
+          "openai/widgetAccessible": true,
+          "openai/visibility": "public",
+        },
       },
       async ({ terms, confirmInstructionsRead }, extra) => {
         try {
-          // Check if instructions were confirmed as read
           if (confirmInstructionsRead !== true) {
+            const message =
+              "Please read the holocaust_education_context prompt, then call this tool again with confirmInstructionsRead: true.";
             return {
+              isError: true,
               content: [
                 {
                   type: "text",
-                  text: JSON.stringify(
-                    {
-                      error: "Instructions not confirmed",
-                      message: "Please read the instructions below and set confirmInstructionsRead to true to confirm you understand the citation guidelines.",
-                      instructions: mcpConstants.promptText,
-                      usageInstructions: mcpUsageInstructions,
-                      nextSteps: "Read the instructions above, then call this tool again with confirmInstructionsRead: true"
-                    },
-                    null,
-                    2
-                  )
-                }
-              ]
+                  text: `${message}\n\n${mcpConstants.promptText}`,
+                },
+              ],
+              structuredContent: {
+                type: "instructions_required",
+                message,
+                nextSteps:
+                  "Read the prompt and call the tool again with confirmInstructionsRead set to true.",
+              },
             };
           }
 
@@ -54,19 +156,35 @@ const handler = createMcpHandler(
           const response: McpLexiconResponse = {
             sources: result.entries,
             usageInstructions: mcpUsageInstructions,
-            nextSteps: result.nextSteps
+            nextSteps: result.nextSteps,
+          };
+
+          const appSources = response.sources.map(toAppSource);
+          const structuredContent: McpLexiconSearchStructuredContent = {
+            type: "lexicon_search",
+            queryTerms: terms,
+            resultCount: appSources.length,
+            sources: appSources,
+            nextSteps: response.nextSteps,
           };
 
           return {
+            isError: Boolean(result.error && appSources.length === 0),
             content: [
               {
                 type: "text",
-                text: JSON.stringify(response, null, 2)
-              }
-            ]
+                text: formatSearchResponseText(response, terms),
+              },
+            ],
+            structuredContent,
+            _meta: {
+              queryTerms: terms,
+              usageInstructions: response.usageInstructions,
+            },
           };
         } catch (error) {
           return {
+            isError: true,
             content: [
               {
                 type: "text",
@@ -77,15 +195,70 @@ const handler = createMcpHandler(
                       error instanceof Error
                         ? error.message
                         : mcpConstants.errorUnknown,
-                    usageInstructions: mcpUsageInstructions
+                    usageInstructions: mcpUsageInstructions,
+                    nextSteps: "Retry with simpler terms.",
                   },
                   null,
                   2
-                )
-              }
-            ]
+                ),
+              },
+            ],
           };
         }
+      }
+    );
+
+    registerAppTool(
+      server,
+      mcpConstants.detailToolName,
+      {
+        title: "Lexicon Entry Detail",
+        description: mcpConstants.detailToolDescription,
+        inputSchema: {
+          sourceId: z.string().min(1).describe(mcpConstants.detailParameterDescription),
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false,
+        },
+        _meta: {
+          ui: {
+            resourceUri: mcpConstants.appResourceUri,
+            visibility: ["app"],
+          },
+          "openai/outputTemplate": mcpConstants.appResourceUri,
+          "openai/widgetAccessible": true,
+          "openai/visibility": "private",
+        },
+      },
+      async ({ sourceId }) => {
+        const detail = await getLexiconEntryDetail(sourceId);
+        if (!detail.entry) {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: detail.error ?? "Entry not found.",
+              },
+            ],
+          };
+        }
+
+        const structuredContent: McpLexiconDetailStructuredContent = {
+          type: "lexicon_entry_detail",
+          entry: detail.entry,
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Loaded "${detail.entry.title}".`,
+            },
+          ],
+          structuredContent,
+        };
       }
     );
 
@@ -99,32 +272,19 @@ const handler = createMcpHandler(
               role: "assistant",
               content: {
                 type: "text",
-                text: mcpConstants.promptText
-              }
-            }
-          ]
+                text: mcpConstants.promptText,
+              },
+            },
+          ],
         };
       }
     );
   },
-  {
-    capabilities: {
-      tools: {
-        [mcpConstants.toolName]: {
-          description: mcpConstants.toolDescription
-        }
-      },
-      prompts: {
-        [mcpConstants.promptName]: {
-          description: mcpConstants.promptDescription
-        }
-      }
-    }
-  },
+  {},
   {
     basePath: "/handler/",
     verboseLogs: false,
-    maxDuration: 300
+    maxDuration: 300,
   }
 );
 

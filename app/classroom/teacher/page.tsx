@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -27,6 +28,21 @@ import {
   Users,
 } from "lucide-react";
 
+const SECTION_LABEL_CLASS =
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground";
+const TOPIC_PRESETS = [
+  "Rise of Nazism",
+  "The Nuremberg Trials",
+  "Jewish resistance",
+  "Liberation and memory",
+];
+const SUGGESTED_PROMPT_PRESETS = [
+  "What choices were available to bystanders in this period?",
+  "How did propaganda shape daily life?",
+  "What parallels do you notice with modern misinformation?",
+  "Which survivor testimony gave you the strongest new insight?",
+];
+
 export default function TeacherDashboard() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const router = useRouter();
@@ -39,6 +55,7 @@ export default function TeacherDashboard() {
     isAuthenticated && profile ? {} : "skip"
   );
   const createClass = useMutation(api.classes.createClass);
+  const sendPrompt = useMutation(api.forcedPrompts.sendForcedPrompt);
   const ensureProfile = useMutation(api.teachers.ensureTeacherProfile);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -48,6 +65,11 @@ export default function TeacherDashboard() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [creatingProfile, setCreatingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [classCreateError, setClassCreateError] = useState<string | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [assignmentPrompt, setAssignmentPrompt] = useState("");
+  const [suggestedPromptInput, setSuggestedPromptInput] = useState("");
+  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);
 
   // Only redirect to auth once loading is complete and we're sure not authenticated
   useEffect(() => {
@@ -119,27 +141,113 @@ export default function TeacherDashboard() {
     );
   }
 
+  const addSuggestedPrompt = (value: string) => {
+    const normalized = value.trim();
+    if (!normalized) return;
+
+    setSuggestedPrompts((current) => {
+      if (current.length >= 6) return current;
+      if (
+        current.some(
+          (prompt) => prompt.toLowerCase() === normalized.toLowerCase()
+        )
+      ) {
+        return current;
+      }
+      return [...current, normalized];
+    });
+    setSuggestedPromptInput("");
+  };
+
+  const removeSuggestedPrompt = (targetPrompt: string) => {
+    setSuggestedPrompts((current) =>
+      current.filter((prompt) => prompt !== targetPrompt)
+    );
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setClassCreateError(null);
+    setDashboardError(null);
     setCreating(true);
+
     try {
+      const normalizedName = className.trim();
+      const normalizedTopic = classTopic.trim();
+      const normalizedAssignment = assignmentPrompt.trim();
+      const normalizedSuggestedPrompts = suggestedPrompts
+        .map((prompt) => prompt.trim())
+        .filter(Boolean)
+        .slice(0, 6);
+
+      if (!normalizedName) {
+        setClassCreateError("Class name is required.");
+        return;
+      }
+
       const classId = await createClass({
-        name: className,
-        topic: classTopic || undefined,
+        name: normalizedName,
+        topic: normalizedTopic || undefined,
       });
+
+      const seedPromptOperations = [
+        ...(normalizedAssignment
+          ? [
+              sendPrompt({
+                classId,
+                promptText: normalizedAssignment,
+                promptType: "assignment",
+              }),
+            ]
+          : []),
+        ...normalizedSuggestedPrompts.map((promptText) =>
+          sendPrompt({
+            classId,
+            promptText,
+            promptType: "suggested",
+          })
+        ),
+      ];
+
+      if (seedPromptOperations.length > 0) {
+        const seedResults = await Promise.allSettled(seedPromptOperations);
+        const failedCount = seedResults.filter(
+          (result) => result.status === "rejected"
+        ).length;
+
+        if (failedCount > 0 && typeof window !== "undefined") {
+          sessionStorage.setItem(
+            `classroom_setup_warning_${classId}`,
+            `Class created, but ${failedCount} setup prompt${failedCount === 1 ? "" : "s"} failed to save.`
+          );
+        }
+      }
+
       setClassName("");
       setClassTopic("");
+      setAssignmentPrompt("");
+      setSuggestedPrompts([]);
+      setSuggestedPromptInput("");
       setShowCreate(false);
       router.push(`/classroom/teacher/class/${classId}`);
+    } catch (err) {
+      setClassCreateError(
+        err instanceof Error ? err.message : "Failed to create class."
+      );
     } finally {
       setCreating(false);
     }
   };
 
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
+  const copyCode = async (code: string) => {
+    try {
+      setDashboardError(null);
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch {
+      setDashboardError("Unable to copy the class code. Please copy manually.");
+    }
   };
 
   return (
@@ -152,7 +260,13 @@ export default function TeacherDashboard() {
               Create classes, monitor student activity, and guide discussions.
             </p>
           </div>
-          <Button onClick={() => setShowCreate(!showCreate)} size="sm">
+          <Button
+            onClick={() => {
+              setShowCreate((current) => !current);
+              setClassCreateError(null);
+            }}
+            size="sm"
+          >
             {showCreate ? (
               <X className="mr-1 h-4 w-4" />
             ) : (
@@ -161,6 +275,12 @@ export default function TeacherDashboard() {
             {showCreate ? "Close" : "New Class"}
           </Button>
         </div>
+
+        {dashboardError && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {dashboardError}
+          </div>
+        )}
 
         {showCreate && (
           <Card>
@@ -173,16 +293,20 @@ export default function TeacherDashboard() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreate} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="class-name">Class Name</Label>
-                  <Input
-                    id="class-name"
-                    value={className}
-                    onChange={(e) => setClassName(e.target.value)}
-                    placeholder="e.g. Period 3 History"
-                    required
-                  />
+                <div className="space-y-3">
+                  <p className={SECTION_LABEL_CLASS}>Class Details</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="class-name">Class Name</Label>
+                    <Input
+                      id="class-name"
+                      value={className}
+                      onChange={(e) => setClassName(e.target.value)}
+                      placeholder="e.g. Period 3 History"
+                      required
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="class-topic">Topic (optional)</Label>
                   <Input
@@ -191,7 +315,110 @@ export default function TeacherDashboard() {
                     onChange={(e) => setClassTopic(e.target.value)}
                     placeholder="e.g. The Nuremberg Trials"
                   />
+                  <div className="flex flex-wrap gap-2">
+                    {TOPIC_PRESETS.map((topic) => (
+                      <button
+                        key={topic}
+                        type="button"
+                        onClick={() => setClassTopic(topic)}
+                        className="rounded-md border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                <div className="h-px bg-border/70" />
+
+                <div className="space-y-3">
+                  <p className={SECTION_LABEL_CLASS}>Prompt Setup</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="assignment-prompt">
+                      Opening Assignment (optional)
+                    </Label>
+                    <Textarea
+                      id="assignment-prompt"
+                      value={assignmentPrompt}
+                      onChange={(e) => setAssignmentPrompt(e.target.value)}
+                      placeholder="e.g. Read one testimony excerpt and identify one turning point in the narrator's experience."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="suggested-prompt-input">
+                      Suggested Student Prompts (optional)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="suggested-prompt-input"
+                        value={suggestedPromptInput}
+                        onChange={(e) => setSuggestedPromptInput(e.target.value)}
+                        placeholder="Add a suggested question students can tap"
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter") return;
+                          e.preventDefault();
+                          addSuggestedPrompt(suggestedPromptInput);
+                        }}
+                        disabled={suggestedPrompts.length >= 6}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addSuggestedPrompt(suggestedPromptInput)}
+                        disabled={
+                          !suggestedPromptInput.trim() ||
+                          suggestedPrompts.length >= 6
+                        }
+                      >
+                        Add
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedPrompts.map((prompt) => (
+                        <span
+                          key={prompt}
+                          className="inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-xs"
+                        >
+                          {prompt}
+                          <button
+                            type="button"
+                            onClick={() => removeSuggestedPrompt(prompt)}
+                            className="rounded-sm p-0.5 hover:bg-muted"
+                            aria-label={`Remove suggested prompt: ${prompt}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {SUGGESTED_PROMPT_PRESETS.map((prompt) => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          onClick={() => addSuggestedPrompt(prompt)}
+                          className="rounded-md border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          disabled={suggestedPrompts.length >= 6}
+                        >
+                          + {prompt}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Up to 6 suggested prompts will be added to the live class
+                      at creation time.
+                    </p>
+                  </div>
+                </div>
+
+                {classCreateError && (
+                  <p className="text-sm text-destructive">{classCreateError}</p>
+                )}
+
                 <div className="flex gap-2">
                   <Button type="submit" size="sm" disabled={creating}>
                     {creating ? "Creating..." : "Create Class"}
@@ -200,7 +427,10 @@ export default function TeacherDashboard() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setShowCreate(false)}
+                    onClick={() => {
+                      setShowCreate(false);
+                      setClassCreateError(null);
+                    }}
                   >
                     Cancel
                   </Button>
@@ -260,7 +490,9 @@ export default function TeacherDashboard() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => copyCode(cls.joinCode)}
+                      onClick={() => {
+                        void copyCode(cls.joinCode);
+                      }}
                       className="flex items-center gap-1 rounded-md px-2 py-0.5 font-mono hover:bg-muted hover:text-foreground"
                     >
                       Code: {cls.joinCode}

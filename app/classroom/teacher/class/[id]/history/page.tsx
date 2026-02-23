@@ -9,6 +9,9 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib";
 
+const SECTION_LABEL_CLASS =
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground";
+
 const TOOL_SUMMARY_PATTERNS: RegExp[] = [
   /^(Lexicon search|Testimony search|Audio search) is searching\.\.\.$/,
   /^(Lexicon search|Testimony search|Audio search) returned results\.$/,
@@ -132,12 +135,16 @@ export default function ClassHistoryPage() {
   const filteredMessages = selectedStudent
     ? messages.filter((m) => m.studentId === selectedStudent)
     : messages;
+  const className = classData.name.trim();
+  const recapTitle = /\brecap$/i.test(className)
+    ? className
+    : `${className} Recap`;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-muted/20">
       <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-lg font-semibold">{classData.name} History</h1>
+          <h1 className="text-lg font-semibold">{recapTitle}</h1>
           <Badge variant="secondary">{messages.length} messages</Badge>
           {selectedStudent && (
             <Badge variant="outline">
@@ -152,7 +159,7 @@ export default function ClassHistoryPage() {
           <aside className="min-h-0 overflow-hidden rounded-xl border bg-card">
             <div className="space-y-4 overflow-auto p-3">
               <div className="space-y-1.5">
-                <p className="px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <p className={cn("px-1", SECTION_LABEL_CLASS)}>
                   View
                 </p>
                 <button
@@ -173,7 +180,7 @@ export default function ClassHistoryPage() {
               </div>
 
               <div className="space-y-1.5">
-                <p className="px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <p className={cn("px-1", SECTION_LABEL_CLASS)}>
                   Students
                 </p>
 

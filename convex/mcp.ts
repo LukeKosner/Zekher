@@ -4,6 +4,13 @@ import { v } from "convex/values";
 import { auth } from "./auth";
 import { appRateLimiter, rateLimitName } from "./rateLimits";
 
+function normalizeAnonymousSessionId(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, 128);
+}
+
 export const searchLexiconForMcp = action({
   args: {
     terms: v.array(v.string()),
@@ -47,7 +54,8 @@ export const searchLexiconForMcp = action({
   }> => {
     const userId = await auth.getUserId(ctx);
     const ownerType = userId ? "user" : "anonymous";
-    const ownerIdOrAnonId = userId ?? args.clientSessionId ?? args.ip ?? "anon";
+    const ownerIdOrAnonId =
+      userId ?? normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
     const key = userId ?? ownerIdOrAnonId;
 
     const limit = await appRateLimiter.limit(

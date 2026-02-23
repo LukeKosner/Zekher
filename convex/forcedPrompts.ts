@@ -1,6 +1,30 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import type { Id } from "./_generated/dataModel";
+
+async function assertTeacherOwnsClass(
+  ctx: QueryCtx | MutationCtx,
+  classId: Id<"classes">
+): Promise<void> {
+  const userId = await auth.getUserId(ctx);
+  if (!userId) {
+    throw new Error("Not authenticated");
+  }
+
+  const classDoc = await ctx.db.get(classId);
+  if (!classDoc) {
+    throw new Error("Class not found");
+  }
+
+  const teacher = await ctx.db
+    .query("teachers")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .unique();
+  if (!teacher || classDoc.teacherId !== teacher._id) {
+    throw new Error("Not authorized");
+  }
+}
 
 export const sendForcedPrompt = mutation({
   args: {
@@ -56,6 +80,17 @@ export const ackForcedPrompt = mutation({
     if (!student || student.sessionToken !== args.sessionToken) {
       throw new Error("Invalid student or token");
     }
+    if (student.kickedAt) {
+      throw new Error("Student has been removed from this class");
+    }
+
+    const prompt = await ctx.db.get(args.promptId);
+    if (!prompt) {
+      throw new Error("Prompt not found");
+    }
+    if (prompt.classId !== student.classId) {
+      throw new Error("Prompt does not belong to this student");
+    }
 
     // Check if already acked
     const existing = await ctx.db
@@ -83,6 +118,7 @@ export const getUnackedPrompts = query({
   args: {
     classId: v.id("classes"),
     studentId: v.id("students"),
+    sessionToken: v.string(),
   },
   returns: v.array(
     v.object({
@@ -102,6 +138,17 @@ export const getUnackedPrompts = query({
     })
   ),
   handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student || student.sessionToken !== args.sessionToken) {
+      throw new Error("Invalid student or token");
+    }
+    if (student.classId !== args.classId) {
+      throw new Error("Student not in this class");
+    }
+    if (student.kickedAt) {
+      throw new Error("Student has been removed from this class");
+    }
+
     const prompts = await ctx.db
       .query("forcedPrompts")
       .withIndex("by_classId", (q) => q.eq("classId", args.classId))
@@ -128,6 +175,7 @@ export const getUnackedPrompts = query({
 
 export const getPromptAckStatus = query({
   args: {
+    classId: v.id("classes"),
     promptId: v.id("forcedPrompts"),
   },
   returns: v.array(
@@ -140,6 +188,13 @@ export const getPromptAckStatus = query({
     })
   ),
   handler: async (ctx, args) => {
+    await assertTeacherOwnsClass(ctx, args.classId);
+
+    const prompt = await ctx.db.get(args.promptId);
+    if (!prompt || prompt.classId !== args.classId) {
+      throw new Error("Prompt not found");
+    }
+
     return await ctx.db
       .query("forcedPromptAcks")
       .withIndex("by_promptId", (q) => q.eq("promptId", args.promptId))

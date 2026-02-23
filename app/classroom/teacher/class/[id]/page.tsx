@@ -10,6 +10,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { StudentList } from "@/components/classroom/StudentList";
 import { MessageFeed } from "@/components/classroom/MessageFeed";
+import { cn } from "@/lib";
 import {
   AIInput,
   AIInputSubmit,
@@ -27,9 +28,13 @@ import {
   CheckCircle2,
   StopCircle,
   Link as LinkIcon,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type TeacherPromptType = "forced" | "suggested" | "assignment";
+const SECTION_LABEL_CLASS =
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground";
 
 export default function LiveClassPage() {
   const params = useParams();
@@ -37,14 +42,18 @@ export default function LiveClassPage() {
   const classId = params.id as Id<"classes">;
 
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const classData = useQuery(api.classes.getClassById, { classId });
+  const classData = useQuery(
+    api.classes.getClassById,
+    isAuthenticated ? { classId } : "skip"
+  );
   const students = useQuery(
     api.students.getStudentsInClass,
     isAuthenticated ? { classId } : "skip"
   );
-  const recentMessages = useQuery(api.classMessages.getRecentActivity, {
-    classId,
-  });
+  const recentMessages = useQuery(
+    api.classMessages.getRecentActivity,
+    isAuthenticated ? { classId } : "skip"
+  );
   const endClass = useMutation(api.classes.endClass);
   const kickStudent = useMutation(api.students.kickStudent);
   const sendPrompt = useMutation(api.forcedPrompts.sendForcedPrompt);
@@ -59,6 +68,9 @@ export default function LiveClassPage() {
     null
   );
   const [sendingPrompt, setSendingPrompt] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [setupWarning, setSetupWarning] = useState<string | null>(null);
+  const [isClassCodeCollapsed, setIsClassCodeCollapsed] = useState(false);
 
   const promptTypeMeta: Record<
     TeacherPromptType,
@@ -103,6 +115,15 @@ export default function LiveClassPage() {
     setJoinUrl(url.toString());
   }, [classData?.joinCode]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storageKey = `classroom_setup_warning_${classId}`;
+    const warning = sessionStorage.getItem(storageKey);
+    if (!warning) return;
+    sessionStorage.removeItem(storageKey);
+    setSetupWarning(warning);
+  }, [classId]);
+
   if (isLoading || !isAuthenticated || !classData) {
     return (
       <div className="flex h-full min-h-0 items-center justify-center">
@@ -114,12 +135,23 @@ export default function LiveClassPage() {
   if (classData.status === "ended") {
     return null;
   }
+  const joinCode = classData.joinCode ?? "";
 
   const handleEndClass = async () => {
     if (!confirm("End this class? Students will be disconnected.")) return;
+
+    setActionError(null);
     setEnding(true);
-    await endClass({ classId });
-    router.push(`/classroom/teacher/class/${classId}/history`);
+    try {
+      await endClass({ classId });
+      router.push(`/classroom/teacher/class/${classId}/history`);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Unable to end class right now."
+      );
+    } finally {
+      setEnding(false);
+    }
   };
 
   const handleSendPrompt = async (e: React.FormEvent) => {
@@ -127,6 +159,7 @@ export default function LiveClassPage() {
     const trimmedPrompt = promptText.trim();
     if (!trimmedPrompt || sendingPrompt) return;
 
+    setActionError(null);
     setSendingPrompt(true);
     try {
       await sendPrompt({
@@ -135,6 +168,10 @@ export default function LiveClassPage() {
         promptType,
       });
       setPromptText("");
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Unable to send prompt right now."
+      );
     } finally {
       setSendingPrompt(false);
     }
@@ -143,25 +180,40 @@ export default function LiveClassPage() {
   const handleKickStudent = async (studentId: Id<"students">) => {
     if (!confirm("Remove this student from the live class?")) return;
 
+    setActionError(null);
     setKickingStudentId(studentId);
     try {
       await kickStudent({ classId, studentId });
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Unable to remove student."
+      );
     } finally {
       setKickingStudentId(null);
     }
   };
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(classData.joinCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+  const copyCode = async () => {
+    try {
+      setActionError(null);
+      await navigator.clipboard.writeText(joinCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      setActionError("Unable to copy class code. You can copy it manually.");
+    }
   };
 
-  const copyJoinLink = () => {
+  const copyJoinLink = async () => {
     if (!joinUrl) return;
-    navigator.clipboard.writeText(joinUrl);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    try {
+      setActionError(null);
+      await navigator.clipboard.writeText(joinUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      setActionError("Unable to copy join link. You can copy it manually.");
+    }
   };
 
   return (
@@ -187,71 +239,140 @@ export default function LiveClassPage() {
             End Class
           </Button>
         </div>
+        {(setupWarning || actionError) && (
+          <div className="mx-auto w-full max-w-7xl space-y-2 px-4 pb-4 sm:px-6 lg:px-8">
+            {setupWarning && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900">
+                {setupWarning}
+              </div>
+            )}
+            {actionError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {actionError}
+              </div>
+            )}
+          </div>
+        )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/80 to-transparent" />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto bg-muted/20">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 p-4 sm:p-6 lg:px-8">
-          <section className="min-h-[260px] rounded-xl border bg-card text-card-foreground shadow-sm">
-            <div className="grid h-full gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_320px] md:items-stretch">
-              <div className="flex h-full flex-col justify-between gap-4">
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    Class Code
-                  </p>
-                  <p className="font-mono text-5xl leading-none font-black tracking-[0.3em] text-foreground sm:text-6xl">
-                    {classData.joinCode}
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-foreground/90">
-                    Scan the QR code or visit this link to join.
-                  </p>
-                  <p className="rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-snug text-muted-foreground">
-                    {joinUrl || "Preparing join link..."}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={copyCode}>
-                    {copiedCode ? (
-                      <CheckCircle2 className="mr-1 h-4 w-4" />
-                    ) : (
-                      <Copy className="mr-1 h-4 w-4" />
-                    )}
-                    {copiedCode ? "Code Copied" : "Copy Code"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={copyJoinLink}
-                    disabled={!joinUrl}
-                  >
-                    {copiedLink ? (
-                      <CheckCircle2 className="mr-1 h-4 w-4" />
-                    ) : (
-                      <LinkIcon className="mr-1 h-4 w-4" />
-                    )}
-                    {copiedLink ? "Link Copied" : "Copy Join Link"}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="mx-auto flex h-full w-full items-center justify-center p-0">
-                <QRCodeSVG
-                  value={joinUrl || classData.joinCode}
-                  size={260}
-                  level="M"
-                  includeMargin
-                  bgColor="#FFFFFF"
-                  fgColor="#000000"
-                />
-              </div>
+      <div className="flex-1 min-h-0 overflow-auto bg-muted/20 lg:overflow-hidden">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 p-4 sm:p-6 lg:overflow-hidden lg:px-8">
+          <section className="shrink-0 overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+              <p className={SECTION_LABEL_CLASS}>Class Code</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setIsClassCodeCollapsed((current) => !current)}
+              >
+                {isClassCodeCollapsed ? (
+                  <ChevronDown className="mr-1 h-3 w-3" />
+                ) : (
+                  <ChevronUp className="mr-1 h-3 w-3" />
+                )}
+                {isClassCodeCollapsed ? "Expand" : "Shrink"}
+              </Button>
             </div>
+
+            {isClassCodeCollapsed ? (
+              <div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-6">
+                <p className="font-mono text-2xl font-black tracking-[0.24em] text-foreground sm:text-3xl">
+                  {joinCode}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyCode}
+                >
+                  {copiedCode ? (
+                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                  ) : (
+                    <Copy className="mr-1 h-4 w-4" />
+                  )}
+                  {copiedCode ? "Code Copied" : "Copy Code"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyJoinLink}
+                  disabled={!joinUrl}
+                >
+                  {copiedLink ? (
+                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                  ) : (
+                    <LinkIcon className="mr-1 h-4 w-4" />
+                  )}
+                  {copiedLink ? "Link Copied" : "Copy Join Link"}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid h-full gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_320px] md:items-stretch">
+                <div className="flex h-full flex-col justify-between gap-4">
+                  <div className="space-y-3">
+                    <p className="font-mono text-5xl leading-none font-black tracking-[0.3em] text-foreground sm:text-6xl">
+                      {joinCode}
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-foreground/90">
+                      Scan the QR code or visit this link to join.
+                    </p>
+                    <p className="rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-snug text-muted-foreground">
+                      {joinUrl || "Preparing join link..."}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={copyCode}
+                    >
+                      {copiedCode ? (
+                        <CheckCircle2 className="mr-1 h-4 w-4" />
+                      ) : (
+                        <Copy className="mr-1 h-4 w-4" />
+                      )}
+                      {copiedCode ? "Code Copied" : "Copy Code"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={copyJoinLink}
+                      disabled={!joinUrl}
+                    >
+                      {copiedLink ? (
+                        <CheckCircle2 className="mr-1 h-4 w-4" />
+                      ) : (
+                        <LinkIcon className="mr-1 h-4 w-4" />
+                      )}
+                      {copiedLink ? "Link Copied" : "Copy Join Link"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mx-auto flex h-full w-full items-center justify-center p-0">
+                  <QRCodeSVG
+                    value={joinUrl || joinCode}
+                    size={260}
+                    level="M"
+                    includeMargin
+                    bgColor="#FFFFFF"
+                    fgColor="#000000"
+                  />
+                </div>
+              </div>
+            )}
           </section>
 
-          <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="min-h-0 overflow-hidden rounded-xl border bg-card">
+          <div className="grid min-h-0 gap-4 lg:flex-1 lg:grid-cols-[260px_minmax(0,1fr)] lg:overflow-hidden">
+            <aside className="min-h-[220px] overflow-hidden rounded-xl border bg-card lg:h-full lg:min-h-0">
               <StudentList
                 students={students ?? []}
                 onKickStudent={handleKickStudent}
@@ -259,7 +380,7 @@ export default function LiveClassPage() {
               />
             </aside>
 
-            <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
+            <section className="flex min-h-[320px] flex-col overflow-hidden rounded-xl border bg-card lg:h-full lg:min-h-0">
               <MessageFeed
                 messages={recentMessages ?? []}
                 students={students ?? []}
@@ -267,7 +388,7 @@ export default function LiveClassPage() {
 
               <div className="space-y-3 border-t bg-muted/20 p-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <span className={cn(SECTION_LABEL_CLASS, "shrink-0")}>
                     Prompt Type
                   </span>
                   <Select
