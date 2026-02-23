@@ -219,7 +219,7 @@ export default function LiveClassPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="relative bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 shadow-sm">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex w-full flex-wrap items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="space-y-0.5">
             <p className="text-sm font-medium">{classData.name}</p>
             {classData.topic && (
@@ -240,7 +240,7 @@ export default function LiveClassPage() {
           </Button>
         </div>
         {(setupWarning || actionError) && (
-          <div className="mx-auto w-full max-w-7xl space-y-2 px-4 pb-4 sm:px-6 lg:px-8">
+          <div className="w-full space-y-2 px-4 pb-4 sm:px-6 lg:px-8">
             {setupWarning && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900">
                 {setupWarning}
@@ -256,9 +256,9 @@ export default function LiveClassPage() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border/80 to-transparent" />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto bg-muted/20 lg:overflow-hidden">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 p-4 sm:p-6 lg:overflow-hidden lg:px-8">
-          <section className="shrink-0 overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+      <div className="flex-1 min-h-0 overflow-hidden bg-muted/20">
+        <div className="flex h-full min-h-0 w-full flex-col gap-4 p-4 sm:p-6 lg:overflow-hidden lg:px-8">
+          <section className="shrink-0 overflow-auto rounded-xl border bg-card text-card-foreground shadow-sm">
             <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
               <p className={SECTION_LABEL_CLASS}>Class Code</p>
               <Button
@@ -311,8 +311,8 @@ export default function LiveClassPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid h-full gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_320px] md:items-stretch">
-                <div className="flex h-full flex-col justify-between gap-4">
+              <div className="grid min-h-[320px] h-full gap-8 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_320px] md:items-center">
+                <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-5 text-center md:mx-0 md:items-start md:text-left">
                   <div className="space-y-3">
                     <p className="font-mono text-5xl leading-none font-black tracking-[0.3em] text-foreground sm:text-6xl">
                       {joinCode}
@@ -326,7 +326,18 @@ export default function LiveClassPage() {
                       {joinUrl || "Preparing join link..."}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                </div>
+
+                <div className="mx-auto flex h-full w-full max-w-[320px] flex-col items-center justify-center gap-3">
+                  <QRCodeSVG
+                    value={joinUrl || joinCode}
+                    size={260}
+                    level="M"
+                    includeMargin
+                    bgColor="#FFFFFF"
+                    fgColor="#000000"
+                  />
+                  <div className="flex w-full flex-wrap justify-center gap-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -356,23 +367,12 @@ export default function LiveClassPage() {
                     </Button>
                   </div>
                 </div>
-
-                <div className="mx-auto flex h-full w-full items-center justify-center p-0">
-                  <QRCodeSVG
-                    value={joinUrl || joinCode}
-                    size={260}
-                    level="M"
-                    includeMargin
-                    bgColor="#FFFFFF"
-                    fgColor="#000000"
-                  />
-                </div>
               </div>
             )}
           </section>
 
-          <div className="grid min-h-0 gap-4 lg:flex-1 lg:grid-cols-[260px_minmax(0,1fr)] lg:overflow-hidden">
-            <aside className="min-h-[220px] overflow-hidden rounded-xl border bg-card lg:h-full lg:min-h-0">
+          <div className="grid min-h-0 flex-1 gap-4 overflow-hidden grid-rows-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-[260px_minmax(0,1fr)]">
+            <aside className="h-full min-h-0 overflow-hidden rounded-xl border bg-card">
               <StudentList
                 students={students ?? []}
                 onKickStudent={handleKickStudent}
@@ -380,7 +380,7 @@ export default function LiveClassPage() {
               />
             </aside>
 
-            <section className="flex min-h-[320px] flex-col overflow-hidden rounded-xl border bg-card lg:h-full lg:min-h-0">
+            <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
               <MessageFeed
                 messages={recentMessages ?? []}
                 students={students ?? []}

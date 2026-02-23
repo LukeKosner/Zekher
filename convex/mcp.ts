@@ -1,7 +1,6 @@
 import { action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
-import { auth } from "./auth";
 import { appRateLimiter, rateLimitName } from "./rateLimits";
 
 function normalizeAnonymousSessionId(value: unknown): string | undefined {
@@ -9,6 +8,13 @@ function normalizeAnonymousSessionId(value: unknown): string | undefined {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   return trimmed.slice(0, 128);
+}
+
+function normalizeIpAddress(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const candidate = value.split(",")[0]?.trim();
+  if (!candidate) return undefined;
+  return candidate.slice(0, 128);
 }
 
 export const searchLexiconForMcp = action({
@@ -52,15 +58,15 @@ export const searchLexiconForMcp = action({
     nextSteps: string;
     error?: string;
   }> => {
-    const userId = await auth.getUserId(ctx);
-    const ownerType = userId ? "user" : "anonymous";
-    const ownerIdOrAnonId =
-      userId ?? normalizeAnonymousSessionId(args.clientSessionId) ?? "anon";
-    const key = userId ?? ownerIdOrAnonId;
+    const ownerType = "anonymous" as const;
+    const key =
+      normalizeAnonymousSessionId(args.clientSessionId) ??
+      normalizeIpAddress(args.ip) ??
+      "anon";
 
     const limit = await appRateLimiter.limit(
       ctx,
-      rateLimitName("mcp", ownerType),
+      rateLimitName("mcp", "anonymous"),
       { key }
     );
 

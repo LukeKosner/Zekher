@@ -19,6 +19,43 @@ function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_BASE_URL ?? "https://zekher.com";
 }
 
+type RequestHeaders = Record<string, string | string[] | undefined>;
+
+function getHeaderValue(headers: RequestHeaders | undefined, name: string) {
+  if (!headers) return undefined;
+  const direct = headers[name] ?? headers[name.toLowerCase()];
+  if (typeof direct === "string") return direct;
+  if (Array.isArray(direct)) return direct[0];
+  return undefined;
+}
+
+function extractClientIp(headers: RequestHeaders | undefined): string | undefined {
+  const forwarded = getHeaderValue(headers, "x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+
+  const realIp = getHeaderValue(headers, "x-real-ip");
+  if (realIp?.trim()) return realIp.trim();
+
+  const cfIp = getHeaderValue(headers, "cf-connecting-ip");
+  if (cfIp?.trim()) return cfIp.trim();
+
+  return undefined;
+}
+
+function extractClientSessionId(
+  extraSessionId: string | undefined,
+  headers: RequestHeaders | undefined
+): string | undefined {
+  const headerSessionId = getHeaderValue(headers, "mcp-session-id");
+  if (headerSessionId?.trim()) {
+    return headerSessionId.trim();
+  }
+  return extraSessionId;
+}
+
 function toAppSource(source: {
   id: string;
   title: string;
@@ -128,6 +165,12 @@ const handler = createMcpHandler(
         },
       },
       async ({ terms, confirmInstructionsRead }, extra) => {
+        const requestHeaders = extra?.requestInfo?.headers as RequestHeaders;
+        const clientSessionId = extractClientSessionId(
+          extra?.sessionId,
+          requestHeaders
+        );
+
         try {
           if (confirmInstructionsRead !== true) {
             const message =
@@ -150,8 +193,35 @@ const handler = createMcpHandler(
           }
 
           const result = await searchLexicon(terms, {
-            clientSessionId: extra?.sessionId,
+            clientSessionId,
+            ip: extractClientIp(requestHeaders),
           });
+          const appSources = result.entries.map(toAppSource);
+
+          if (result.error === "Rate limited") {
+            const structuredContent: McpLexiconSearchStructuredContent = {
+              type: "lexicon_search",
+              queryTerms: terms,
+              resultCount: 0,
+              sources: [],
+              nextSteps:
+                "You have hit the MCP rate limit. Wait and try again in about an hour.",
+            };
+            return {
+              isError: true,
+              content: [
+                {
+                  type: "text",
+                  text: "Rate limited: too many MCP requests from this session. Please try again later.",
+                },
+              ],
+              structuredContent,
+              _meta: {
+                queryTerms: terms,
+                rateLimited: true,
+              },
+            };
+          }
 
           const response: McpLexiconResponse = {
             sources: result.entries,
@@ -159,7 +229,6 @@ const handler = createMcpHandler(
             nextSteps: result.nextSteps,
           };
 
-          const appSources = response.sources.map(toAppSource);
           const structuredContent: McpLexiconSearchStructuredContent = {
             type: "lexicon_search",
             queryTerms: terms,
