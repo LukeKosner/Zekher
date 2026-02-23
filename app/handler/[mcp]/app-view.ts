@@ -1,10 +1,23 @@
 const APP_TITLE = "Zekher Lexicon Explorer";
+const DEFAULT_ASSET_ORIGIN = "https://zekher.com";
+
+function resolveAssetOrigin(rawBaseUrl: string | undefined): string {
+  if (!rawBaseUrl) return DEFAULT_ASSET_ORIGIN;
+
+  try {
+    return new URL(rawBaseUrl).origin;
+  } catch {
+    return DEFAULT_ASSET_ORIGIN;
+  }
+}
 
 /**
  * Returns the HTML document used by MCP App-capable hosts to render
  * lexicon search results inline.
  */
 export function getLexiconExplorerAppHtml(): string {
+  const assetOrigin = resolveAssetOrigin(process.env.NEXT_PUBLIC_BASE_URL);
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -351,8 +364,21 @@ export function getLexiconExplorerAppHtml(): string {
       let resizeObserver = null;
       let pdfJsLibPromise = null;
       const renderedPdfPreviews = new Set();
-      const PDF_JS_MODULE_URL = "/pdf.min.mjs";
-      const PDF_WORKER_URL = "/pdf.worker.min.js";
+      const ASSET_ORIGIN = ${JSON.stringify(assetOrigin)};
+
+      function uniqueUrls(urls) {
+        return Array.from(new Set(urls.filter(Boolean)));
+      }
+
+      const PDF_JS_MODULE_URLS = uniqueUrls([
+        new URL("/pdf.min.mjs", window.location.origin).toString(),
+        new URL("/pdf.min.mjs", ASSET_ORIGIN).toString()
+      ]);
+
+      const PDF_WORKER_URLS = uniqueUrls([
+        new URL("/pdf.worker.min.js", window.location.origin).toString(),
+        new URL("/pdf.worker.min.js", ASSET_ORIGIN).toString()
+      ]);
 
       function escapeHtml(value) {
         return String(value)
@@ -438,16 +464,28 @@ export function getLexiconExplorerAppHtml(): string {
 
       async function loadPdfJs() {
         if (!pdfJsLibPromise) {
-          pdfJsLibPromise = import(PDF_JS_MODULE_URL)
-            .then((mod) => {
-              if (mod && mod.GlobalWorkerOptions) {
-                mod.GlobalWorkerOptions.workerSrc = new URL(
-                  PDF_WORKER_URL,
-                  window.location.origin
-                ).toString();
+          pdfJsLibPromise = (async () => {
+            let lastError;
+
+            for (let index = 0; index < PDF_JS_MODULE_URLS.length; index += 1) {
+              try {
+                const moduleUrl = PDF_JS_MODULE_URLS[index];
+                const workerUrl =
+                  PDF_WORKER_URLS[index] || PDF_WORKER_URLS[PDF_WORKER_URLS.length - 1];
+                const mod = await import(moduleUrl);
+
+                if (mod && mod.GlobalWorkerOptions && workerUrl) {
+                  mod.GlobalWorkerOptions.workerSrc = workerUrl;
+                }
+
+                return mod;
+              } catch (error) {
+                lastError = error;
               }
-              return mod;
-            })
+            }
+
+            throw lastError || new Error("Unable to load PDF.js assets");
+          })()
             .catch((error) => {
               pdfJsLibPromise = null;
               throw error;
