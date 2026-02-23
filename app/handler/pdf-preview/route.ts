@@ -12,6 +12,18 @@ const MIN_PREVIEW_WIDTH = 240;
 const MAX_PREVIEW_WIDTH = 1400;
 
 type PdfJsModule = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
+type CanvasModule = {
+  createCanvas: (
+    width: number,
+    height: number
+  ) => {
+    getContext: (type: "2d") => unknown;
+    toBuffer: (mimeType: "image/png") => Uint8Array | Buffer;
+  };
+  DOMMatrix?: unknown;
+  ImageData?: unknown;
+  Path2D?: unknown;
+};
 
 type CacheEntry = {
   body: Uint8Array;
@@ -21,44 +33,63 @@ type CacheEntry = {
 
 const previewCache = new Map<string, CacheEntry>();
 let pdfJsPromise: Promise<PdfJsModule> | null = null;
-let createCanvasImpl:
-  | ((width: number, height: number) => {
-      getContext: (type: "2d") => unknown;
-      toBuffer: (mimeType: "image/png") => Uint8Array | Buffer;
-    })
-  | null = null;
+let canvasModulePromise: Promise<CanvasModule> | null = null;
 
-function getCreateCanvas() {
-  if (createCanvasImpl) return createCanvasImpl;
+function normalizeErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return String(error);
+}
 
-  try {
-    const runtimeRequire = (0, eval)("require") as NodeJS.Require;
-    const canvasModule = runtimeRequire("@napi-rs/canvas") as {
-      createCanvas: typeof createCanvasImpl;
-      DOMMatrix?: unknown;
-      ImageData?: unknown;
-      Path2D?: unknown;
-    };
-    if (typeof canvasModule.createCanvas !== "function") {
-      throw new Error("createCanvas missing");
-    }
-
-    const globalScope = globalThis as Record<string, unknown>;
-    if (!globalScope.DOMMatrix && canvasModule.DOMMatrix) {
-      globalScope.DOMMatrix = canvasModule.DOMMatrix;
-    }
-    if (!globalScope.ImageData && canvasModule.ImageData) {
-      globalScope.ImageData = canvasModule.ImageData;
-    }
-    if (!globalScope.Path2D && canvasModule.Path2D) {
-      globalScope.Path2D = canvasModule.Path2D;
-    }
-
-    createCanvasImpl = canvasModule.createCanvas;
-    return createCanvasImpl;
-  } catch {
-    throw new Error("Server canvas renderer unavailable.");
+function installCanvasGlobals(canvasModule: CanvasModule): void {
+  const globalScope = globalThis as Record<string, unknown>;
+  if (!globalScope.DOMMatrix && canvasModule.DOMMatrix) {
+    globalScope.DOMMatrix = canvasModule.DOMMatrix;
   }
+  if (!globalScope.ImageData && canvasModule.ImageData) {
+    globalScope.ImageData = canvasModule.ImageData;
+  }
+  if (!globalScope.Path2D && canvasModule.Path2D) {
+    globalScope.Path2D = canvasModule.Path2D;
+  }
+}
+
+async function loadCanvasModule(): Promise<CanvasModule> {
+  if (!canvasModulePromise) {
+    canvasModulePromise = (async () => {
+      let loadedModule: CanvasModule | undefined;
+      let lastError: unknown;
+
+      const maybeRequire = globalThis as { require?: NodeJS.Require };
+      if (typeof maybeRequire.require === "function") {
+        try {
+          loadedModule = maybeRequire.require("@napi-rs/canvas") as CanvasModule;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (!loadedModule) {
+        try {
+          loadedModule = (await import("@napi-rs/canvas")) as CanvasModule;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      if (!loadedModule || typeof loadedModule.createCanvas !== "function") {
+        const detail = normalizeErrorMessage(lastError);
+        throw new Error(`Server canvas renderer unavailable: ${detail}`);
+      }
+
+      installCanvasGlobals(loadedModule);
+      return loadedModule;
+    })().catch((error) => {
+      canvasModulePromise = null;
+      throw error;
+    });
+  }
+
+  return canvasModulePromise;
 }
 
 function getPreviewWidth(request: Request): number {
@@ -150,7 +181,7 @@ function respondImage(
 async function loadPdfJs(): Promise<PdfJsModule> {
   if (!pdfJsPromise) {
     // Ensure Node has canvas DOM globals (DOMMatrix/ImageData/Path2D) before PDF.js loads.
-    getCreateCanvas();
+    await loadCanvasModule();
     pdfJsPromise = import("pdfjs-dist/legacy/build/pdf.mjs");
   }
   return pdfJsPromise;
@@ -209,7 +240,7 @@ async function renderPdfPreviewImage(
     const scale = width / baseViewport.width;
     const viewport = page.getViewport({ scale });
 
-    const createCanvas = getCreateCanvas();
+    const { createCanvas } = await loadCanvasModule();
     const canvas = createCanvas(
       Math.max(1, Math.floor(viewport.width)),
       Math.max(1, Math.floor(viewport.height))
