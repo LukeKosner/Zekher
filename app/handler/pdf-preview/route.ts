@@ -222,45 +222,67 @@ function isCanvasMissingError(error: unknown): boolean {
   );
 }
 
-function escapeXml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+function parseDataImageUrl(dataUrl: string): {
+  body: Uint8Array;
+  contentType: "image/png" | "image/svg+xml";
+} | null {
+  const match = /^data:(image\/(?:png|svg\+xml));base64,(.+)$/i.exec(dataUrl);
+  if (!match) return null;
+
+  const contentType = match[1].toLowerCase() as "image/png" | "image/svg+xml";
+  const base64Payload = match[2];
+  const bytes = Buffer.from(base64Payload, "base64");
+  return {
+    body: new Uint8Array(bytes),
+    contentType,
+  };
 }
 
-function buildSvgPreview(
-  width: number,
-  height: number,
-  lines: string[]
-): Uint8Array {
-  const safeWidth = Math.max(240, Math.floor(width));
-  const safeHeight = Math.max(320, Math.floor(height));
-  const header = "Text Preview";
-  const lineHeight = 20;
-  const startY = 52;
-  const maxLines = Math.max(6, Math.floor((safeHeight - startY - 18) / lineHeight));
-  const renderedLines = lines.slice(0, maxLines);
+async function fetchRemoteImageFallback(
+  targetUrl: URL
+): Promise<{ body: Uint8Array; contentType: "image/png" | "image/svg+xml" } | null> {
+  const apiUrl = new URL("https://api.microlink.io/");
+  apiUrl.searchParams.set("url", targetUrl.toString());
+  apiUrl.searchParams.set("screenshot", "true");
+  apiUrl.searchParams.set("meta", "false");
 
-  const textNodes = renderedLines
-    .map((line, index) => {
-      const y = startY + index * lineHeight;
-      return `<text x="24" y="${y}" font-size="14" fill="#2f2f2f">${escapeXml(line)}</text>`;
-    })
-    .join("");
+  const response = await fetch(apiUrl.toString(), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  if (!response.ok) return null;
 
-  const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${safeWidth}" height="${safeHeight}" viewBox="0 0 ${safeWidth} ${safeHeight}">`,
-    '<rect width="100%" height="100%" fill="#ffffff"/>',
-    `<rect x="12" y="12" width="${safeWidth - 24}" height="${safeHeight - 24}" rx="8" fill="#f7f7f7" stroke="#dddddd"/>`,
-    `<text x="24" y="34" font-size="13" fill="#6b6b6b" font-family="ui-sans-serif, system-ui">${header}</text>`,
-    textNodes,
-    "</svg>",
-  ].join("");
+  const payload = (await response.json()) as {
+    status?: string;
+    data?: { image?: { url?: string } };
+  };
+  const imageUrl = payload?.data?.image?.url;
+  if (!imageUrl) return null;
 
-  return new TextEncoder().encode(svg);
+  if (imageUrl.startsWith("data:")) {
+    return parseDataImageUrl(imageUrl);
+  }
+
+  const imageResponse = await fetch(imageUrl, {
+    method: "GET",
+    headers: {
+      Accept: "image/*",
+    },
+  });
+  if (!imageResponse.ok) return null;
+
+  const contentTypeHeader = imageResponse.headers.get("content-type") ?? "";
+  const normalized = contentTypeHeader.toLowerCase();
+  const contentType: "image/png" | "image/svg+xml" =
+    normalized.includes("svg") ? "image/svg+xml" : "image/png";
+
+  const imageBytes = new Uint8Array(await imageResponse.arrayBuffer());
+  return {
+    body: imageBytes,
+    contentType,
+  };
 }
 
 async function fetchPdfBytes(target: URL): Promise<Uint8Array> {
@@ -295,7 +317,8 @@ async function fetchPdfBytes(target: URL): Promise<Uint8Array> {
 async function renderPdfPreviewImage(
   bytes: Uint8Array,
   pageNumber: number,
-  width: number
+  width: number,
+  targetUrl: URL
 ): Promise<{ body: Uint8Array; contentType: "image/png" | "image/svg+xml" }> {
   const pdfjs = await loadPdfJs();
   const loadingTask = pdfjs.getDocument({
@@ -339,16 +362,9 @@ async function renderPdfPreviewImage(
         throw error;
       }
 
-      const textContent = await page.getTextContent();
-      const lines = textContent.items
-        .map((item) => ("str" in item ? String(item.str).trim() : ""))
-        .filter(Boolean)
-        .slice(0, 40);
-
-      return {
-        body: buildSvgPreview(viewport.width, viewport.height, lines),
-        contentType: "image/svg+xml",
-      };
+      const remotePreview = await fetchRemoteImageFallback(targetUrl);
+      if (remotePreview) return remotePreview;
+      throw new Error("Unable to render image preview without canvas support.");
     }
   } finally {
     await pdf.destroy();
@@ -378,7 +394,7 @@ export async function GET(request: Request): Promise<Response> {
 
   try {
     const bytes = await fetchPdfBytes(target);
-    const preview = await renderPdfPreviewImage(bytes, page, width);
+    const preview = await renderPdfPreviewImage(bytes, page, width, target);
     const etag = `"${createHash("sha256").update(preview.body).digest("hex")}"`;
 
     setCacheEntry(key, {
