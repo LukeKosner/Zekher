@@ -19,10 +19,12 @@ if [[ "${VERCEL_ENV:-}" == "preview" ]]; then
   fi
 
   PREVIEW_NAME="${VERCEL_GIT_COMMIT_REF:-preview}"
-  echo "Running Convex preview deploy for '${PREVIEW_NAME}' and building Next.js..."
+  echo "Running Convex preview deploy for branch '${PREVIEW_NAME}' and building Next.js..."
   deploy_log="$(mktemp)"
+
+  # Let Convex infer and reuse the branch-associated preview deployment.
+  # Forcing --preview-create rotates URLs and can break older Vercel preview links.
   npx convex deploy \
-    --preview-create "${PREVIEW_NAME}" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
     --cmd "npm run build" 2>&1 | tee "${deploy_log}"
 
