@@ -33,13 +33,13 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <Link href="/mcp" className="no-underline">
+              <Link href="/classroom" className="no-underline">
                 <Announcement>
                   <AnnouncementTag className="bg-green-200">
-                    v3 Beta
+                    v3.5 Beta
                   </AnnouncementTag>
                   <AnnouncementTitle>
-                    Support for MCP
+                    Introducing Classroom
                     <ArrowUpRight className="inline w-4 h-4" />
                   </AnnouncementTitle>
                 </Announcement>

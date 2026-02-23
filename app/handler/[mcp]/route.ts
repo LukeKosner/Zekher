@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getLexiconExplorerAppHtml } from "./app-view";
 import { searchLexicon, getLexiconEntryDetail } from "./utils";
 import { mcpUsageInstructions, mcpConstants } from "./config";
+import { buildCorsHeaders, withCorsHeaders } from "../cors";
 import type {
   McpLexiconAppSource,
   McpLexiconDetailStructuredContent,
@@ -17,6 +18,11 @@ import type {
 
 function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_BASE_URL ?? "https://zekher.com";
+}
+
+function toProxyUrl(rawUrl: string | null | undefined): string | undefined {
+  if (!rawUrl?.trim()) return undefined;
+  return `${getBaseUrl()}/handler/proxy?url=${encodeURIComponent(rawUrl)}`;
 }
 
 type RequestHeaders = Record<string, string | string[] | undefined>;
@@ -68,6 +74,8 @@ function toAppSource(source: {
 }): McpLexiconAppSource {
   return {
     ...source,
+    pdfUrl: toProxyUrl(source.pdfUrl),
+    txtUrl: toProxyUrl(source.txtUrl),
     citationUrl: `${getBaseUrl()}/sources/lexicon/${source.id}`,
   };
 }
@@ -357,4 +365,17 @@ const handler = createMcpHandler(
   }
 );
 
-export { handler as GET, handler as POST };
+export async function OPTIONS(request: Request): Promise<Response> {
+  return new Response(null, {
+    status: 204,
+    headers: buildCorsHeaders(request),
+  });
+}
+
+export async function GET(request: Request): Promise<Response> {
+  return withCorsHeaders(request, await handler(request));
+}
+
+export async function POST(request: Request): Promise<Response> {
+  return withCorsHeaders(request, await handler(request));
+}

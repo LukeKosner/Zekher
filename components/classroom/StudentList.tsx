@@ -69,24 +69,26 @@ export function StudentList({
           presentStudents.map((student) => (
             <div
               key={student._id}
-              className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm"
+              className="flex items-start gap-2 rounded-lg border bg-background px-3 py-2 text-sm"
             >
               <div
                 className={cn(
-                  "h-2 w-2 shrink-0 rounded-full",
+                  "mt-1.5 h-2 w-2 shrink-0 rounded-full",
                   getStatusColor(student, now)
                 )}
               />
-              <span className="min-w-0 flex-1 truncate">{student.displayName}</span>
-              <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                {getStatusLabel(student, now)}
-              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate">{student.displayName}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {getStatusLabel(student, now)}
+                </p>
+              </div>
               {onKickStudent && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                  className="ml-auto h-7 shrink-0 px-2 text-xs text-destructive hover:text-destructive"
                   onClick={() => onKickStudent(student._id)}
                   disabled={kickingStudentId === student._id}
                 >

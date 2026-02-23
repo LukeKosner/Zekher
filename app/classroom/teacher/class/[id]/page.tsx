@@ -258,7 +258,7 @@ export default function LiveClassPage() {
 
       <div className="flex-1 min-h-0 overflow-hidden bg-muted/20">
         <div className="flex h-full min-h-0 w-full flex-col gap-4 p-4 sm:p-6 lg:overflow-hidden lg:px-8">
-          <section className="shrink-0 overflow-auto rounded-xl border bg-card text-card-foreground shadow-sm">
+          <section className="shrink-0 overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
             <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
               <p className={SECTION_LABEL_CLASS}>Class Code</p>
               <Button
@@ -311,33 +311,14 @@ export default function LiveClassPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid min-h-[320px] h-full gap-8 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_320px] md:items-center">
-                <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-5 text-center md:mx-0 md:items-start md:text-left">
+              <div className="grid min-h-[260px] h-full gap-6 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_320px] md:items-center">
+                <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-4 text-center md:mx-0 md:items-start md:text-left">
                   <div className="space-y-3">
                     <p className="font-mono text-5xl leading-none font-black tracking-[0.3em] text-foreground sm:text-6xl">
                       {joinCode}
                     </p>
                   </div>
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-foreground/90">
-                      Scan the QR code or visit this link to join.
-                    </p>
-                    <p className="rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-snug text-muted-foreground">
-                      {joinUrl || "Preparing join link..."}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mx-auto flex h-full w-full max-w-[320px] flex-col items-center justify-center gap-3">
-                  <QRCodeSVG
-                    value={joinUrl || joinCode}
-                    size={260}
-                    level="M"
-                    includeMargin
-                    bgColor="#FFFFFF"
-                    fgColor="#000000"
-                  />
-                  <div className="flex w-full flex-wrap justify-center gap-2">
+                  <div className="flex flex-wrap justify-center gap-2 md:justify-start">
                     <Button
                       type="button"
                       variant="outline"
@@ -366,6 +347,25 @@ export default function LiveClassPage() {
                       {copiedLink ? "Link Copied" : "Copy Join Link"}
                     </Button>
                   </div>
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-foreground/90">
+                      Scan the QR code or visit this link to join.
+                    </p>
+                    <p className="rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-snug text-muted-foreground">
+                      {joinUrl || "Preparing join link..."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mx-auto flex h-full w-full max-w-[320px] items-center justify-center">
+                  <QRCodeSVG
+                    value={joinUrl || joinCode}
+                    size={260}
+                    level="M"
+                    includeMargin
+                    bgColor="#FFFFFF"
+                    fgColor="#000000"
+                  />
                 </div>
               </div>
             )}
