@@ -24,9 +24,13 @@ if [[ "${VERCEL_ENV:-}" == "preview" ]]; then
   npx convex deploy \
     --preview-create "${PREVIEW_NAME}" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
-    --cmd "npm run build" | tee "${deploy_log}"
+    --cmd "npm run build" 2>&1 | tee "${deploy_log}"
 
-  preview_url="$(grep -Eo 'https://[a-z0-9-]+\.convex\.cloud' "${deploy_log}" | tail -n1 || true)"
+  preview_url="$(
+    sed -E $'s/\x1b\\[[0-9;]*[mK]//g' "${deploy_log}" \
+      | grep -Eo 'https://[a-z0-9-]+\.convex\.cloud' \
+      | tail -n1 || true
+  )"
   rm -f "${deploy_log}"
 
   if [[ -z "${preview_url}" ]]; then
