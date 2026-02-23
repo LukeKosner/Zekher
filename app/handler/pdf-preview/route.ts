@@ -181,8 +181,32 @@ function respondImage(
 async function loadPdfJs(): Promise<PdfJsModule> {
   if (!pdfJsPromise) {
     // Ensure Node has canvas DOM globals (DOMMatrix/ImageData/Path2D) before PDF.js loads.
-    await loadCanvasModule();
-    pdfJsPromise = import("pdfjs-dist/legacy/build/pdf.mjs");
+    pdfJsPromise = (async () => {
+      await loadCanvasModule();
+
+      const pdfImportPromise = import("pdfjs-dist/legacy/build/pdf.mjs");
+      const workerModulePath = "pdfjs-dist/legacy/build/pdf.worker.mjs";
+      const workerImportPromise = import(workerModulePath) as Promise<{
+        WorkerMessageHandler?: unknown;
+      }>;
+      const [pdfjs, worker] = await Promise.all([
+        pdfImportPromise,
+        workerImportPromise,
+      ]);
+
+      // In Node, PDF.js uses fake-worker mode and expects this global handler.
+      if (worker?.WorkerMessageHandler) {
+        const globalScope = globalThis as Record<string, unknown>;
+        globalScope.pdfjsWorker = {
+          WorkerMessageHandler: worker.WorkerMessageHandler,
+        };
+      }
+
+      return pdfjs;
+    })().catch((error) => {
+      pdfJsPromise = null;
+      throw error;
+    });
   }
   return pdfJsPromise;
 }
