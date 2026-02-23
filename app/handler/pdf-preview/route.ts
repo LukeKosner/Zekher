@@ -35,10 +35,25 @@ function getCreateCanvas() {
     const runtimeRequire = (0, eval)("require") as NodeJS.Require;
     const canvasModule = runtimeRequire("@napi-rs/canvas") as {
       createCanvas: typeof createCanvasImpl;
+      DOMMatrix?: unknown;
+      ImageData?: unknown;
+      Path2D?: unknown;
     };
     if (typeof canvasModule.createCanvas !== "function") {
       throw new Error("createCanvas missing");
     }
+
+    const globalScope = globalThis as Record<string, unknown>;
+    if (!globalScope.DOMMatrix && canvasModule.DOMMatrix) {
+      globalScope.DOMMatrix = canvasModule.DOMMatrix;
+    }
+    if (!globalScope.ImageData && canvasModule.ImageData) {
+      globalScope.ImageData = canvasModule.ImageData;
+    }
+    if (!globalScope.Path2D && canvasModule.Path2D) {
+      globalScope.Path2D = canvasModule.Path2D;
+    }
+
     createCanvasImpl = canvasModule.createCanvas;
     return createCanvasImpl;
   } catch {
@@ -134,6 +149,8 @@ function respondImage(
 
 async function loadPdfJs(): Promise<PdfJsModule> {
   if (!pdfJsPromise) {
+    // Ensure Node has canvas DOM globals (DOMMatrix/ImageData/Path2D) before PDF.js loads.
+    getCreateCanvas();
     pdfJsPromise = import("pdfjs-dist/legacy/build/pdf.mjs");
   }
   return pdfJsPromise;
