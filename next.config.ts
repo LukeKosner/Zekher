@@ -2,6 +2,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["@napi-rs/canvas"],
   env: {
     NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV
   },

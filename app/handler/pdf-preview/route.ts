@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { createCanvas } from "@napi-rs/canvas";
 import { buildCorsHeaders, withCorsHeaders } from "../cors";
 import { parseHttpsTargetUrlFromRequest } from "../url-safety";
 
@@ -22,6 +21,30 @@ type CacheEntry = {
 
 const previewCache = new Map<string, CacheEntry>();
 let pdfJsPromise: Promise<PdfJsModule> | null = null;
+let createCanvasImpl:
+  | ((width: number, height: number) => {
+      getContext: (type: "2d") => unknown;
+      toBuffer: (mimeType: "image/png") => Uint8Array | Buffer;
+    })
+  | null = null;
+
+function getCreateCanvas() {
+  if (createCanvasImpl) return createCanvasImpl;
+
+  try {
+    const runtimeRequire = (0, eval)("require") as NodeJS.Require;
+    const canvasModule = runtimeRequire("@napi-rs/canvas") as {
+      createCanvas: typeof createCanvasImpl;
+    };
+    if (typeof canvasModule.createCanvas !== "function") {
+      throw new Error("createCanvas missing");
+    }
+    createCanvasImpl = canvasModule.createCanvas;
+    return createCanvasImpl;
+  } catch {
+    throw new Error("Server canvas renderer unavailable.");
+  }
+}
 
 function getPreviewWidth(request: Request): number {
   const requestUrl = new URL(request.url);
@@ -169,6 +192,7 @@ async function renderPdfPreviewImage(
     const scale = width / baseViewport.width;
     const viewport = page.getViewport({ scale });
 
+    const createCanvas = getCreateCanvas();
     const canvas = createCanvas(
       Math.max(1, Math.floor(viewport.width)),
       Math.max(1, Math.floor(viewport.height))
