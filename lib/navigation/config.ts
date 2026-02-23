@@ -4,7 +4,8 @@ import {
   Info,
   Home,
   Server,
-  type LucideIcon
+  GraduationCap,
+  Presentation
 } from "lucide-react";
 import type { NavigationItem } from "./types";
 import { NAVIGATION_SECTIONS, ROUTES } from "./constants";
@@ -41,6 +42,23 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
     breadcrumbLabel: "Sources",
     section: NAVIGATION_SECTIONS.EVERYONE
   },
+
+  // Education section
+  {
+    href: ROUTES.CLASSROOM_STUDENT,
+    icon: GraduationCap,
+    label: "Student",
+    breadcrumbLabel: "Student",
+    section: NAVIGATION_SECTIONS.EDUCATION
+  },
+  {
+    href: ROUTES.CLASSROOM_TEACHER,
+    icon: Presentation,
+    label: "Teacher",
+    breadcrumbLabel: "Teacher",
+    section: NAVIGATION_SECTIONS.EDUCATION
+  },
+
   // Developers section
   {
     href: ROUTES.DEVELOPERS_MCP,

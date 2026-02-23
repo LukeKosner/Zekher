@@ -6,7 +6,8 @@
 
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getTestimonyBySlug } from "@/lib/database";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
 import { TestimonyPageClient } from "./TestimonyPageClient";
 import { TestimonyPageFallback } from "@/app/sources/components/skeletons";
 
@@ -15,7 +16,9 @@ import { TestimonyPageFallback } from "@/app/sources/components/skeletons";
  */
 async function TestimonyPageContent(props: any) {
   const params = await props.params;
-  const testimony = await getTestimonyBySlug(params.id); // Now expects ID
+  const testimony = await fetchQuery(api.sources.getTestimonyBySourceId, {
+    sourceId: params.id,
+  });
 
   if (!testimony) {
     notFound();
@@ -23,7 +26,7 @@ async function TestimonyPageContent(props: any) {
 
   // Convert database testimony to client format
   const clientTestimony = {
-    id: testimony.id,
+    id: testimony.sourceId,
     survivor_name: testimony.survivor_name,
     filename: testimony.filename,
     content: testimony.content,
@@ -32,7 +35,9 @@ async function TestimonyPageContent(props: any) {
     date: testimony.date || undefined,
     location: testimony.location || undefined,
     description: testimony.description || undefined,
-    createdAt: testimony.createdAt?.toISOString()
+    createdAt: testimony.createdAt
+      ? new Date(testimony.createdAt).toISOString()
+      : undefined
   };
 
   return <TestimonyPageClient testimony={clientTestimony} />;
@@ -55,7 +60,9 @@ export default function TestimonyPage(props: any) {
 export async function generateMetadata(props: any) {
   try {
     const params = await props.params;
-    const testimony = await getTestimonyBySlug(params.id);
+    const testimony = await fetchQuery(api.sources.getTestimonyBySourceId, {
+      sourceId: params.id,
+    });
 
     if (!testimony) {
       return {

@@ -1,19 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { generateAudioUrl, type AudioUrlParams } from "@/lib";
-import {
-  trackAudioLoading,
-  trackSpeakerMappingError,
-  createMonitoringContext,
-  ErrorType,
-  type AudioLoadingMetrics
-} from "@/lib/monitoring";
-import { getTestimonyMetadata } from "@/lib/ingestion/processors/testimony-languages";
-import { getTestimonyById } from "@/lib/database";
-import { logger } from "@/lib/monitoring";
-import { toolDescriptions, nextStepsInstructions } from "@/lib/tools";
+import { fetchAction } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { toolDescriptions, nextStepsInstructions } from "./prompts";
 
-// Input schema - AI provides these fields only (audioFile removed)
 const audioSegmentInputSchema = z.object({
   testimonyId: z.string().describe("The ID of the testimony"),
   speakerName: z
@@ -23,16 +13,12 @@ const audioSegmentInputSchema = z.object({
   endTime: z.number().describe("End time in seconds"),
   transcriptExcerpt: z
     .string()
-    .describe(
-      "Concise EXACT excerpt (2-3 sentences max) spoken by the survivor"
-    ),
+    .describe("Concise exact excerpt (2-3 sentences max) spoken by the survivor"),
   language: z.string().optional().describe("Language spoken if not English"),
   significance: z
     .string()
     .max(500)
-    .describe(
-      "Brief explanation (1-2 sentences) of why this segment is important"
-    )
+    .describe("Brief explanation (1-2 sentences) of why this segment is important"),
 });
 
 export const showUsersAudio = tool({
@@ -42,188 +28,20 @@ export const showUsersAudio = tool({
     segments: z
       .array(audioSegmentInputSchema)
       .max(toolDescriptions.showUsersAudio.maxSegments)
-      .describe(toolDescriptions.showUsersAudio.inputDescription)
+      .describe(toolDescriptions.showUsersAudio.inputDescription),
   }),
   execute: async ({ segments }) => {
-    const processedAt = new Date().toISOString();
-    const errors: string[] = [];
-    const monitoringContext = createMonitoringContext("audio_tool_execution");
-
-    const processedSegments = await Promise.all(
-      segments.map(async (segment, index) => {
-        const startTime = Date.now();
-        let fallbackUsed = false;
-        let urlSource: "blob" | "gcs" | "fallback" = "gcs";
-
-        // Look up testimony URL from database using testimonyId (outside try-catch so it's available in error handling)
-        let testimonyUrl: string | undefined;
-        try {
-          if (segment.testimonyId) {
-            const testimony = await getTestimonyById(segment.testimonyId);
-            testimonyUrl = testimony?.url || undefined;
-          }
-        } catch (error) {
-          logger.warn("Failed to look up testimony URL", {
-            testimonyId: segment.testimonyId,
-            error: error instanceof Error ? error : new Error(String(error))
-          });
-        }
-
-        try {
-          // Get testimony metadata for the speaker
-          const metadata = getTestimonyMetadata(segment.speakerName);
-
-          // Generate audioFile using centralized URL generation
-          const audioFile = generateAudioUrl({
-            speakerName: segment.speakerName
-          });
-
-          const processedSegment = {
-            ...segment,
-            audioFile, // Always generated internally, never from AI input
-            language: segment.language || metadata.language,
-            languageCode:
-              (segment as any).languageCode || metadata.languageCode,
-            url: testimonyUrl
-          };
-
-          const loadTimeMs = Date.now() - startTime;
-
-          // Track successful audio URL generation
-          const metrics: AudioLoadingMetrics = {
-            speakerName: segment.speakerName,
-            audioFilename: audioFile,
-            success: true,
-            loadTimeMs,
-            fallbackUsed: false,
-            urlSource
-          };
-
-          trackAudioLoading(metrics);
-          monitoringContext.trackSuccess();
-
-          logger.info("Audio segment processed", {
-            segmentIndex: index + 1,
-            speakerName: segment.speakerName,
-            generatedAudioFile: audioFile,
-            testimonyId: segment.testimonyId,
-            urlSource,
-            loadTimeMs,
-            component: "audio-tool"
-          });
-
-          return processedSegment;
-        } catch (error) {
-          const loadTimeMs = Date.now() - startTime;
-          const errorMessage = `Failed to process audio segment for ${
-            segment.speakerName
-          }: ${error instanceof Error ? error.message : "Unknown error"}`;
-          errors.push(errorMessage);
-
-          // Log detailed error information for debugging
-          console.error("Failed to process audio segment", {
-            segment,
-            errorMessage
-          });
-
-          // Track the initial failure
-          const failureMetrics: AudioLoadingMetrics = {
-            speakerName: segment.speakerName,
-            audioFilename: "unknown",
-            success: false,
-            loadTimeMs,
-            errorType: ErrorType.AUDIO_LOADING,
-            errorMessage,
-            fallbackUsed: false,
-            urlSource: "gcs"
-          };
-
-          trackAudioLoading(failureMetrics);
-          monitoringContext.trackError(ErrorType.AUDIO_LOADING, errorMessage);
-
-          // Return segment with fallback audioFile using centralized URL generation
-          try {
-            const fallbackUrl = generateAudioUrl({
-              speakerName: "fallback",
-              fallbackFilename: "fallback.mp3"
-            });
-
-            fallbackUsed = true;
-            urlSource = "fallback";
-
-            // Track successful fallback
-            const fallbackMetrics: AudioLoadingMetrics = {
-              speakerName: segment.speakerName,
-              audioFilename: fallbackUrl,
-              success: true,
-              loadTimeMs: Date.now() - startTime,
-              fallbackUsed: true,
-              urlSource: "fallback"
-            };
-
-            trackAudioLoading(fallbackMetrics);
-
-            return {
-              ...segment,
-              audioFile: fallbackUrl,
-              url: testimonyUrl
-            };
-          } catch (fallbackError) {
-            // If even fallback fails, use direct GCS URL
-            const finalFallbackUrl =
-              "https://storage.googleapis.com/zekher-storage/audio/fallback.mp3";
-
-            // Track final fallback attempt
-            const finalFallbackMetrics: AudioLoadingMetrics = {
-              speakerName: segment.speakerName,
-              audioFilename: finalFallbackUrl,
-              success: false,
-              loadTimeMs: Date.now() - startTime,
-              errorType: ErrorType.CONFIGURATION,
-              errorMessage: `All fallbacks failed: ${
-                fallbackError instanceof Error
-                  ? fallbackError.message
-                  : "Unknown error"
-              }`,
-              fallbackUsed: true,
-              urlSource: "fallback"
-            };
-
-            trackAudioLoading(finalFallbackMetrics);
-
-            return {
-              ...segment,
-              audioFile: finalFallbackUrl,
-              url: testimonyUrl
-            };
-          }
-        }
-      })
-    );
-
-    // Finish monitoring context and get summary metrics
-    const summaryMetrics = monitoringContext.finish();
-
-    const result = {
-      type: "audio_segments",
-      segments: processedSegments,
-      message: `${nextStepsInstructions.audio.replace(
-        "for the selected segments",
-        `for ${processedSegments.length} segment(s)`
-      )}`
-    };
-
-    if (errors.length > 0) {
-      // console.warn(
-      //   `Audio tool completed with ${errors.length} errors:`,
-      //   errors
-      // );
-    } else {
-      // console.log(
-      //   `Audio tool completed successfully. Generated ${processedSegments.length} audio URLs with ${summaryMetrics.successRate.toFixed(2)}% success rate.`
-      // );
+    try {
+      return await fetchAction(api.tools.audioToolAction, { segments });
+    } catch (error) {
+      return {
+        type: "audio_segments",
+        segments: [],
+        message:
+          error instanceof Error
+            ? error.message
+            : nextStepsInstructions.noResults,
+      };
     }
-
-    return result;
-  }
+  },
 });

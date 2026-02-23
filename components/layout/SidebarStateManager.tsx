@@ -31,6 +31,7 @@ export function SidebarStateManager({ children }: SidebarStateManagerProps) {
               title={title}
               sidebarOpen={open}
               isMobile={isMobile}
+              isChatRoute={isChatRoute}
             />
           )}
         </RouteSlugGenerator>

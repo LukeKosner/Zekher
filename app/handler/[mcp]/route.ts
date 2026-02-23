@@ -23,7 +23,7 @@ const handler = createMcpHandler(
           .optional()
           .describe("Set to true to confirm you have read the holocaust_education_context prompt and will follow citation guidelines")
       },
-      async ({ terms, confirmInstructionsRead }) => {
+      async ({ terms, confirmInstructionsRead }, extra) => {
         try {
           // Check if instructions were confirmed as read
           if (confirmInstructionsRead !== true) {
@@ -47,7 +47,9 @@ const handler = createMcpHandler(
             };
           }
 
-          const result = await searchLexicon(terms);
+          const result = await searchLexicon(terms, {
+            clientSessionId: extra?.sessionId,
+          });
 
           const response: McpLexiconResponse = {
             sources: result.entries,
@@ -122,8 +124,7 @@ const handler = createMcpHandler(
   {
     basePath: "/handler/",
     verboseLogs: false,
-    maxDuration: 300,
-    redisUrl: process.env.REDIS_URL
+    maxDuration: 300
   }
 );
 

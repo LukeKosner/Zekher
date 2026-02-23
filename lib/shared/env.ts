@@ -22,12 +22,15 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     DATABASE_URL: z.string().min(1),
+    DATABASE_URL_READONLY: z.string().min(1).optional(),
     REDIS_URL: z.string().min(1)
   },
   client: {
-    NEXT_PUBLIC_BASE_URL: z.string().url().default("https://zekher.com")
+    NEXT_PUBLIC_BASE_URL: z.string().url().default("https://zekher.com"),
+    NEXT_PUBLIC_CONVEX_URL: z.string().url().optional()
   },
   experimental__runtimeEnv: {
-    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL
   }
 });

@@ -30,7 +30,9 @@ export function ConditionalTitle({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <h1 className="text-lg md:text-xl cursor-pointer">{title}</h1>
+              <h1 className="text-lg md:text-xl cursor-pointer">
+                {title} <span className="text-muted-foreground">Beta</span>
+              </h1>
             </TooltipTrigger>
             <TooltipContent>
               <p>זכר - "remembrance" in Hebrew</p>

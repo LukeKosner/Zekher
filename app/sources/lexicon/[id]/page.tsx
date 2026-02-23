@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getLexiconEntryBySlug } from "@/lib/database";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
 import { LexiconPageFallback } from "@/app/sources/components/skeletons";
 import { LexiconPageClient } from "./client";
 import { ExternalRedirect } from "./ExternalRedirect";
@@ -20,8 +21,9 @@ async function LexiconPageContent(props: any) {
       notFound();
     }
 
-    // Get the lexicon entry from database using ID
-    const lexiconEntry = await getLexiconEntryBySlug(id);
+    const lexiconEntry = await fetchQuery(api.sources.getLexiconEntryBySourceId, {
+      sourceId: id
+    });
     console.log("LexiconPageContent: Found entry:", !!lexiconEntry, lexiconEntry?.title);
 
     if (!lexiconEntry) {
@@ -30,7 +32,7 @@ async function LexiconPageContent(props: any) {
     }
 
     console.log("LexiconPageContent: Entry details:", {
-      id: lexiconEntry.id,
+      id: lexiconEntry.sourceId,
       title: lexiconEntry.title,
       hasRedirectUrl: !!lexiconEntry.redirectUrl,
       hasTxtUrl: !!lexiconEntry.txtUrl,
@@ -84,7 +86,9 @@ export async function generateMetadata(props: any) {
     }
 
     // Get the title from the database
-    const lexiconEntry = await getLexiconEntryBySlug(id);
+    const lexiconEntry = await fetchQuery(api.sources.getLexiconEntryBySourceId, {
+      sourceId: id
+    });
 
     if (!lexiconEntry) {
       return {

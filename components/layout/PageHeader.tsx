@@ -7,17 +7,20 @@ import { ConditionalTitle } from "@/components/layout/PageHeader/Title";
 import { Menu } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib";
+import { ChatHeaderActions } from "@/components/layout/PageHeader/ChatHeaderActions";
 
 export function PageHeader({
   slug,
   title,
   sidebarOpen,
-  isMobile
+  isMobile,
+  isChatRoute = false
 }: {
   slug: string;
   title: string;
   sidebarOpen?: boolean;
   isMobile?: boolean;
+  isChatRoute?: boolean;
 }) {
   // Desktop only: compute gap for positioning
   const gap = sidebarOpen
@@ -62,8 +65,9 @@ export function PageHeader({
         isMobile={isMobile}
       />
 
-      {/* Mobile: Menu trigger on right */}
+      {/* Right actions */}
       <div className="flex items-center gap-2 ml-auto px-4">
+        <ChatHeaderActions isChatRoute={isChatRoute} />
         <SidebarTrigger className="md:hidden">
           <Menu className="h-4 w-4" />
         </SidebarTrigger>

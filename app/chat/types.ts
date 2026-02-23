@@ -33,7 +33,6 @@ export interface AudioPlayerSuspenseProps {
   className?: string;
 }
 
-import type { SelectLexiconSource, SelectTestimonySource } from "@/lib/database/schema";
 import type { ToolLexiconEntry, ToolTestimonyEntry } from "@/lib/shared/types";
 
 export type LexiconCarouselEntry = ToolLexiconEntry;

@@ -12,6 +12,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientSidebarLayout } from "@/components/layout/ClientSidebarLayout";
 import { Analytics } from "@vercel/analytics/next";
+import { ConvexClientProvider } from "@/components/classroom/ConvexClientProvider";
 
 import type { LayoutProps } from "./types";
 import * as Sentry from "@sentry/nextjs";
@@ -144,13 +145,15 @@ export default function RootLayout({ children }: Readonly<LayoutProps>) {
       </head>
       <body className={`${inter.variable} antialiased`}>
         {/* Client Component boundary - only interactive parts */}
-        <ClientSidebarLayout>
-          {children || (
-            <div className="flex items-center justify-center min-h-screen">
-              <p>Loading...</p>
-            </div>
-          )}
-        </ClientSidebarLayout>
+        <ConvexClientProvider>
+          <ClientSidebarLayout>
+            {children || (
+              <div className="flex items-center justify-center min-h-screen">
+                <p>Loading...</p>
+              </div>
+            )}
+          </ClientSidebarLayout>
+        </ConvexClientProvider>
       </body>
     </html>
   );

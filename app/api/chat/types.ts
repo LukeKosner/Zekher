@@ -14,6 +14,9 @@ export type CustomUIMessage = UIMessage<
       timestamp: string;
       message: string;
     };
+    thread: {
+      threadId: string;
+    };
   } // data parts type
 >;
 
@@ -27,6 +30,8 @@ export interface ChatMessage {
 
 export interface ChatRequest {
   messages: CustomUIMessage[]; // Using CustomUIMessage with content-filter support
+  threadId?: string;
+  clientSessionId?: string;
 }
 
 export interface ChatErrorResponse {

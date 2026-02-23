@@ -29,8 +29,8 @@ import { Suspense } from "react";
 import type { JSX } from "react";
 import { SourcesPageContent } from "./components/SourcesPageContent";
 import { SourcesPageFallback } from "./components/skeletons";
-import { getAllLexiconEntries } from "@/lib/database";
-import { getAllTestimonies } from "@/lib/database";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
 import { LexiconSource, TestimonySource } from "./types";
 import { sourcesPageConstants } from "./config";
 
@@ -58,12 +58,15 @@ async function getSources(): Promise<{
   testimonySources: TestimonySource[];
 }> {
   try {
-    const lexiconEntries = await getAllLexiconEntries();
-    const testimonyEntries = await getAllTestimonies();
+    const lexiconEntries = await fetchQuery(api.sources.getAllLexiconEntries, {});
+    const testimonyEntries = await fetchQuery(api.sources.getAllTestimonies, {});
 
     const lexiconSources: LexiconSource[] = lexiconEntries.map(
-      (entry, index) => ({
-        ...nullToUndefined(entry),
+      (entry) => ({
+        ...nullToUndefined(entry as any),
+        id: entry.sourceId,
+        slug: entry.sourceId,
+        citation: "Yad Vashem's Holocaust Lexicon",
         description: `${sourcesPageConstants.lexiconOverlay.title} entry: ${entry.title}`,
         tags: [],
         featured: Math.random() < 0.2
@@ -97,8 +100,10 @@ async function getSources(): Promise<{
         }
 
         return {
-          ...nullToUndefined(entry),
+          ...nullToUndefined(entry as any),
+          id: entry.sourceId,
           title: entry.survivor_name || undefined, // Use survivor name as title for display
+          survivorName: entry.survivor_name || undefined,
           description: entry.description || contentPreview,
           tags: [],
           featured: Math.random() < 0.2

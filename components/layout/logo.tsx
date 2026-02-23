@@ -29,7 +29,9 @@ export function Logo() {
               priority
             />
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">Zekher</span>
+              <span className="truncate font-medium">
+                Zekher <span className="text-muted-foreground">Beta</span>
+              </span>
               <span className="truncate text-xs">Holocaust Tools for AI</span>
             </div>
           </SidebarMenuButton>

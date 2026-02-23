@@ -30,8 +30,9 @@ import {
   AIToolContent,
   AIToolParameters
 } from "@/components/ui/kibo-ui/ai/tool";
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { motion, AnimatePresence } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -45,6 +46,17 @@ import dynamic from "next/dynamic";
 import * as Sentry from "@sentry/nextjs";
 import { ChatError } from "./components/ChatError";
 import type { CustomUIMessage } from "@/app/api/chat/types";
+import { useAuthToken } from "@convex-dev/auth/react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { useSearchParams } from "next/navigation";
+import {
+  CHAT_SESSION_STORAGE_KEY,
+  CHAT_THREAD_STORAGE_KEY,
+  CHAT_THREAD_UPDATED_EVENT,
+  CHAT_RATE_REFRESH_EVENT
+} from "./constants";
 
 const { logger } = Sentry;
 
@@ -60,15 +72,86 @@ const suggestions = [
 ];
 
 function ChatContent() {
+  const authToken = useAuthToken();
+  const searchParams = useSearchParams();
+  const requestedThreadId = searchParams.get("thread");
   const [contentFilterData, setContentFilterData] = useState<any>(null);
   const [duplicateToolCalls, setDuplicateToolCalls] = useState(false);
   const [seenToolCallIds, setSeenToolCallIds] = useState<Set<string>>(
     new Set()
   );
   const [errorDetected, setErrorDetected] = useState<string | null>(null);
+  const [threadId, setThreadId] = useState<string | null>(
+    requestedThreadId ?? null
+  );
+  const [clientSessionId, setClientSessionId] = useState<string | null>(null);
+  const [hydratedThreadId, setHydratedThreadId] = useState<string | null>(null);
 
-  const { messages, sendMessage, status, stop, error } =
+  useEffect(() => {
+    const existing = window.localStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+    if (existing) {
+      setClientSessionId(existing);
+      return;
+    }
+    const created = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(CHAT_SESSION_STORAGE_KEY, created);
+    setClientSessionId(created);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (threadId) {
+      window.localStorage.setItem(CHAT_THREAD_STORAGE_KEY, threadId);
+    } else {
+      window.localStorage.removeItem(CHAT_THREAD_STORAGE_KEY);
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(CHAT_THREAD_UPDATED_EVENT, { detail: { threadId } })
+    );
+  }, [threadId]);
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat"
+      }),
+    []
+  );
+
+  const notifyRateRefresh = () => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event(CHAT_RATE_REFRESH_EVENT));
+  };
+
+  const ensureClientSessionId = () => {
+    if (clientSessionId) return clientSessionId;
+    if (typeof window === "undefined") return undefined;
+
+    const existing = window.localStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+    if (existing) {
+      setClientSessionId(existing);
+      return existing;
+    }
+
+    const created = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(CHAT_SESSION_STORAGE_KEY, created);
+    setClientSessionId(created);
+    return created;
+  };
+
+  const getChatRequestOptions = () => ({
+    headers: authToken ? { authorization: `Bearer ${authToken}` } : undefined,
+    body: {
+      threadId: threadId ?? undefined,
+      clientSessionId: ensureClientSessionId()
+    }
+  });
+
+  const { messages, setMessages, sendMessage, status, stop, error } =
     useChat<CustomUIMessage>({
+      transport,
       onError: (err) => {
         logger.error("Chat error occurred", {
           error: err instanceof Error ? err.message : String(err),
@@ -77,12 +160,17 @@ function ChatContent() {
         Sentry.captureException(err, {
           tags: { component: "chat", operation: "useChat" }
         });
+        notifyRateRefresh();
       },
       onData: (dataPart) => {
         // Handle streaming content-filter data
         if (dataPart.type === "data-contentFilter") {
           console.log("Content filter detected:", dataPart.data);
           setContentFilterData(dataPart.data);
+        }
+        if (dataPart.type === "data-thread") {
+          setThreadId(dataPart.data.threadId);
+          notifyRateRefresh();
         }
 
         // Log the data part to understand its structure
@@ -101,6 +189,65 @@ function ChatContent() {
         setSeenToolCallIds((prev) => new Set([...prev, toolCall.toolCallId]));
       }
     });
+
+  useEffect(() => {
+    if (requestedThreadId) {
+      setMessages([]);
+      setThreadId(requestedThreadId);
+      setHydratedThreadId(null);
+      return;
+    }
+
+    setMessages([]);
+    setThreadId(null);
+    setHydratedThreadId(null);
+  }, [requestedThreadId, setMessages]);
+
+  const historicalMessages = useQuery(
+    api.chat.listThreadMessages,
+    threadId && clientSessionId
+      ? {
+          threadId: threadId as Id<"chatThreads">,
+          clientSessionId
+        }
+      : "skip"
+  );
+
+  useEffect(() => {
+    if (!requestedThreadId) {
+      if (messages.length > 0) return;
+      if (hydratedThreadId !== null) {
+        setHydratedThreadId(null);
+      }
+      return;
+    }
+    if (!threadId || historicalMessages === undefined) return;
+    if (hydratedThreadId === threadId) return;
+
+    const hydratedMessages: CustomUIMessage[] = historicalMessages.map(
+      (message) => ({
+        id: message._id,
+        role: message.role,
+        parts:
+          Array.isArray(message.parts) && message.parts.length > 0
+            ? (message.parts as any)
+            : [{ type: "text", text: message.content }]
+      })
+    );
+    setMessages(hydratedMessages);
+    setHydratedThreadId(threadId);
+    setContentFilterData(null);
+    setDuplicateToolCalls(false);
+    setSeenToolCallIds(new Set());
+    setErrorDetected(null);
+  }, [
+    requestedThreadId,
+    threadId,
+    historicalMessages,
+    hydratedThreadId,
+    setMessages,
+    messages.length
+  ]);
 
   const [input, setInput] = useState("");
 
@@ -136,7 +283,6 @@ function ChatContent() {
     }
   }, [messages, status, stop]);
 
-  // Handlers
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = input.trim();
@@ -151,14 +297,10 @@ function ChatContent() {
         );
 
       if (!recentUserMessages.includes(trimmedInput)) {
-        try {
-          sendMessage({ text: trimmedInput });
-          setInput("");
-          setContentFilterData(null); // Clear any previous content filter data
-          setDuplicateToolCalls(false); // Clear duplicate tool calls flag
-          setSeenToolCallIds(new Set()); // Clear seen tool call IDs
-          setErrorDetected(null); // Clear error detected flag
-        } catch (error) {
+        void sendMessage(
+          { text: trimmedInput },
+          getChatRequestOptions()
+        ).catch((error) => {
           logger.error("Failed to send message", {
             error: error instanceof Error ? error.message : String(error),
             inputLength: trimmedInput.length
@@ -166,7 +308,12 @@ function ChatContent() {
           Sentry.captureException(error, {
             tags: { component: "chat", operation: "sendMessage" }
           });
-        }
+        });
+        setInput("");
+        setContentFilterData(null); // Clear any previous content filter data
+        setDuplicateToolCalls(false); // Clear duplicate tool calls flag
+        setSeenToolCallIds(new Set()); // Clear seen tool call IDs
+        setErrorDetected(null); // Clear error detected flag
       }
     }
   };
@@ -184,14 +331,10 @@ function ChatContent() {
         );
 
       if (!recentUserMessages.includes(trimmedSuggestion)) {
-        try {
-          sendMessage({ text: trimmedSuggestion });
-          setInput(""); // Clear input after sending
-          setContentFilterData(null); // Clear any previous content filter data
-          setDuplicateToolCalls(false); // Clear duplicate tool calls flag
-          setSeenToolCallIds(new Set()); // Clear seen tool call IDs
-          setErrorDetected(null); // Clear error detected flag
-        } catch (error) {
+        void sendMessage(
+          { text: trimmedSuggestion },
+          getChatRequestOptions()
+        ).catch((error) => {
           logger.error("Failed to send suggestion message", {
             error: error instanceof Error ? error.message : String(error),
             suggestionLength: trimmedSuggestion.length
@@ -199,7 +342,12 @@ function ChatContent() {
           Sentry.captureException(error, {
             tags: { component: "chat", operation: "sendSuggestionMessage" }
           });
-        }
+        });
+        setInput(""); // Clear input after sending
+        setContentFilterData(null); // Clear any previous content filter data
+        setDuplicateToolCalls(false); // Clear duplicate tool calls flag
+        setSeenToolCallIds(new Set()); // Clear seen tool call IDs
+        setErrorDetected(null); // Clear error detected flag
       }
     }
   };
@@ -217,14 +365,10 @@ function ChatContent() {
         );
 
       if (!recentUserMessages.includes(trimmedQuestion)) {
-        try {
-          sendMessage({ text: trimmedQuestion });
-          setInput(""); // Clear input after sending
-          setContentFilterData(null); // Clear any previous content filter data
-          setDuplicateToolCalls(false); // Clear duplicate tool calls flag
-          setSeenToolCallIds(new Set()); // Clear seen tool call IDs
-          setErrorDetected(null); // Clear error detected flag
-        } catch (error) {
+        void sendMessage(
+          { text: trimmedQuestion },
+          getChatRequestOptions()
+        ).catch((error) => {
           logger.error("Failed to send question message", {
             error: error instanceof Error ? error.message : String(error),
             questionLength: trimmedQuestion.length
@@ -232,7 +376,12 @@ function ChatContent() {
           Sentry.captureException(error, {
             tags: { component: "chat", operation: "sendQuestionMessage" }
           });
-        }
+        });
+        setInput(""); // Clear input after sending
+        setContentFilterData(null); // Clear any previous content filter data
+        setDuplicateToolCalls(false); // Clear duplicate tool calls flag
+        setSeenToolCallIds(new Set()); // Clear seen tool call IDs
+        setErrorDetected(null); // Clear error detected flag
       }
     }
   };
