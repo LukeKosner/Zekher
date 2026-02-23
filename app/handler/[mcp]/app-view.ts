@@ -50,35 +50,9 @@ export function getLexiconExplorerAppHtml(): string {
 
       .app {
         width: 100%;
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 12px;
-      }
-
-      .status-row {
-        margin-bottom: 10px;
-      }
-
-      .status {
+        max-width: none;
         margin: 0;
-        font-size: 0.86rem;
-        color: var(--muted-foreground);
-      }
-
-      .chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 8px;
-      }
-
-      .chip {
-        font-size: 0.74rem;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: var(--muted);
-        color: var(--muted-foreground);
-        padding: 4px 9px;
+        padding: 0;
       }
 
       .tool-shell {
@@ -290,6 +264,17 @@ export function getLexiconExplorerAppHtml(): string {
         margin-top: 6px;
       }
 
+      .pdf-row {
+        margin-top: 6px;
+        text-align: center;
+        font-size: 0.72rem;
+      }
+
+      .pdf-row a {
+        color: var(--muted-foreground);
+        text-decoration: underline;
+      }
+
       .detail-btn {
         border: 1px solid var(--border);
         border-radius: 999px;
@@ -370,12 +355,6 @@ export function getLexiconExplorerAppHtml(): string {
   </head>
   <body>
     <main class="app">
-      <section class="status-row">
-        <h1 style="margin:0;font-size:1rem;">${APP_TITLE}</h1>
-        <p class="status" id="status">Waiting for tool result...</p>
-        <div class="chips" id="chips"></div>
-      </section>
-
       <section id="results"></section>
     </main>
 
@@ -390,12 +369,12 @@ export function getLexiconExplorerAppHtml(): string {
         slideIndex: 0
       };
 
-      const statusEl = document.getElementById("status");
-      const chipsEl = document.getElementById("chips");
       const resultsEl = document.getElementById("results");
 
       const pending = new Map();
       let requestId = 1;
+      let resizeRaf = 0;
+      let resizeObserver = null;
 
       function escapeHtml(value) {
         return String(value)
@@ -439,7 +418,37 @@ export function getLexiconExplorerAppHtml(): string {
       }
 
       function setStatus(text) {
-        statusEl.textContent = text;
+        window.__zekherStatus = text;
+      }
+
+      function notifySizeChangedNow() {
+        const root = document.documentElement;
+        const body = document.body;
+        const width = Math.max(
+          root ? root.scrollWidth : 0,
+          root ? root.offsetWidth : 0,
+          body ? body.scrollWidth : 0,
+          body ? body.offsetWidth : 0
+        );
+        const height = Math.max(
+          root ? root.scrollHeight : 0,
+          root ? root.offsetHeight : 0,
+          body ? body.scrollHeight : 0,
+          body ? body.offsetHeight : 0
+        );
+
+        notify("ui/notifications/size-changed", {
+          width,
+          height
+        });
+      }
+
+      function scheduleSizeChanged() {
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(() => {
+          resizeRaf = 0;
+          notifySizeChangedNow();
+        });
       }
 
       function previewText(value, max) {
@@ -472,6 +481,7 @@ export function getLexiconExplorerAppHtml(): string {
         const title = escapeHtml(source.title || "Untitled");
         const text = escapeHtml(previewText(source.content || "", 550));
         const pdfUrl = source.pdfUrl ? escapeHtml(source.pdfUrl + "#toolbar=0&navpanes=0&scrollbar=0") : "";
+        const rawPdfUrl = source.pdfUrl ? escapeHtml(source.pdfUrl) : "";
         const detail = state.details[source.id];
         const loading = Boolean(state.loadingDetails[source.id]);
 
@@ -495,6 +505,10 @@ export function getLexiconExplorerAppHtml(): string {
           ? '<div class="detail-panel">' + escapeHtml(detail.content || "") + '</div>'
           : "";
 
+        const pdfRow = rawPdfUrl
+          ? '<p class="pdf-row"><a href="' + rawPdfUrl + '" target="_blank" rel="noopener noreferrer">Open PDF <span class="ext">↗</span></a></p>'
+          : "";
+
         return [
           '<div class="carousel-slide">',
           '  <a class="preview-link" href="' + entryUrl + '" target="_blank" rel="noopener noreferrer">',
@@ -512,6 +526,7 @@ export function getLexiconExplorerAppHtml(): string {
           loading ? 'Loading…' : 'Load Full Entry',
           '    </button>',
           '  </div>',
+          '  ' + pdfRow,
           '  ' + detailPanel,
           '</div>'
         ].join("");
@@ -546,14 +561,6 @@ export function getLexiconExplorerAppHtml(): string {
       }
 
       function render() {
-        chipsEl.innerHTML = "";
-        for (const term of state.terms) {
-          const el = document.createElement("span");
-          el.className = "chip";
-          el.textContent = term;
-          chipsEl.appendChild(el);
-        }
-
         const html = [
           '<section class="tool-shell">',
           renderHeader(),
@@ -563,6 +570,7 @@ export function getLexiconExplorerAppHtml(): string {
 
         resultsEl.innerHTML = html;
         requestAnimationFrame(updateCarouselPosition);
+        scheduleSizeChanged();
       }
 
       function onNotification(method, params) {
@@ -657,6 +665,7 @@ export function getLexiconExplorerAppHtml(): string {
 
       window.addEventListener("resize", () => {
         updateCarouselPosition();
+        scheduleSizeChanged();
       });
 
       document.addEventListener("click", async (event) => {
@@ -715,6 +724,13 @@ export function getLexiconExplorerAppHtml(): string {
           });
 
           notify("ui/notifications/initialized", {});
+          if (typeof ResizeObserver !== "undefined") {
+            resizeObserver = new ResizeObserver(() => {
+              scheduleSizeChanged();
+            });
+            resizeObserver.observe(document.documentElement);
+            resizeObserver.observe(document.body);
+          }
           setStatus("Connected. Waiting for search result...");
           render();
         } catch (error) {

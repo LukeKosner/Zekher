@@ -322,29 +322,29 @@ export default function TeacherDashboard() {
 
                 <div className="space-y-2">
                   <Label htmlFor="assignment-prompt">
-                    Opening Prompt (optional)
+                    Opening Instructions (optional)
                   </Label>
                   <Textarea
                     id="assignment-prompt"
                     value={assignmentPrompt}
                     onChange={(e) => setAssignmentPrompt(e.target.value)}
-                    placeholder="e.g. Read one testimony excerpt and identify one turning point in the narrator's experience."
+                    placeholder="e.g. Ask questions about an aspect of the Holocaust that interests you. Use the sample prompts below."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Shows at the top of the student view when class starts.
+                    This is the first instruction students see when class starts.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="suggested-prompt-input">
-                    Student Prompt Buttons (optional)
+                    Sample Prompt Buttons (optional)
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       id="suggested-prompt-input"
                       value={suggestedPromptInput}
                       onChange={(e) => setSuggestedPromptInput(e.target.value)}
-                      placeholder="Add a prompt students can tap"
+                      placeholder="Type a sample question students can tap to send"
                       onKeyDown={(e) => {
                         if (e.key !== "Enter") return;
                         e.preventDefault();
@@ -355,7 +355,7 @@ export default function TeacherDashboard() {
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
+                      className="h-10 shrink-0"
                       onClick={() => addSuggestedPrompt(suggestedPromptInput)}
                       disabled={
                         !suggestedPromptInput.trim() ||
@@ -367,7 +367,7 @@ export default function TeacherDashboard() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Students can tap these to start a question. Add up to 6.
+                    These appear below the student chat input as one-tap starters. Add up to 6.
                   </p>
 
                   <div className="flex flex-wrap gap-2">

@@ -20,9 +20,72 @@ function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_BASE_URL ?? "https://zekher.com";
 }
 
-function toProxyUrl(rawUrl: string | null | undefined): string | undefined {
+function getBaseOrigin(): string {
+  try {
+    return new URL(getBaseUrl()).origin;
+  } catch {
+    return "https://zekher.com";
+  }
+}
+
+function parseAllowedOrigins(
+  rawValue: string | undefined,
+  fallbackOrigin: string
+): string[] {
+  const values = (rawValue ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const parsed = values
+    .map((value) => {
+      try {
+        return new URL(value).origin;
+      } catch {
+        return undefined;
+      }
+    })
+    .filter((value): value is string => Boolean(value));
+
+  if (parsed.length === 0) return [fallbackOrigin];
+  return Array.from(new Set(parsed));
+}
+
+function getWidgetCspOrigins(): string[] {
+  return parseAllowedOrigins(
+    process.env.MCP_WIDGET_CSP_ORIGINS,
+    getBaseOrigin()
+  );
+}
+
+function normalizeForwardedValue(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return value
+    .split(",")[0]
+    ?.trim();
+}
+
+function getRequestBaseUrl(headers: RequestHeaders | undefined): string {
+  const forwardedProto =
+    normalizeForwardedValue(getHeaderValue(headers, "x-forwarded-proto")) ??
+    "https";
+  const forwardedHost =
+    normalizeForwardedValue(getHeaderValue(headers, "x-forwarded-host")) ??
+    normalizeForwardedValue(getHeaderValue(headers, "host"));
+
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  return getBaseOrigin();
+}
+
+function toProxyUrl(
+  baseUrl: string,
+  rawUrl: string | null | undefined
+): string | undefined {
   if (!rawUrl?.trim()) return undefined;
-  return `${getBaseUrl()}/handler/proxy?url=${encodeURIComponent(rawUrl)}`;
+  return `${baseUrl}/handler/proxy?url=${encodeURIComponent(rawUrl)}`;
 }
 
 type RequestHeaders = Record<string, string | string[] | undefined>;
@@ -62,21 +125,24 @@ function extractClientSessionId(
   return extraSessionId;
 }
 
-function toAppSource(source: {
-  id: string;
-  title: string;
-  content: string;
-  citation: string;
-  filename: string;
-  pdfUrl?: string | null;
-  txtUrl?: string | null;
-  redirectUrl?: string | null;
-}): McpLexiconAppSource {
+function toAppSource(
+  baseUrl: string,
+  source: {
+    id: string;
+    title: string;
+    content: string;
+    citation: string;
+    filename: string;
+    pdfUrl?: string | null;
+    txtUrl?: string | null;
+    redirectUrl?: string | null;
+  }
+): McpLexiconAppSource {
   return {
     ...source,
-    pdfUrl: toProxyUrl(source.pdfUrl),
-    txtUrl: toProxyUrl(source.txtUrl),
-    citationUrl: `${getBaseUrl()}/sources/lexicon/${source.id}`,
+    pdfUrl: toProxyUrl(baseUrl, source.pdfUrl),
+    txtUrl: toProxyUrl(baseUrl, source.txtUrl),
+    citationUrl: `${baseUrl}/sources/lexicon/${source.id}`,
   };
 }
 
@@ -118,6 +184,8 @@ function formatSearchResponseText(
  */
 const handler = createMcpHandler(
   async (server) => {
+    const widgetOrigins = getWidgetCspOrigins();
+
     registerAppResource(
       server,
       mcpConstants.appResourceName,
@@ -134,6 +202,13 @@ const handler = createMcpHandler(
             _meta: {
               ui: {
                 prefersBorder: true,
+              },
+              "openai/widgetDescription": mcpConstants.appResourceDescription,
+              "openai/widgetPrefersBorder": true,
+              "openai/widgetDomain": getBaseOrigin(),
+              "openai/widgetCSP": {
+                connect_domains: widgetOrigins,
+                resource_domains: widgetOrigins,
               },
             },
           },
@@ -204,7 +279,10 @@ const handler = createMcpHandler(
             clientSessionId,
             ip: extractClientIp(requestHeaders),
           });
-          const appSources = result.entries.map(toAppSource);
+          const requestBaseUrl = getRequestBaseUrl(requestHeaders);
+          const appSources = result.entries.map((entry) =>
+            toAppSource(requestBaseUrl, entry)
+          );
 
           if (result.error === "Rate limited") {
             const structuredContent: McpLexiconSearchStructuredContent = {

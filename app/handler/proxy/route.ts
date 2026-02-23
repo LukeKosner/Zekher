@@ -1,6 +1,27 @@
 import { isIP } from "node:net";
 import { buildCorsHeaders, withCorsHeaders } from "../cors";
 
+function getProxyAllowedHostPatterns(): string[] {
+  return (process.env.PROXY_ALLOWED_HOSTS ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isHostAllowedByPattern(hostname: string, pattern: string): boolean {
+  if (pattern.startsWith("*.")) {
+    const suffix = pattern.slice(2);
+    return hostname === suffix || hostname.endsWith(`.${suffix}`);
+  }
+  return hostname === pattern;
+}
+
+function isHostAllowed(hostname: string): boolean {
+  const patterns = getProxyAllowedHostPatterns();
+  if (patterns.length === 0) return true;
+  return patterns.some((pattern) => isHostAllowedByPattern(hostname, pattern));
+}
+
 function isPrivateIpv4(hostname: string): boolean {
   const parts = hostname.split(".").map((part) => Number.parseInt(part, 10));
   if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) {
@@ -47,6 +68,7 @@ function parseTargetUrl(request: Request): URL | null {
     const target = new URL(rawTarget);
     if (target.protocol !== "https:") return null;
     if (isBlockedHostname(target.hostname)) return null;
+    if (!isHostAllowed(target.hostname.toLowerCase())) return null;
     return target;
   } catch {
     return null;
