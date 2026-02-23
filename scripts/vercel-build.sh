@@ -2,7 +2,17 @@
 
 set -euo pipefail
 
+if [[ -d ".next" ]]; then
+  mv ".next" ".next_prev_$(date +%s)"
+fi
+
 if [[ "${VERCEL_ENV:-}" == "preview" ]]; then
+  if [[ "${SKIP_CONVEX_DEPLOY:-0}" == "1" ]]; then
+    echo "Running preview build check (skipping Convex deploy)..."
+    npm run build
+    exit 0
+  fi
+
   if [[ -z "${CONVEX_DEPLOY_KEY:-}" ]]; then
     echo "Missing CONVEX_DEPLOY_KEY for preview deploy."
     exit 1

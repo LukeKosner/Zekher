@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/convex/_generated/api";
@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function JoinClassPage() {
+function JoinClassPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const joinClass = useMutation(api.students.joinClass);
@@ -209,5 +209,21 @@ export default function JoinClassPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function JoinClassPageFallback() {
+  return (
+    <div className="flex h-full min-h-0 items-center justify-center">
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  );
+}
+
+export default function JoinClassPage() {
+  return (
+    <Suspense fallback={<JoinClassPageFallback />}>
+      <JoinClassPageContent />
+    </Suspense>
   );
 }
