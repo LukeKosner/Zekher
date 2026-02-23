@@ -23,7 +23,8 @@ if [[ "${VERCEL_ENV:-}" == "preview" ]]; then
   npx convex deploy \
     --preview-create "${PREVIEW_NAME}" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
-    --cmd "npm run build"
+    --cmd "npm run build && npm run convex:backfill"
+  bash ./scripts/sync-convex-env.sh --preview-name "${PREVIEW_NAME}" --source vercel-preview
   exit 0
 fi
 
