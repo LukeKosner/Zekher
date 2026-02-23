@@ -21,6 +21,7 @@ done
 tmp_dir="$(mktemp -d)"
 values_tsv="${tmp_dir}/values.tsv"
 source_file="${tmp_dir}/source.env"
+use_runtime_env=0
 
 cleanup() {
   rm -rf "${tmp_dir}"
@@ -42,6 +43,17 @@ is_excluded_key() {
   esac
 }
 
+is_included_key() {
+  case "$1" in
+    AI_GATEWAY_*|ANTHROPIC_*|AUTH_*|AWS_*|AZURE_*|BLOB_*|BRAINTRUST_*|CLERK_*|COHERE_*|CONVEX_*|DATABASE_URL|DATABASE_URL_READONLY|GCP_*|GOOGLE_*|KV_*|NEXT_PUBLIC_*|OPENAI_*|OPENROUTER_*|REDIS_*|RESEND_*|SENTRY_*|XAI_*|NODE_ENV)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 branch_name="${VERCEL_GIT_COMMIT_REF:-}"
 if [[ -z "${branch_name}" ]]; then
   branch_name="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
@@ -53,11 +65,11 @@ pull_from_vercel_preview() {
     env_arg+=(--git-branch "${branch_name}")
   fi
 
-  if vercel env pull "${source_file}" "${env_arg[@]}" >/dev/null 2>&1; then
+  if vercel env pull "${source_file}" "${env_arg[@]}" --yes >/dev/null 2>&1; then
     return 0
   fi
 
-  vercel env pull "${source_file}" --environment preview >/dev/null 2>&1
+  vercel env pull "${source_file}" --environment preview --yes >/dev/null 2>&1
 }
 
 if [[ "${source_mode}" == "vercel-preview" || "${source_mode}" == "auto" ]]; then
@@ -68,12 +80,20 @@ if [[ ! -s "${source_file}" ]]; then
   if [[ -f ".env.local" ]]; then
     cp ".env.local" "${source_file}"
   else
-    echo "No source env found (Vercel preview pull failed and .env.local missing)."
-    exit 1
+    echo "Vercel preview pull failed and .env.local missing; falling back to runtime environment variables."
+    use_runtime_env=1
   fi
 fi
 
-node - <<'NODE' "${source_file}" > "${values_tsv}"
+if [[ "${use_runtime_env}" -eq 1 ]]; then
+  node - <<'NODE' > "${values_tsv}"
+for (const [k, v] of Object.entries(process.env)) {
+  if (!k || typeof v !== "string") continue;
+  process.stdout.write(`${k}\t${Buffer.from(v, "utf8").toString("base64")}\n`);
+}
+NODE
+else
+  node - <<'NODE' "${source_file}" > "${values_tsv}"
 const fs = require("fs");
 const dotenv = require("dotenv");
 const srcPath = process.argv[2];
@@ -83,6 +103,7 @@ for (const [k, v] of Object.entries(parsed)) {
   process.stdout.write(`${k}\t${Buffer.from(v, "utf8").toString("base64")}\n`);
 }
 NODE
+fi
 
 echo "Syncing Preview env vars to Convex..."
 synced=0
@@ -95,6 +116,11 @@ while IFS=$'\t' read -r key b64; do
   fi
 
   if is_excluded_key "${key}"; then
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  if ! is_included_key "${key}"; then
     skipped=$((skipped + 1))
     continue
   fi
