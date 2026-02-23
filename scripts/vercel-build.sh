@@ -40,7 +40,11 @@ if [[ "${VERCEL_ENV:-}" == "preview" ]]; then
 
   echo "Running backfill against ${preview_url}..."
   NEXT_PUBLIC_CONVEX_URL="${preview_url}" npm run convex:backfill
-  bash ./scripts/sync-convex-env.sh --preview-name "${PREVIEW_NAME}" --source vercel-preview
+
+  # Env sync improves preview parity but should not block deploy readiness.
+  if ! bash ./scripts/sync-convex-env.sh --preview-name "${PREVIEW_NAME}" --source vercel-preview; then
+    echo "Warning: Convex preview env sync failed; continuing without blocking preview deploy."
+  fi
   exit 0
 fi
 
