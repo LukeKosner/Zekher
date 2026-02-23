@@ -1,27 +1,10 @@
 const APP_TITLE = "Zekher Lexicon Explorer";
-const DEFAULT_ASSET_ORIGIN = "https://zekher.com";
-
-function resolveAssetOrigin(rawBaseUrl: string | undefined): string {
-  if (!rawBaseUrl) return DEFAULT_ASSET_ORIGIN;
-
-  try {
-    return new URL(rawBaseUrl).origin;
-  } catch {
-    return DEFAULT_ASSET_ORIGIN;
-  }
-}
 
 /**
  * Returns the HTML document used by MCP App-capable hosts to render
  * lexicon search results inline.
  */
-export function getLexiconExplorerAppHtml(
-  assetBaseOrigin?: string
-): string {
-  const assetOrigin = resolveAssetOrigin(
-    assetBaseOrigin ?? process.env.NEXT_PUBLIC_BASE_URL
-  );
-
+export function getLexiconExplorerAppHtml(): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -224,36 +207,12 @@ export function getLexiconExplorerAppHtml(
         opacity: 0.92;
       }
 
-      .preview-pdf-pages {
+      .preview-image {
         width: 100%;
         height: 100%;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        background: var(--muted);
-      }
-
-      .pdf-status {
-        margin: 0;
-        text-align: center;
-        font-size: 0.75rem;
-        color: var(--muted-foreground);
-      }
-
-      .pdf-page {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-      }
-
-      .pdf-page-canvas {
-        max-width: 100%;
         display: block;
-        border-radius: 4px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+        object-fit: contain;
+        background: #ffffff;
       }
 
       .preview-fallback {
@@ -366,34 +325,6 @@ export function getLexiconExplorerAppHtml(
       let requestId = 1;
       let resizeRaf = 0;
       let resizeObserver = null;
-      const pdfJsLibPromisesByOrigin = new Map();
-      const renderedPdfPreviews = new Set();
-      const ASSET_ORIGIN = ${JSON.stringify(assetOrigin)};
-
-      function uniqueUrls(urls) {
-        return Array.from(new Set(urls.filter(Boolean)));
-      }
-
-      function getOriginFromUrl(rawUrl) {
-        if (!rawUrl) return undefined;
-        try {
-          return new URL(rawUrl).origin;
-        } catch {
-          return undefined;
-        }
-      }
-
-      function getPdfAssetCandidates(primaryOrigin) {
-        const origins = uniqueUrls([primaryOrigin, ASSET_ORIGIN]);
-        const candidates = [];
-        for (const origin of origins) {
-          candidates.push({
-            moduleUrl: new URL("/pdf.min.mjs", origin).toString(),
-            workerUrl: new URL("/pdf.worker.min.js", origin).toString()
-          });
-        }
-        return candidates;
-      }
 
       function escapeHtml(value) {
         return String(value)
@@ -477,128 +408,6 @@ export function getLexiconExplorerAppHtml(
         return cleaned.slice(0, max).trimEnd() + "...";
       }
 
-      async function loadPdfJs(primaryOrigin) {
-        const cacheKey = primaryOrigin || ASSET_ORIGIN;
-        if (!pdfJsLibPromisesByOrigin.has(cacheKey)) {
-          const promise = (async () => {
-            let lastError;
-            const candidates = getPdfAssetCandidates(primaryOrigin);
-
-            for (const candidate of candidates) {
-              try {
-                const mod = await import(candidate.moduleUrl);
-                if (mod && mod.GlobalWorkerOptions) {
-                  mod.GlobalWorkerOptions.workerSrc = candidate.workerUrl;
-                }
-                return mod;
-              } catch (error) {
-                lastError = error;
-              }
-            }
-
-            throw lastError || new Error("Unable to load PDF.js assets");
-          })().catch((error) => {
-            pdfJsLibPromisesByOrigin.delete(cacheKey);
-            throw error;
-          });
-
-          pdfJsLibPromisesByOrigin.set(cacheKey, promise);
-        }
-
-        return pdfJsLibPromisesByOrigin.get(cacheKey);
-      }
-
-      function isSlideNearViewport(container) {
-        const slide = container.closest(".carousel-slide");
-        if (!slide) return true;
-        const rect = slide.getBoundingClientRect();
-        return rect.right >= -48 && rect.left <= window.innerWidth + 48;
-      }
-
-      async function renderPdfPreview(container) {
-        const sourceId = container.getAttribute("data-source-id");
-        const pdfUrl = container.getAttribute("data-pdf-url");
-        const title = container.getAttribute("data-title") || "Untitled";
-        const text = container.getAttribute("data-text") || "";
-
-        if (!sourceId || !pdfUrl || renderedPdfPreviews.has(sourceId)) return;
-
-        renderedPdfPreviews.add(sourceId);
-        container.innerHTML = '<p class="pdf-status">Loading pages...</p>';
-        scheduleSizeChanged();
-
-        try {
-          const pdfAssetOrigin = getOriginFromUrl(pdfUrl);
-          const pdfjsLib = await loadPdfJs(pdfAssetOrigin);
-          const loadingTask = pdfjsLib.getDocument({
-            url: pdfUrl,
-            withCredentials: false
-          });
-          const pdf = await loadingTask.promise;
-
-          container.innerHTML = "";
-          const availableWidth = Math.max(220, container.clientWidth - 12);
-
-          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
-            const page = await pdf.getPage(pageNum);
-            const baseViewport = page.getViewport({ scale: 1 });
-            const scale = availableWidth / baseViewport.width;
-            const viewport = page.getViewport({ scale });
-            const outputScale = window.devicePixelRatio || 1;
-
-            const pageWrap = document.createElement("div");
-            pageWrap.className = "pdf-page";
-
-            const canvas = document.createElement("canvas");
-            canvas.className = "pdf-page-canvas";
-            canvas.width = Math.max(1, Math.floor(viewport.width * outputScale));
-            canvas.height = Math.max(1, Math.floor(viewport.height * outputScale));
-            canvas.style.width = Math.floor(viewport.width) + "px";
-            canvas.style.height = Math.floor(viewport.height) + "px";
-
-            pageWrap.appendChild(canvas);
-            container.appendChild(pageWrap);
-
-            const context = canvas.getContext("2d", { alpha: false });
-            if (!context) continue;
-
-            await page.render({
-              canvasContext: context,
-              viewport,
-              transform:
-                outputScale !== 1
-                  ? [outputScale, 0, 0, outputScale, 0, 0]
-                  : null
-            }).promise;
-          }
-
-          if (!container.children.length) {
-            throw new Error("No PDF pages rendered");
-          }
-        } catch (error) {
-          renderedPdfPreviews.delete(sourceId);
-          container.innerHTML = [
-            '<div class="preview-fallback">',
-            '<h3 class="preview-title">' + escapeHtml(title) + "</h3>",
-            '<p class="preview-text">' + escapeHtml(text) + "</p>",
-            "</div>"
-          ].join("");
-          const message = error && error.message ? error.message : "unknown error";
-          setStatus("PDF preview unavailable for " + title + ": " + message);
-        } finally {
-          scheduleSizeChanged();
-        }
-      }
-
-      function schedulePdfPreviews() {
-        const containers = document.querySelectorAll("[data-preview-type='pdf']");
-        containers.forEach((container) => {
-          if (!(container instanceof HTMLElement)) return;
-          if (!isSlideNearViewport(container)) return;
-          void renderPdfPreview(container);
-        });
-      }
-
       function renderHeader() {
         const isCompleted = state.hasResult;
         const badge = isCompleted
@@ -617,25 +426,20 @@ export function getLexiconExplorerAppHtml(
       }
 
       function renderSlide(source) {
-        const id = escapeHtml(source.id || "");
         const entryUrl = escapeHtml(source.citationUrl || source.redirectUrl || "#");
         const title = escapeHtml(source.title || "Untitled");
         const text = escapeHtml(previewText(source.content || "", 550));
-        const rawPdfUrl = source.pdfUrl ? escapeHtml(source.pdfUrl) : "";
+        const previewImageUrl = source.previewImageUrl
+          ? escapeHtml(source.previewImageUrl)
+          : "";
 
-        const preview = rawPdfUrl
+        const preview = previewImageUrl
           ? [
-              '<div class="preview-pdf-pages" data-preview-type="pdf" data-source-id="' +
-                id +
-                '" data-pdf-url="' +
-                rawPdfUrl +
-                '" data-title="' +
+              '<img class="preview-image" loading="lazy" alt="' +
                 title +
-                '" data-text="' +
-                text +
-                '">',
-              '<p class="pdf-status">Loading pages...</p>',
-              '</div>',
+                '" src="' +
+                previewImageUrl +
+                '" />',
             ].join("")
           : [
               '<div class="preview-fallback">',
@@ -699,7 +503,6 @@ export function getLexiconExplorerAppHtml(
         resultsEl.innerHTML = html;
         requestAnimationFrame(() => {
           updateCarouselPosition();
-          schedulePdfPreviews();
         });
         scheduleSizeChanged();
       }
@@ -711,7 +514,6 @@ export function getLexiconExplorerAppHtml(
           state.terms = terms;
           state.hasResult = false;
           state.slideIndex = 0;
-          renderedPdfPreviews.clear();
           if (terms.length) setStatus("Search terms: " + terms.join(", "));
           render();
           return;
@@ -731,6 +533,7 @@ export function getLexiconExplorerAppHtml(
             content: source.content,
             citationUrl: source.citationUrl,
             redirectUrl: source.redirectUrl,
+            previewImageUrl: source.previewImageUrl,
             pdfUrl: source.pdfUrl,
             txtUrl: source.txtUrl
           }));
@@ -738,7 +541,6 @@ export function getLexiconExplorerAppHtml(
           state.nextSteps = structured.nextSteps || "";
           state.hasResult = true;
           state.slideIndex = 0;
-          renderedPdfPreviews.clear();
 
           if (state.sources.length) {
             setStatus(
@@ -811,7 +613,6 @@ export function getLexiconExplorerAppHtml(
           if (direction === "prev") state.slideIndex -= 1;
           if (direction === "next") state.slideIndex += 1;
           updateCarouselPosition();
-          schedulePdfPreviews();
           return;
         }
       });

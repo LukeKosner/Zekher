@@ -88,6 +88,14 @@ function toProxyUrl(
   return `${baseUrl}/handler/proxy?url=${encodeURIComponent(rawUrl)}`;
 }
 
+function toPreviewImageUrl(
+  baseUrl: string,
+  rawPdfUrl: string | null | undefined
+): string | undefined {
+  if (!rawPdfUrl?.trim()) return undefined;
+  return `${baseUrl}/handler/pdf-preview?url=${encodeURIComponent(rawPdfUrl)}&page=1&w=720`;
+}
+
 type RequestHeaders = Record<string, string | string[] | undefined>;
 
 function getHeaderValue(headers: RequestHeaders | undefined, name: string) {
@@ -141,6 +149,7 @@ function toAppSource(
   return {
     ...source,
     pdfUrl: toProxyUrl(baseUrl, source.pdfUrl),
+    previewImageUrl: toPreviewImageUrl(baseUrl, source.pdfUrl),
     txtUrl: toProxyUrl(baseUrl, source.txtUrl),
     citationUrl: `${baseUrl}/sources/lexicon/${source.id}`,
   };
@@ -214,7 +223,7 @@ const handler = createMcpHandler(
             {
               uri: mcpConstants.appResourceUri,
               mimeType: RESOURCE_MIME_TYPE,
-              text: getLexiconExplorerAppHtml(requestBaseOrigin),
+              text: getLexiconExplorerAppHtml(),
               _meta: {
                 ui: {
                   prefersBorder: true,
