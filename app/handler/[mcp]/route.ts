@@ -193,27 +193,44 @@ const handler = createMcpHandler(
       {
         description: mcpConstants.appResourceDescription,
       },
-      async () => ({
-        contents: [
-          {
-            uri: mcpConstants.appResourceUri,
-            mimeType: RESOURCE_MIME_TYPE,
-            text: getLexiconExplorerAppHtml(),
-            _meta: {
-              ui: {
-                prefersBorder: true,
-              },
-              "openai/widgetDescription": mcpConstants.appResourceDescription,
-              "openai/widgetPrefersBorder": true,
-              "openai/widgetDomain": getBaseOrigin(),
-              "openai/widgetCSP": {
-                connect_domains: widgetOrigins,
-                resource_domains: widgetOrigins,
+      async (_uri, extra) => {
+        const requestHeaders = extra?.requestInfo?.headers as
+          | RequestHeaders
+          | undefined;
+        const requestBaseUrl = getRequestBaseUrl(requestHeaders);
+        const requestBaseOrigin = (() => {
+          try {
+            return new URL(requestBaseUrl).origin;
+          } catch {
+            return getBaseOrigin();
+          }
+        })();
+        const cspOrigins = Array.from(
+          new Set([requestBaseOrigin, ...widgetOrigins])
+        );
+
+        return {
+          contents: [
+            {
+              uri: mcpConstants.appResourceUri,
+              mimeType: RESOURCE_MIME_TYPE,
+              text: getLexiconExplorerAppHtml(requestBaseOrigin),
+              _meta: {
+                ui: {
+                  prefersBorder: true,
+                },
+                "openai/widgetDescription": mcpConstants.appResourceDescription,
+                "openai/widgetPrefersBorder": true,
+                "openai/widgetDomain": requestBaseOrigin,
+                "openai/widgetCSP": {
+                  connect_domains: cspOrigins,
+                  resource_domains: cspOrigins,
+                },
               },
             },
-          },
-        ],
-      })
+          ],
+        };
+      }
     );
 
     registerAppTool(

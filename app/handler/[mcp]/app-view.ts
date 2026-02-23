@@ -15,8 +15,12 @@ function resolveAssetOrigin(rawBaseUrl: string | undefined): string {
  * Returns the HTML document used by MCP App-capable hosts to render
  * lexicon search results inline.
  */
-export function getLexiconExplorerAppHtml(): string {
-  const assetOrigin = resolveAssetOrigin(process.env.NEXT_PUBLIC_BASE_URL);
+export function getLexiconExplorerAppHtml(
+  assetBaseOrigin?: string
+): string {
+  const assetOrigin = resolveAssetOrigin(
+    assetBaseOrigin ?? process.env.NEXT_PUBLIC_BASE_URL
+  );
 
   return `<!doctype html>
 <html lang="en">
@@ -362,7 +366,7 @@ export function getLexiconExplorerAppHtml(): string {
       let requestId = 1;
       let resizeRaf = 0;
       let resizeObserver = null;
-      let pdfJsLibPromise = null;
+      const pdfJsLibPromisesByOrigin = new Map();
       const renderedPdfPreviews = new Set();
       const ASSET_ORIGIN = ${JSON.stringify(assetOrigin)};
 
@@ -370,15 +374,26 @@ export function getLexiconExplorerAppHtml(): string {
         return Array.from(new Set(urls.filter(Boolean)));
       }
 
-      const PDF_JS_MODULE_URLS = uniqueUrls([
-        new URL("/pdf.min.mjs", window.location.origin).toString(),
-        new URL("/pdf.min.mjs", ASSET_ORIGIN).toString()
-      ]);
+      function getOriginFromUrl(rawUrl) {
+        if (!rawUrl) return undefined;
+        try {
+          return new URL(rawUrl).origin;
+        } catch {
+          return undefined;
+        }
+      }
 
-      const PDF_WORKER_URLS = uniqueUrls([
-        new URL("/pdf.worker.min.js", window.location.origin).toString(),
-        new URL("/pdf.worker.min.js", ASSET_ORIGIN).toString()
-      ]);
+      function getPdfAssetCandidates(primaryOrigin) {
+        const origins = uniqueUrls([primaryOrigin, ASSET_ORIGIN]);
+        const candidates = [];
+        for (const origin of origins) {
+          candidates.push({
+            moduleUrl: new URL("/pdf.min.mjs", origin).toString(),
+            workerUrl: new URL("/pdf.worker.min.js", origin).toString()
+          });
+        }
+        return candidates;
+      }
 
       function escapeHtml(value) {
         return String(value)
@@ -462,22 +477,19 @@ export function getLexiconExplorerAppHtml(): string {
         return cleaned.slice(0, max).trimEnd() + "...";
       }
 
-      async function loadPdfJs() {
-        if (!pdfJsLibPromise) {
-          pdfJsLibPromise = (async () => {
+      async function loadPdfJs(primaryOrigin) {
+        const cacheKey = primaryOrigin || ASSET_ORIGIN;
+        if (!pdfJsLibPromisesByOrigin.has(cacheKey)) {
+          const promise = (async () => {
             let lastError;
+            const candidates = getPdfAssetCandidates(primaryOrigin);
 
-            for (let index = 0; index < PDF_JS_MODULE_URLS.length; index += 1) {
+            for (const candidate of candidates) {
               try {
-                const moduleUrl = PDF_JS_MODULE_URLS[index];
-                const workerUrl =
-                  PDF_WORKER_URLS[index] || PDF_WORKER_URLS[PDF_WORKER_URLS.length - 1];
-                const mod = await import(moduleUrl);
-
-                if (mod && mod.GlobalWorkerOptions && workerUrl) {
-                  mod.GlobalWorkerOptions.workerSrc = workerUrl;
+                const mod = await import(candidate.moduleUrl);
+                if (mod && mod.GlobalWorkerOptions) {
+                  mod.GlobalWorkerOptions.workerSrc = candidate.workerUrl;
                 }
-
                 return mod;
               } catch (error) {
                 lastError = error;
@@ -485,13 +497,15 @@ export function getLexiconExplorerAppHtml(): string {
             }
 
             throw lastError || new Error("Unable to load PDF.js assets");
-          })()
-            .catch((error) => {
-              pdfJsLibPromise = null;
-              throw error;
-            });
+          })().catch((error) => {
+            pdfJsLibPromisesByOrigin.delete(cacheKey);
+            throw error;
+          });
+
+          pdfJsLibPromisesByOrigin.set(cacheKey, promise);
         }
-        return pdfJsLibPromise;
+
+        return pdfJsLibPromisesByOrigin.get(cacheKey);
       }
 
       function isSlideNearViewport(container) {
@@ -514,7 +528,8 @@ export function getLexiconExplorerAppHtml(): string {
         scheduleSizeChanged();
 
         try {
-          const pdfjsLib = await loadPdfJs();
+          const pdfAssetOrigin = getOriginFromUrl(pdfUrl);
+          const pdfjsLib = await loadPdfJs(pdfAssetOrigin);
           const loadingTask = pdfjsLib.getDocument({
             url: pdfUrl,
             withCredentials: false
