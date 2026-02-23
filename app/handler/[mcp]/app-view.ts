@@ -487,12 +487,12 @@ export function getLexiconExplorerAppHtml(): string {
 
         const preview = pdfUrl
           ? [
-              '<object class="preview-pdf" data="' + pdfUrl + '" type="application/pdf">',
+              '<iframe class="preview-pdf" src="' + pdfUrl + '" loading="lazy" referrerpolicy="no-referrer">',
               '<div class="preview-fallback">',
               '<h3 class="preview-title">' + title + '</h3>',
               '<p class="preview-text">' + text + '</p>',
               '</div>',
-              '</object>'
+              '</iframe>'
             ].join("")
           : [
               '<div class="preview-fallback">',
