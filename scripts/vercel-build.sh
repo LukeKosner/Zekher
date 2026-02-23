@@ -20,10 +20,22 @@ if [[ "${VERCEL_ENV:-}" == "preview" ]]; then
 
   PREVIEW_NAME="${VERCEL_GIT_COMMIT_REF:-preview}"
   echo "Running Convex preview deploy for '${PREVIEW_NAME}' and building Next.js..."
+  deploy_log="$(mktemp)"
   npx convex deploy \
     --preview-create "${PREVIEW_NAME}" \
     --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL \
-    --cmd "npm run build && npm run convex:backfill"
+    --cmd "npm run build" | tee "${deploy_log}"
+
+  preview_url="$(grep -Eo 'https://[a-z0-9-]+\.convex\.cloud' "${deploy_log}" | tail -n1 || true)"
+  rm -f "${deploy_log}"
+
+  if [[ -z "${preview_url}" ]]; then
+    echo "Failed to detect Convex preview URL from deploy output; skipping backfill."
+    exit 1
+  fi
+
+  echo "Running backfill against ${preview_url}..."
+  NEXT_PUBLIC_CONVEX_URL="${preview_url}" npm run convex:backfill
   bash ./scripts/sync-convex-env.sh --preview-name "${PREVIEW_NAME}" --source vercel-preview
   exit 0
 fi
