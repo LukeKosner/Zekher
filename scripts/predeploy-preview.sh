@@ -13,6 +13,6 @@ echo "3) Preview build simulation (no Convex deploy)"
 if [[ -d ".next" ]]; then
   mv ".next" ".next_prev_$(date +%s)"
 fi
-VERCEL_ENV=preview SKIP_CONVEX_DEPLOY=1 npm run vercel:build
+VERCEL_ENV=preview npm run vercel:build
 
 echo "Pre-deploy checks passed."
