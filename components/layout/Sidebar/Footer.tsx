@@ -4,7 +4,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -30,6 +30,14 @@ function formatThreadLabel(updatedAt: number, chatNumber: number) {
 }
 
 export function SidebarFooterContent() {
+  return (
+    <Suspense fallback={<div className="p-2" />}>
+      <SidebarFooterContentInner />
+    </Suspense>
+  );
+}
+
+function SidebarFooterContentInner() {
   const { open, isMobile, setOpen } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
