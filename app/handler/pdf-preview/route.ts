@@ -185,8 +185,9 @@ async function loadPdfJs(): Promise<PdfJsModule> {
       await loadCanvasModule();
 
       const pdfImportPromise = import("pdfjs-dist/legacy/build/pdf.mjs");
-      const workerModulePath = "pdfjs-dist/legacy/build/pdf.worker.mjs";
-      const workerImportPromise = import(workerModulePath) as Promise<{
+      const workerImportPromise = import(
+        "pdfjs-dist/legacy/build/pdf.worker.mjs"
+      ) as Promise<{
         WorkerMessageHandler?: unknown;
       }>;
       const [pdfjs, worker] = await Promise.all([
