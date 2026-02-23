@@ -28,6 +28,7 @@ type CanvasModule = {
 type CacheEntry = {
   body: Uint8Array;
   etag: string;
+  contentType: "image/png" | "image/svg+xml";
   expiresAt: number;
 };
 
@@ -147,7 +148,8 @@ function badRequest(request: Request, message: string): Response {
 function respondImage(
   request: Request,
   body: Uint8Array,
-  etag: string
+  etag: string,
+  contentType: "image/png" | "image/svg+xml"
 ): Response {
   if (request.headers.get("if-none-match") === etag) {
     return withCorsHeaders(
@@ -168,7 +170,7 @@ function respondImage(
     new Response(body, {
       status: 200,
       headers: {
-        "Content-Type": "image/png",
+        "Content-Type": contentType,
         "Content-Length": String(body.byteLength),
         "Cache-Control": "public, max-age=600",
         ETag: etag,
@@ -212,6 +214,55 @@ async function loadPdfJs(): Promise<PdfJsModule> {
   return pdfJsPromise;
 }
 
+function isCanvasMissingError(error: unknown): boolean {
+  const message = normalizeErrorMessage(error).toLowerCase();
+  return (
+    message.includes("@napi-rs/canvas") ||
+    message.includes("server canvas renderer unavailable")
+  );
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function buildSvgPreview(
+  width: number,
+  height: number,
+  lines: string[]
+): Uint8Array {
+  const safeWidth = Math.max(240, Math.floor(width));
+  const safeHeight = Math.max(320, Math.floor(height));
+  const header = "Text Preview";
+  const lineHeight = 20;
+  const startY = 52;
+  const maxLines = Math.max(6, Math.floor((safeHeight - startY - 18) / lineHeight));
+  const renderedLines = lines.slice(0, maxLines);
+
+  const textNodes = renderedLines
+    .map((line, index) => {
+      const y = startY + index * lineHeight;
+      return `<text x="24" y="${y}" font-size="14" fill="#2f2f2f">${escapeXml(line)}</text>`;
+    })
+    .join("");
+
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${safeWidth}" height="${safeHeight}" viewBox="0 0 ${safeWidth} ${safeHeight}">`,
+    '<rect width="100%" height="100%" fill="#ffffff"/>',
+    `<rect x="12" y="12" width="${safeWidth - 24}" height="${safeHeight - 24}" rx="8" fill="#f7f7f7" stroke="#dddddd"/>`,
+    `<text x="24" y="34" font-size="13" fill="#6b6b6b" font-family="ui-sans-serif, system-ui">${header}</text>`,
+    textNodes,
+    "</svg>",
+  ].join("");
+
+  return new TextEncoder().encode(svg);
+}
+
 async function fetchPdfBytes(target: URL): Promise<Uint8Array> {
   const upstream = await fetch(target.toString(), {
     method: "GET",
@@ -245,7 +296,7 @@ async function renderPdfPreviewImage(
   bytes: Uint8Array,
   pageNumber: number,
   width: number
-): Promise<Uint8Array> {
+): Promise<{ body: Uint8Array; contentType: "image/png" | "image/svg+xml" }> {
   const pdfjs = await loadPdfJs();
   const loadingTask = pdfjs.getDocument({
     data: bytes,
@@ -264,22 +315,41 @@ async function renderPdfPreviewImage(
     const baseViewport = page.getViewport({ scale: 1 });
     const scale = width / baseViewport.width;
     const viewport = page.getViewport({ scale });
+    try {
+      const { createCanvas } = await loadCanvasModule();
+      const canvas = createCanvas(
+        Math.max(1, Math.floor(viewport.width)),
+        Math.max(1, Math.floor(viewport.height))
+      );
+      const context = canvas.getContext("2d");
 
-    const { createCanvas } = await loadCanvasModule();
-    const canvas = createCanvas(
-      Math.max(1, Math.floor(viewport.width)),
-      Math.max(1, Math.floor(viewport.height))
-    );
-    const context = canvas.getContext("2d");
+      await page.render({
+        canvasContext: context as unknown as CanvasRenderingContext2D,
+        canvas: canvas as unknown as HTMLCanvasElement,
+        viewport,
+      }).promise;
 
-    await page.render({
-      canvasContext: context as unknown as CanvasRenderingContext2D,
-      canvas: canvas as unknown as HTMLCanvasElement,
-      viewport,
-    }).promise;
+      const buffer = canvas.toBuffer("image/png");
+      return {
+        body: new Uint8Array(buffer),
+        contentType: "image/png",
+      };
+    } catch (error) {
+      if (!isCanvasMissingError(error)) {
+        throw error;
+      }
 
-    const buffer = canvas.toBuffer("image/png");
-    return new Uint8Array(buffer);
+      const textContent = await page.getTextContent();
+      const lines = textContent.items
+        .map((item) => ("str" in item ? String(item.str).trim() : ""))
+        .filter(Boolean)
+        .slice(0, 40);
+
+      return {
+        body: buildSvgPreview(viewport.width, viewport.height, lines),
+        contentType: "image/svg+xml",
+      };
+    }
   } finally {
     await pdf.destroy();
   }
@@ -303,21 +373,22 @@ export async function GET(request: Request): Promise<Response> {
   const key = cacheKey(target, page, width);
   const cached = getCacheEntry(key);
   if (cached) {
-    return respondImage(request, cached.body, cached.etag);
+    return respondImage(request, cached.body, cached.etag, cached.contentType);
   }
 
   try {
     const bytes = await fetchPdfBytes(target);
-    const image = await renderPdfPreviewImage(bytes, page, width);
-    const etag = `"${createHash("sha256").update(image).digest("hex")}"`;
+    const preview = await renderPdfPreviewImage(bytes, page, width);
+    const etag = `"${createHash("sha256").update(preview.body).digest("hex")}"`;
 
     setCacheEntry(key, {
-      body: image,
+      body: preview.body,
       etag,
+      contentType: preview.contentType,
       expiresAt: Date.now() + CACHE_TTL_MS,
     });
 
-    return respondImage(request, image, etag);
+    return respondImage(request, preview.body, etag, preview.contentType);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to render preview.";
     const status = message.includes("Requested page does not exist.") ? 404 : 502;
