@@ -17,7 +17,6 @@ export interface McpLexiconResponse {
 
 export interface McpLexiconAppSource extends ToolLexiconEntry {
   citationUrl: string;
-  previewImageUrl?: string;
 }
 
 export interface McpLexiconSearchStructuredContent

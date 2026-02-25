@@ -1,10 +1,18 @@
 const APP_TITLE = "Zekher Lexicon Explorer";
 
+type AppViewOptions = {
+  readPdfBytesToolName: string;
+  pdfjsModuleUrl: string;
+  pdfjsWorkerUrl: string;
+};
+
 /**
  * Returns the HTML document used by MCP App-capable hosts to render
  * lexicon search results inline.
  */
-export function getLexiconExplorerAppHtml(): string {
+export function getLexiconExplorerAppHtml(options: AppViewOptions): string {
+  const serializedConfig = JSON.stringify(options);
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -193,7 +201,9 @@ export function getLexiconExplorerAppHtml(): string {
       }
 
       .preview-link {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         border: 1px solid var(--border);
         border-radius: 6px;
         overflow: hidden;
@@ -207,34 +217,39 @@ export function getLexiconExplorerAppHtml(): string {
         opacity: 0.92;
       }
 
-      .preview-image {
+      .preview-canvas-shell {
         width: 100%;
         height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .preview-canvas {
+        max-width: 100%;
+        max-height: 100%;
         display: block;
-        object-fit: contain;
         background: #ffffff;
       }
 
-      .preview-fallback {
-        width: 100%;
-        height: 100%;
-        overflow-y: auto;
+      .preview-loading,
+      .preview-error,
+      .preview-empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
         padding: 12px;
-        background: var(--muted);
-      }
-
-      .preview-title {
-        margin: 0;
-        font-size: 0.86rem;
-        font-weight: 600;
-      }
-
-      .preview-text {
-        margin: 8px 0 0;
-        font-size: 0.74rem;
-        line-height: 1.45;
+        font-size: 0.78rem;
+        line-height: 1.35;
         color: var(--muted-foreground);
-        white-space: pre-wrap;
+      }
+
+      .preview-error {
+        color: #dc2626;
       }
 
       .citation-row {
@@ -311,6 +326,9 @@ export function getLexiconExplorerAppHtml(): string {
     </main>
 
     <script>
+      const APP_CONFIG = ${serializedConfig};
+      const MAX_TOOL_RANGE_BYTES = 512 * 1024;
+
       const state = {
         terms: [],
         sources: [],
@@ -320,11 +338,14 @@ export function getLexiconExplorerAppHtml(): string {
       };
 
       const resultsEl = document.getElementById("results");
-
       const pending = new Map();
+      const previewRendered = new Set();
+      const previewInFlight = new Set();
+      const pdfDocCache = new Map();
       let requestId = 1;
       let resizeRaf = 0;
       let resizeObserver = null;
+      let pdfjsModulePromise = null;
 
       function escapeHtml(value) {
         return String(value)
@@ -387,10 +408,7 @@ export function getLexiconExplorerAppHtml(): string {
           body ? body.offsetHeight : 0
         );
 
-        notify("ui/notifications/size-changed", {
-          width,
-          height
-        });
+        notify("ui/notifications/size-changed", { width, height });
       }
 
       function scheduleSizeChanged() {
@@ -399,13 +417,6 @@ export function getLexiconExplorerAppHtml(): string {
           resizeRaf = 0;
           notifySizeChangedNow();
         });
-      }
-
-      function previewText(value, max) {
-        if (!value) return "";
-        const cleaned = String(value).trim().replace(/\s+/g, " ");
-        if (cleaned.length <= max) return cleaned;
-        return cleaned.slice(0, max).trimEnd() + "...";
       }
 
       function renderHeader() {
@@ -425,39 +436,30 @@ export function getLexiconExplorerAppHtml(): string {
         ].join("");
       }
 
-      function renderSlide(source) {
+      function renderSlide(source, index) {
         const entryUrl = escapeHtml(source.citationUrl || source.redirectUrl || "#");
         const title = escapeHtml(source.title || "Untitled");
-        const text = escapeHtml(previewText(source.content || "", 550));
-        const previewImageUrl = source.previewImageUrl
-          ? escapeHtml(source.previewImageUrl)
-          : "";
 
-        const preview = previewImageUrl
+        const preview = source.pdfUrl
           ? [
-              '<img class="preview-image" loading="lazy" alt="' +
-                title +
-                '" src="' +
-                previewImageUrl +
-                '" />',
-            ].join("")
-          : [
-              '<div class="preview-fallback">',
-              '<h3 class="preview-title">' + title + '</h3>',
-              '<p class="preview-text">' + text + '</p>',
+              '<div class="preview-canvas-shell" data-preview-root data-source-index="' + index + '">',
+              '  <canvas class="preview-canvas" data-preview-canvas hidden></canvas>',
+              '  <div class="preview-loading" data-preview-loading>Loading PDF preview...</div>',
+              '  <div class="preview-error" data-preview-error hidden>PDF preview unavailable.</div>',
               '</div>'
-            ].join("");
+            ].join("")
+          : '<div class="preview-empty">PDF unavailable for this entry.</div>';
 
         return [
           '<div class="carousel-slide">',
-          '  <a class="preview-link" href="' + entryUrl + '" target="_blank" rel="noopener noreferrer">',
-          '    ' + preview,
+          '  <a class="preview-link" href="' + entryUrl + '" target="_blank" rel="noopener noreferrer" title="' + title + '">',
+          preview,
           '  </a>',
           '  <p class="citation-row">',
           '    <a href="https://www.yadvashem.org/holocaust/resource-center/lexicon.html" target="_blank" rel="noopener noreferrer">Yad Vashem</a>',
           '    •',
           '    <a class="view-entry" href="' + entryUrl + '" target="_blank" rel="noopener noreferrer">',
-          '      View Entry <span class="ext">↗</span>',
+          '      View Entry <span class="ext">-></span>',
           '    </a>',
           '  </p>',
           '</div>'
@@ -475,7 +477,7 @@ export function getLexiconExplorerAppHtml(): string {
           ].join("");
         }
 
-        const slides = state.sources.map(renderSlide).join("");
+        const slides = state.sources.map((source, index) => renderSlide(source, index)).join("");
 
         return [
           '<div class="tool-body">',
@@ -503,8 +505,243 @@ export function getLexiconExplorerAppHtml(): string {
         resultsEl.innerHTML = html;
         requestAnimationFrame(() => {
           updateCarouselPosition();
+          renderPdfPreviews();
         });
         scheduleSizeChanged();
+      }
+
+      function notify(method, params) {
+        window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+      }
+
+      function request(method, params, timeoutMs = 45000) {
+        return new Promise((resolve, reject) => {
+          const id = requestId++;
+          pending.set(id, { resolve, reject });
+          window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+
+          setTimeout(() => {
+            if (pending.has(id)) {
+              pending.delete(id);
+              reject(new Error("Request timed out: " + method));
+            }
+          }, timeoutMs);
+        });
+      }
+
+      async function getPdfjsModule() {
+        if (!pdfjsModulePromise) {
+          pdfjsModulePromise = import(APP_CONFIG.pdfjsModuleUrl)
+            .then((module) => {
+              const pdfjs = module && typeof module.getDocument === "function"
+                ? module
+                : module && module.default && typeof module.default.getDocument === "function"
+                  ? module.default
+                  : null;
+
+              if (!pdfjs) {
+                throw new Error("Failed to load PDF.js module");
+              }
+
+              if (pdfjs.GlobalWorkerOptions) {
+                pdfjs.GlobalWorkerOptions.workerSrc = APP_CONFIG.pdfjsWorkerUrl;
+              }
+
+              return pdfjs;
+            })
+            .catch((error) => {
+              pdfjsModulePromise = null;
+              throw error;
+            });
+        }
+
+        return pdfjsModulePromise;
+      }
+
+      async function callReadPdfBytes(url, offset, byteCount) {
+        const result = await request("tools/call", {
+          name: APP_CONFIG.readPdfBytesToolName,
+          arguments: {
+            url,
+            offset,
+            byteCount,
+          },
+        });
+
+        if (result && result.isError) {
+          const content = Array.isArray(result.content) ? result.content : [];
+          const firstText = content.find((item) => item && item.type === "text" && typeof item.text === "string");
+          throw new Error(firstText ? firstText.text : "PDF byte read failed");
+        }
+
+        const structured = result && result.structuredContent ? result.structuredContent : null;
+        if (!structured || typeof structured.dataBase64 !== "string") {
+          throw new Error("PDF byte read returned invalid structuredContent");
+        }
+
+        return structured;
+      }
+
+      function base64ToUint8Array(base64Value) {
+        const binary = atob(base64Value);
+        const length = binary.length;
+        const bytes = new Uint8Array(length);
+        for (let i = 0; i < length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      async function getPdfDocument(pdfUrl) {
+        if (!pdfUrl) {
+          throw new Error("Missing PDF URL");
+        }
+
+        if (!pdfDocCache.has(pdfUrl)) {
+          const promise = (async () => {
+            const pdfjs = await getPdfjsModule();
+            const meta = await callReadPdfBytes(pdfUrl, 0, 1);
+            const totalBytes = Number(meta.totalBytes);
+
+            if (!Number.isFinite(totalBytes) || totalBytes <= 0) {
+              throw new Error("Invalid PDF length");
+            }
+
+            const transport = new pdfjs.PDFDataRangeTransport(totalBytes, null);
+
+            transport.requestDataRange = (begin, end) => {
+              void (async () => {
+                let cursor = begin;
+                try {
+                  while (cursor < end) {
+                    const wanted = Math.min(MAX_TOOL_RANGE_BYTES, end - cursor);
+                    const chunk = await callReadPdfBytes(pdfUrl, cursor, wanted);
+                    const bytes = base64ToUint8Array(chunk.dataBase64);
+
+                    if (!bytes.byteLength) {
+                      throw new Error("Empty PDF range payload");
+                    }
+
+                    transport.onDataRange(cursor, bytes);
+                    cursor += bytes.byteLength;
+
+                    if (bytes.byteLength < wanted) {
+                      break;
+                    }
+                  }
+                } catch (error) {
+                  if (typeof transport.abort === "function") {
+                    transport.abort();
+                  }
+                }
+              })();
+            };
+
+            transport.transportReady();
+
+            const loadingTask = pdfjs.getDocument({
+              length: totalBytes,
+              range: transport,
+              disableStream: true,
+              disableAutoFetch: false,
+              rangeChunkSize: MAX_TOOL_RANGE_BYTES,
+            });
+
+            return loadingTask.promise;
+          })().catch((error) => {
+            pdfDocCache.delete(pdfUrl);
+            throw error;
+          });
+
+          pdfDocCache.set(pdfUrl, promise);
+        }
+
+        return pdfDocCache.get(pdfUrl);
+      }
+
+      function previewKeyForSource(source) {
+        return String(source.id || "") + "::" + String(source.pdfUrl || "");
+      }
+
+      async function renderSinglePdfPreview(source, rootEl) {
+        const canvas = rootEl.querySelector("[data-preview-canvas]");
+        const loading = rootEl.querySelector("[data-preview-loading]");
+        const error = rootEl.querySelector("[data-preview-error]");
+
+        if (!(canvas instanceof HTMLCanvasElement)) return;
+
+        if (loading) loading.hidden = false;
+        if (error) error.hidden = true;
+        canvas.hidden = true;
+
+        try {
+          const pdfDocument = await getPdfDocument(source.pdfUrl);
+          const firstPage = await pdfDocument.getPage(1);
+
+          if (!document.contains(rootEl)) {
+            return;
+          }
+
+          const containerWidth = Math.max(1, rootEl.clientWidth || 320);
+          const containerHeight = Math.max(1, rootEl.clientHeight || 224);
+          const baseViewport = firstPage.getViewport({ scale: 1 });
+          const scale = Math.max(
+            0.1,
+            Math.min(containerWidth / baseViewport.width, containerHeight / baseViewport.height)
+          );
+          const viewport = firstPage.getViewport({ scale });
+          const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+          canvas.width = Math.max(1, Math.floor(viewport.width * pixelRatio));
+          canvas.height = Math.max(1, Math.floor(viewport.height * pixelRatio));
+          canvas.style.width = Math.max(1, Math.floor(viewport.width)) + "px";
+          canvas.style.height = Math.max(1, Math.floor(viewport.height)) + "px";
+
+          const context = canvas.getContext("2d", { alpha: false });
+          if (!context) {
+            throw new Error("Canvas 2D context unavailable");
+          }
+
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          await firstPage.render({
+            canvasContext: context,
+            viewport,
+            transform: pixelRatio === 1 ? null : [pixelRatio, 0, 0, pixelRatio, 0, 0],
+          }).promise;
+
+          canvas.hidden = false;
+          if (loading) loading.hidden = true;
+          if (error) error.hidden = true;
+        } catch (previewError) {
+          if (loading) loading.hidden = true;
+          if (error) error.hidden = false;
+          console.warn("PDF preview render failed", previewError);
+        } finally {
+          scheduleSizeChanged();
+        }
+      }
+
+      function renderPdfPreviews() {
+        const roots = document.querySelectorAll("[data-preview-root]");
+        for (const rootEl of roots) {
+          const indexValue = Number(rootEl.getAttribute("data-source-index"));
+          if (!Number.isFinite(indexValue)) continue;
+
+          const source = state.sources[indexValue];
+          if (!source || !source.pdfUrl) continue;
+
+          const key = previewKeyForSource(source);
+          if (previewRendered.has(key) || previewInFlight.has(key)) continue;
+
+          previewInFlight.add(key);
+          void renderSinglePdfPreview(source, rootEl)
+            .finally(() => {
+              previewInFlight.delete(key);
+              previewRendered.add(key);
+            });
+        }
       }
 
       function onNotification(method, params) {
@@ -514,6 +751,8 @@ export function getLexiconExplorerAppHtml(): string {
           state.terms = terms;
           state.hasResult = false;
           state.slideIndex = 0;
+          previewRendered.clear();
+          previewInFlight.clear();
           if (terms.length) setStatus("Search terms: " + terms.join(", "));
           render();
           return;
@@ -533,7 +772,6 @@ export function getLexiconExplorerAppHtml(): string {
             content: source.content,
             citationUrl: source.citationUrl,
             redirectUrl: source.redirectUrl,
-            previewImageUrl: source.previewImageUrl,
             pdfUrl: source.pdfUrl,
             txtUrl: source.txtUrl
           }));
@@ -541,6 +779,8 @@ export function getLexiconExplorerAppHtml(): string {
           state.nextSteps = structured.nextSteps || "";
           state.hasResult = true;
           state.slideIndex = 0;
+          previewRendered.clear();
+          previewInFlight.clear();
 
           if (state.sources.length) {
             setStatus(
@@ -556,25 +796,6 @@ export function getLexiconExplorerAppHtml(): string {
 
           render();
         }
-      }
-
-      function notify(method, params) {
-        window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
-      }
-
-      function request(method, params) {
-        return new Promise((resolve, reject) => {
-          const id = requestId++;
-          pending.set(id, { resolve, reject });
-          window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
-
-          setTimeout(() => {
-            if (pending.has(id)) {
-              pending.delete(id);
-              reject(new Error("Request timed out: " + method));
-            }
-          }, 20000);
-        });
       }
 
       window.addEventListener("message", (event) => {

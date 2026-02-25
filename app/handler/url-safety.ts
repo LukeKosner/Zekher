@@ -63,12 +63,9 @@ function isBlockedHostname(hostname: string): boolean {
   return false;
 }
 
-export function parseHttpsTargetUrlFromRequest(
-  request: Request,
-  queryParam = "url"
+export function parseHttpsTargetUrl(
+  rawTarget: string | null | undefined
 ): URL | null {
-  const requestUrl = new URL(request.url);
-  const rawTarget = requestUrl.searchParams.get(queryParam);
   if (!rawTarget) return null;
 
   try {
@@ -80,4 +77,12 @@ export function parseHttpsTargetUrlFromRequest(
   } catch {
     return null;
   }
+}
+
+export function parseHttpsTargetUrlFromRequest(
+  request: Request,
+  queryParam = "url"
+): URL | null {
+  const requestUrl = new URL(request.url);
+  return parseHttpsTargetUrl(requestUrl.searchParams.get(queryParam));
 }

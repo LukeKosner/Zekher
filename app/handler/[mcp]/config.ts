@@ -19,14 +19,23 @@ export const mcpConstants = {
   maxTerms: 6,
   toolName: "yad_vashem_holocaust_lexicon",
   detailToolName: "yad_vashem_lexicon_entry_detail",
+  pdfBytesToolName: "yad_vashem_lexicon_read_pdf_bytes",
   toolDescription:
     "Search Yad Vashem's Holocaust Lexicon for historical information and terminology. Returns up to 6 sources with exact citations in markdown format [Title](URL) that must be included in responses.",
   detailToolDescription:
     "Load a full Yad Vashem Holocaust Lexicon entry by source ID for app-driven drilldown.",
+  pdfBytesToolDescription:
+    "Read a byte range from a PDF URL for MCP app-side rendering via PDF.js.",
   parameterDescription:
     "Search terms to query the Holocaust Lexicon (maximum 6 terms)",
   detailParameterDescription:
     "Lexicon source ID to retrieve the full entry content.",
+  pdfBytesUrlParameterDescription:
+    "HTTPS PDF URL to read.",
+  pdfBytesOffsetParameterDescription:
+    "Zero-based byte offset where the read should start.",
+  pdfBytesByteCountParameterDescription:
+    "Maximum number of bytes to read from the offset (max 524288).",
   promptName: "holocaust_education_context",
   promptDescription:
     "Provides context and guidelines for using the Yad Vashem Holocaust Lexicon responsibly and effectively.",

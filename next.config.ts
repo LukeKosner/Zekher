@@ -2,17 +2,6 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@napi-rs/canvas"],
-  outputFileTracingIncludes: {
-    "/handler/pdf-preview": [
-      "./node_modules/@napi-rs/canvas/**/*",
-      "./node_modules/@napi-rs/canvas-*/**/*",
-    ],
-    "/handler/pdf-preview/route": [
-      "./node_modules/@napi-rs/canvas/**/*",
-      "./node_modules/@napi-rs/canvas-*/**/*",
-    ],
-  },
   env: {
     NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV
   },

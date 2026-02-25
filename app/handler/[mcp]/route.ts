@@ -9,12 +9,15 @@ import { getLexiconExplorerAppHtml } from "./app-view";
 import { searchLexicon, getLexiconEntryDetail } from "./utils";
 import { mcpUsageInstructions, mcpConstants } from "./config";
 import { buildCorsHeaders, withCorsHeaders } from "../cors";
+import { parseHttpsTargetUrl } from "../url-safety";
 import type {
   McpLexiconAppSource,
   McpLexiconDetailStructuredContent,
   McpLexiconResponse,
   McpLexiconSearchStructuredContent,
 } from "./types";
+
+const MAX_PDF_RANGE_BYTES = 512 * 1024;
 
 function getBaseUrl(): string {
   return process.env.NEXT_PUBLIC_BASE_URL ?? "https://zekher.com";
@@ -88,14 +91,6 @@ function toProxyUrl(
   return `${baseUrl}/handler/proxy?url=${encodeURIComponent(rawUrl)}`;
 }
 
-function toPreviewImageUrl(
-  baseUrl: string,
-  rawPdfUrl: string | null | undefined
-): string | undefined {
-  if (!rawPdfUrl?.trim()) return undefined;
-  return `${baseUrl}/handler/pdf-preview?url=${encodeURIComponent(rawPdfUrl)}&page=1&w=720`;
-}
-
 type RequestHeaders = Record<string, string | string[] | undefined>;
 
 function getHeaderValue(headers: RequestHeaders | undefined, name: string) {
@@ -148,8 +143,7 @@ function toAppSource(
 ): McpLexiconAppSource {
   return {
     ...source,
-    pdfUrl: toProxyUrl(baseUrl, source.pdfUrl),
-    previewImageUrl: toPreviewImageUrl(baseUrl, source.pdfUrl),
+    pdfUrl: source.pdfUrl?.trim() || undefined,
     txtUrl: toProxyUrl(baseUrl, source.txtUrl),
     citationUrl: `${baseUrl}/sources/lexicon/${source.id}`,
   };
@@ -185,6 +179,27 @@ function formatSearchResponseText(
     "",
     `Instructions: ${response.nextSteps}`,
   ].join("\n");
+}
+
+function parseContentRangeHeader(value: string | null): {
+  start: number;
+  end: number;
+  total: number | null;
+} | null {
+  if (!value) return null;
+  const match = /^bytes\s+(\d+)-(\d+)\/(\d+|\*)$/i.exec(value.trim());
+  if (!match) return null;
+
+  const start = Number.parseInt(match[1], 10);
+  const end = Number.parseInt(match[2], 10);
+  const total = match[3] === "*" ? null : Number.parseInt(match[3], 10);
+
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+  return {
+    start,
+    end,
+    total: Number.isFinite(total ?? Number.NaN) ? total : null,
+  };
 }
 
 /**
@@ -223,7 +238,11 @@ const handler = createMcpHandler(
             {
               uri: mcpConstants.appResourceUri,
               mimeType: RESOURCE_MIME_TYPE,
-              text: getLexiconExplorerAppHtml(),
+              text: getLexiconExplorerAppHtml({
+                readPdfBytesToolName: mcpConstants.pdfBytesToolName,
+                pdfjsModuleUrl: `${requestBaseOrigin}/pdf.min.mjs`,
+                pdfjsWorkerUrl: `${requestBaseOrigin}/pdf.worker.min.js`,
+              }),
               _meta: {
                 ui: {
                   prefersBorder: true,
@@ -439,6 +458,157 @@ const handler = createMcpHandler(
             },
           ],
           structuredContent,
+        };
+      }
+    );
+
+    registerAppTool(
+      server,
+      mcpConstants.pdfBytesToolName,
+      {
+        title: "Read PDF Bytes",
+        description: mcpConstants.pdfBytesToolDescription,
+        inputSchema: {
+          url: z
+            .string()
+            .min(1)
+            .describe(mcpConstants.pdfBytesUrlParameterDescription),
+          offset: z
+            .number()
+            .int()
+            .nonnegative()
+            .describe(mcpConstants.pdfBytesOffsetParameterDescription),
+          byteCount: z
+            .number()
+            .int()
+            .positive()
+            .max(MAX_PDF_RANGE_BYTES)
+            .describe(mcpConstants.pdfBytesByteCountParameterDescription),
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false,
+        },
+        _meta: {
+          ui: {
+            resourceUri: mcpConstants.appResourceUri,
+            visibility: ["app"],
+          },
+          "openai/outputTemplate": mcpConstants.appResourceUri,
+          "openai/widgetAccessible": true,
+          "openai/visibility": "private",
+        },
+      },
+      async ({ url, offset, byteCount }) => {
+        const target = parseHttpsTargetUrl(url);
+        if (!target) {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: "Invalid or disallowed PDF URL.",
+              },
+            ],
+          };
+        }
+
+        const start = Math.max(0, Math.trunc(offset));
+        const requestedBytes = Math.max(
+          1,
+          Math.min(MAX_PDF_RANGE_BYTES, Math.trunc(byteCount))
+        );
+        const end = start + requestedBytes - 1;
+
+        let upstream: Response;
+        try {
+          upstream = await fetch(target.toString(), {
+            method: "GET",
+            redirect: "follow",
+            headers: {
+              Accept: "application/pdf,*/*;q=0.8",
+              Range: `bytes=${start}-${end}`,
+            },
+          });
+        } catch {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: "Failed to fetch upstream PDF bytes.",
+              },
+            ],
+          };
+        }
+
+        if (!upstream.ok) {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: `Upstream PDF request failed (${upstream.status}).`,
+              },
+            ],
+          };
+        }
+
+        const parsedContentRange = parseContentRangeHeader(
+          upstream.headers.get("content-range")
+        );
+        const upstreamBytes = new Uint8Array(await upstream.arrayBuffer());
+
+        let normalizedOffset = start;
+        let payload = upstreamBytes;
+        let totalBytes =
+          parsedContentRange?.total ??
+          Number.parseInt(upstream.headers.get("content-length") ?? "", 10);
+
+        if (upstream.status === 200 && start > 0) {
+          if (upstreamBytes.byteLength <= start) {
+            return {
+              isError: true,
+              content: [
+                {
+                  type: "text",
+                  text: "Upstream PDF server does not support byte-range reads.",
+                },
+              ],
+            };
+          }
+
+          normalizedOffset = start;
+          payload = upstreamBytes.subarray(
+            start,
+            Math.min(start + requestedBytes, upstreamBytes.byteLength)
+          );
+        } else if (parsedContentRange) {
+          normalizedOffset = parsedContentRange.start;
+        } else {
+          normalizedOffset = start;
+          payload = upstreamBytes.subarray(0, Math.min(requestedBytes, upstreamBytes.byteLength));
+        }
+
+        if (!Number.isFinite(totalBytes) || totalBytes <= 0) {
+          totalBytes = Math.max(normalizedOffset + payload.byteLength, 0);
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Read ${payload.byteLength} byte(s) at offset ${normalizedOffset}.`,
+            },
+          ],
+          structuredContent: {
+            type: "pdf_bytes_range",
+            url: target.toString(),
+            offset: normalizedOffset,
+            byteCount: payload.byteLength,
+            totalBytes,
+            dataBase64: Buffer.from(payload).toString("base64"),
+          },
         };
       }
     );
