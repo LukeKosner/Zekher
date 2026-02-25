@@ -328,6 +328,8 @@ export function getLexiconExplorerAppHtml(options: AppViewOptions): string {
     <script>
       const APP_CONFIG = ${serializedConfig};
       const MAX_TOOL_RANGE_BYTES = 512 * 1024;
+      const MIN_REPORTED_HEIGHT = 380;
+      const MIN_REPORTED_WIDTH = 320;
 
       const state = {
         terms: [],
@@ -346,6 +348,8 @@ export function getLexiconExplorerAppHtml(options: AppViewOptions): string {
       let resizeRaf = 0;
       let resizeObserver = null;
       let pdfjsModulePromise = null;
+      let lastReportedWidth = 0;
+      let lastReportedHeight = 0;
 
       function escapeHtml(value) {
         return String(value)
@@ -394,19 +398,28 @@ export function getLexiconExplorerAppHtml(options: AppViewOptions): string {
 
       function notifySizeChangedNow() {
         const root = document.documentElement;
-        const body = document.body;
-        const width = Math.max(
-          root ? root.scrollWidth : 0,
-          root ? root.offsetWidth : 0,
-          body ? body.scrollWidth : 0,
-          body ? body.offsetWidth : 0
-        );
-        const height = Math.max(
-          root ? root.scrollHeight : 0,
-          root ? root.offsetHeight : 0,
-          body ? body.scrollHeight : 0,
-          body ? body.offsetHeight : 0
-        );
+        if (!root) return;
+
+        const previousWidth = root.style.width;
+        const previousHeight = root.style.height;
+        root.style.width = "fit-content";
+        root.style.height = "fit-content";
+
+        const bounds = root.getBoundingClientRect();
+
+        root.style.width = previousWidth;
+        root.style.height = previousHeight;
+
+        const scrollbarCompensation = Math.max(0, window.innerWidth - root.clientWidth);
+        const measuredWidth = Math.ceil(bounds.width + scrollbarCompensation);
+        const measuredHeight = Math.ceil(bounds.height);
+
+        const width = Math.max(MIN_REPORTED_WIDTH, measuredWidth);
+        const height = Math.max(MIN_REPORTED_HEIGHT, measuredHeight);
+
+        if (width === lastReportedWidth && height === lastReportedHeight) return;
+        lastReportedWidth = width;
+        lastReportedHeight = height;
 
         notify("ui/notifications/size-changed", { width, height });
       }
