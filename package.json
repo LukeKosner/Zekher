@@ -13,6 +13,8 @@
   "license": "MIT",
   "author": "Luke Kosner",
   "scripts": {
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "dev": "next dev",
     "build": "next build",
     "vercel:build": "bash ./scripts/vercel-build.sh",

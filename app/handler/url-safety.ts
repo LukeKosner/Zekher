@@ -24,10 +24,6 @@ function isHostAllowed(hostname: string): boolean {
 
 function isPrivateIpv4(hostname: string): boolean {
   const parts = hostname.split(".").map((part) => Number.parseInt(part, 10));
-  if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) {
-    return false;
-  }
-
   const [a, b] = parts;
   if (a === 10 || a === 127) return true;
   if (a === 169 && b === 254) return true;
@@ -38,6 +34,8 @@ function isPrivateIpv4(hostname: string): boolean {
 
 function isBlockedHostname(hostname: string): boolean {
   const lower = hostname.toLowerCase();
+  const normalizedIpHost =
+    lower.startsWith("[") && lower.endsWith("]") ? lower.slice(1, -1) : lower;
   if (
     lower === "localhost" ||
     lower.endsWith(".local") ||
@@ -46,17 +44,17 @@ function isBlockedHostname(hostname: string): boolean {
     return true;
   }
 
-  const ipVersion = isIP(lower);
+  const ipVersion = isIP(normalizedIpHost);
   if (ipVersion === 4) {
-    return isPrivateIpv4(lower);
+    return isPrivateIpv4(normalizedIpHost);
   }
 
   if (ipVersion === 6) {
     return (
-      lower === "::1" ||
-      lower.startsWith("fc") ||
-      lower.startsWith("fd") ||
-      lower.startsWith("fe80:")
+      normalizedIpHost === "::1" ||
+      normalizedIpHost.startsWith("fc") ||
+      normalizedIpHost.startsWith("fd") ||
+      normalizedIpHost.startsWith("fe80:")
     );
   }
 
